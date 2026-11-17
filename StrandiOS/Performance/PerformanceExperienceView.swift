@@ -23,6 +23,19 @@ struct PerformanceExperienceView: View {
     @State private var showCalendar = false
     @State private var showSettings = false
     @State private var dataRevision = 0
+    @State private var showDashboardEditor = false
+    @State private var planWorkouts: [WorkoutRow] = []
+    @State private var planReady = false
+    @AppStorage(WeeklyPlanGoals.sleepMinutesKey) private var planSleepMinutes = 480
+    @AppStorage(WeeklyPlanGoals.sleepNightsKey) private var planSleepNights = 0
+    @AppStorage(WeeklyPlanGoals.workoutDaysKey) private var planWorkoutDays = 0
+    @AppStorage(DashboardCardPrefs.selectionKey) private var dashboardCardsRaw = ""
+    @AppStorage(HostedCardPrefs.selectionKey) private var hostedCardsRaw = ""
+    @AppStorage(TodayLayoutPrefs.orderKey) private var sectionOrderRaw = ""
+    @AppStorage(TodayLayoutPrefs.hiddenKey) private var hiddenSectionsRaw = ""
+    @AppStorage(KeyMetricPrefs.layoutKey) private var keyMetricsRaw = ""
+    @AppStorage("today.keyMetricsDetailed") private var keyMetricsDetailed = false
+    @AppStorage("today.keyMetricsWindowDays") private var keyMetricsWindowDays = 14
 
     init(context: PerformanceContext, isRoot: Bool = false) {
         self.initialContext = context
@@ -76,6 +89,19 @@ struct PerformanceExperienceView: View {
         .onReceive(repo.performanceSnapshotCache.$revision) { dataRevision = $0 }
         .sheet(isPresented: $showCalendar) { calendar }
         .sheet(isPresented: $showSettings) { NavigationStack { SettingsView() } }
+        .sheet(isPresented: $showDashboardEditor) {
+            TodayCustomizationSheet(initialDestination: .yourCards, sectionOrderRaw: $sectionOrderRaw,
+                hiddenSectionsRaw: $hiddenSectionsRaw, keyMetricsRaw: $keyMetricsRaw,
+                keyMetricsDetailed: $keyMetricsDetailed, keyMetricsWindowDays: $keyMetricsWindowDays,
+                dashboardCardsRaw: $dashboardCardsRaw, hostedCardsRaw: $hostedCardsRaw)
+        }
+        .task(id: "\(repo.deviceId)|\(repo.refreshSeq)|\(today)") {
+            planReady = false
+            let rows = await repo.workoutRows(days: 8)
+            guard !Task.isCancelled else { return }
+            planWorkouts = rows
+            planReady = true
+        }
     }
 
     @ViewBuilder private var header: some View {
@@ -204,7 +230,6 @@ struct PerformanceExperienceView: View {
                 }
             }
             PerformanceCoachLink(context: context)
-            NavigationLink { WeeklyPlanView().modifier(PerformanceLegacyContextReset()) } label: { Label("My plan", systemImage: "calendar").font(StrandFont.headline) }
             NavigationLink(value: TabRoute.workouts) { Label("All activities", systemImage: "figure.run").font(StrandFont.subhead) }
             activityList(snapshot, includeSleep: true)
             if day == today {
@@ -212,9 +237,105 @@ struct PerformanceExperienceView: View {
                     WorkoutStartControl(compact: true)
                     Button { router.openJournal(day: 0) } label: { Label("Journal", systemImage: "book.closed").font(StrandFont.subhead).frame(maxWidth: .infinity, minHeight: NoopMetrics.controlHeight) }
                 }
-                Button { router.openAlarms() } label: { PerformancePanel { PerformanceMeasureRow(title: String(localized: "Tonight’s sleep"), value: "", caption: String(localized: "Prepare your sleep and alarm"), symbol: "moon") } }.buttonStyle(.plain)
+                tonightSleep(snapshot)
                 JournalReminderCard()
+                weeklyPlan
+                dashboard(snapshot)
             }
+        }
+    }
+
+    private func tonightSleep(_ snapshot: PerformanceSnapshot) -> some View {
+        let tomorrow = Calendar.current.date(byAdding: .day, value: 1, to: Date()) ?? Date()
+        let weekday = Calendar.current.component(.weekday, from: tomorrow)
+        let wake = WindDownNudge.wakeMinutes(forWeekday: weekday)
+        let need = snapshot.value("sleep_need_min").flatMap { $0.isFinite && $0 > 0 && $0 <= 1440 ? Int($0.rounded()) : nil }
+        let bedtime = need.map { (wake - $0 + 1440) % 1440 }
+        return Button { router.openAlarms() } label: {
+            PerformancePanel {
+                VStack(alignment: .leading, spacing: NoopMetrics.space2) {
+                    Label("Tonight’s sleep", systemImage: "moon").font(StrandFont.headline)
+                    if let bedtime {
+                        Text("Suggested bedtime \(clockMinute(bedtime)) · usual wake \(clockMinute(wake))")
+                            .font(StrandFont.subhead).monospacedDigit()
+                        Text("Based on your sleep need and usual wake time; not an alarm.")
+                            .font(StrandFont.footnote).foregroundStyle(StrandPalette.textSecondary)
+                    } else {
+                        Text("Sleep need is not available yet. Set your usual wake time in Alarms.")
+                            .font(StrandFont.footnote).foregroundStyle(StrandPalette.textSecondary)
+                    }
+                }
+            }
+        }.buttonStyle(.plain).foregroundStyle(StrandPalette.textPrimary)
+    }
+
+    private func clockMinute(_ minute: Int) -> String {
+        let start = Calendar.current.startOfDay(for: Date())
+        let date = Calendar.current.date(byAdding: .minute, value: minute, to: start) ?? start
+        return date.formatted(.dateTime.hour().minute().locale(AppLanguage.activeLocale))
+    }
+
+    private var weeklyPlan: some View {
+        let goals = WeeklyPlanGoals(sleepMinutes: planSleepMinutes, sleepNights: planSleepNights, workoutDays: planWorkoutDays)
+        let rows = WeeklyPlanSource.rows(days: repo.days, workouts: planReady ? planWorkouts : [], now: Date())
+        let progress = WeeklyPlanEngine.progress(rows: rows, goals: goals)
+        return NavigationLink { WeeklyPlanView().modifier(PerformanceLegacyContextReset()) } label: {
+            PerformancePanel {
+                VStack(alignment: .leading, spacing: NoopMetrics.space3) {
+                    HStack { Text("My plan").font(StrandFont.headline); Spacer(); Image(systemName: "pencil") }
+                    if goals.sleepNights > 0 {
+                        Text("Sleep nights: \(progress.sleepNights) / \(goals.sleepNights)").font(StrandFont.subhead).monospacedDigit()
+                        ProgressView(value: Double(min(progress.sleepNights, goals.sleepNights)), total: Double(goals.sleepNights))
+                    }
+                    if goals.workoutDays > 0 && planReady {
+                        Text("Workout days: \(progress.workoutDays) / \(goals.workoutDays)").font(StrandFont.subhead).monospacedDigit()
+                        ProgressView(value: Double(min(progress.workoutDays, goals.workoutDays)), total: Double(goals.workoutDays))
+                    }
+                    if goals.sleepNights == 0 && goals.workoutDays == 0 {
+                        Text("Choose your weekly sleep and activity goals.").font(StrandFont.subhead).foregroundStyle(StrandPalette.textSecondary)
+                    }
+                }
+            }
+        }.buttonStyle(.plain).foregroundStyle(StrandPalette.textPrimary)
+    }
+
+    private func dashboard(_ snapshot: PerformanceSnapshot) -> some View {
+        let cards = DashboardCardPrefs.decodeEnabled(dashboardCardsRaw).filter { dashboardMetric($0) != nil }
+        return VStack(alignment: .leading, spacing: NoopMetrics.space3) {
+            HStack {
+                Text("My dashboard").font(StrandFont.headline)
+                Spacer()
+                Button("Customize") { showDashboardEditor = true }.font(StrandFont.caption)
+            }
+            PerformancePanel {
+                VStack(spacing: 0) {
+                    ForEach(cards) { card in
+                        if let key = dashboardMetric(card) {
+                            NavigationLink(value: TabRoute.performance(PerformanceContext(day: day, domain: .trend, metric: key)!)) {
+                                PerformanceMeasureRow(title: card.title, value: PerformanceFormat.value(key, key == "stress" ? snapshot.stress : snapshot.value(key)), caption: card.subtitle, symbol: card.icon)
+                            }.buttonStyle(.plain)
+                            Divider()
+                        }
+                    }
+                    if cards.isEmpty { Text("Choose metrics to show here.").font(StrandFont.subhead) }
+                }
+            }
+        }
+    }
+
+    private func dashboardMetric(_ card: DashboardCard) -> String? {
+        switch card {
+        case .hrv: "hrv"
+        case .restingHr: "rhr"
+        case .respiratory: "resp_rate"
+        case .steps: "steps"
+        case .stress: "stress"
+        case .fitnessAge: "fitness_age"
+        case .vo2max: "vo2max"
+        case .vitality: "vitality"
+        case .skinTemp: "skin_temp"
+        case .sleep: "sleep_performance"
+        default: nil
         }
     }
 
