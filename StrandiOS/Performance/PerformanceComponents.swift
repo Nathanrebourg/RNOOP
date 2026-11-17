@@ -23,7 +23,9 @@ extension PerformanceContext.Domain {
         switch self {
         case .sleep: PerformanceDesign.sleep
         case .effort, .activities: PerformanceDesign.effort
-        case .recovery: score.map(StrandPalette.recoveryColor) ?? StrandPalette.chargeColor
+        case .recovery:
+            guard let score else { return PerformanceDesign.recoveryHigh }
+            return score >= 67 ? PerformanceDesign.recoveryHigh : score >= 34 ? PerformanceDesign.recoveryMedium : PerformanceDesign.recoveryLow
         default: PerformanceDesign.coach
         }
     }
@@ -83,6 +85,8 @@ struct DatedPerformanceScoreRing: View {
     let value: Double?
     var large = false
     @ScaledMetric(relativeTo: .largeTitle) private var scoreSize = PerformanceDesign.scoreSize
+    // Scores, including effort, arrive on the stored 0–100 axis. The display formatter
+    // converts effort to 0–21; both axes therefore have the same ring fraction.
     private var fraction: Double { min(1, max(0, (PerformanceContext.finite(value) ?? 0) / 100)) }
     var body: some View {
         ZStack {
@@ -91,6 +95,7 @@ struct DatedPerformanceScoreRing: View {
                 Circle().trim(from: 0, to: fraction)
                     .stroke(domain.tint(score: value), style: StrokeStyle(lineWidth: large ? PerformanceDesign.largeStroke : PerformanceDesign.smallStroke, lineCap: .round))
                     .rotationEffect(.degrees(NoopMetrics.performanceRingRotation))
+                    .shadow(color: domain.tint(score: value).opacity(0.3), radius: NoopMetrics.space2)
             }
             VStack(spacing: NoopMetrics.space2) {
                 if large { Text(verbatim: "NROOP").font(StrandFont.overline).tracking(PerformanceDesign.labelTracking).foregroundStyle(StrandPalette.textSecondary) }
@@ -100,7 +105,7 @@ struct DatedPerformanceScoreRing: View {
                     if domain != .effort, value != nil {
                         Text(verbatim: "%").font(StrandFont.rounded(large ? PerformanceDesign.suffixSize : PerformanceDesign.compactSuffixSize))
                     }
-                }.foregroundStyle(StrandPalette.textPrimary).minimumScaleFactor(0.7).lineLimit(1)
+                }.foregroundStyle(StrandPalette.textPrimary).monospacedDigit().minimumScaleFactor(0.7).lineLimit(1)
                 if large { Text(domain.title.uppercased()).font(StrandFont.overline).tracking(PerformanceDesign.labelTracking) }
             }
         }

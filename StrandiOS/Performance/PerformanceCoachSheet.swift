@@ -203,11 +203,18 @@ struct PerformanceTabBar: View {
     @Binding var selection: Int
     let coachEnabled: Bool
     let openCoach: () -> Void
-    private let tabs: [(Int, LocalizedStringKey, String)] = [(0,"Today","house"),(1,"Health","heart"),(2,"Activities","figure.run"),(4,"More","ellipsis")]
+    @EnvironmentObject private var router: NavRouter
+    private let tabs: [(Int, LocalizedStringKey, String)] = [(0,"Home","house"),(1,"Health","heart"),(4,"More","ellipsis")]
     var body: some View {
         HStack(spacing: NoopMetrics.space2) {
             HStack(spacing: NoopMetrics.space1) {
                 ForEach(tabs, id: \.0) { tag, title, symbol in
+                    if tag == 4 {
+                        Button { router.requestQuickActions() } label: {
+                            Image(systemName: "plus.circle.fill").font(StrandFont.title2)
+                                .frame(maxWidth: .infinity, minHeight: PerformanceDesign.navigationHeight)
+                        }.buttonStyle(.plain).accessibilityLabel("Quick actions")
+                    }
                     Button { selection = tag } label: {
                         VStack(spacing: NoopMetrics.space1) {
                             Image(systemName: symbol).font(StrandFont.headline)

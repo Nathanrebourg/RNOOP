@@ -61,9 +61,9 @@ struct PerformanceTrendView: View {
                     Label(PerformanceFormat.title(key), systemImage: descriptor?.icon ?? "chart.xyaxis.line").font(StrandFont.headline)
                 }
                 Picker("Period", selection: $window) {
-                    Text("7 days").tag(7)
-                    Text("4 weeks").tag(28)
-                    Text("6 months").tag(180)
+                    Text("1W").tag(7)
+                    Text("1M").tag(28)
+                    Text("6M").tag(180)
                 }.pickerStyle(.segmented)
                 if let snapshot = model.snapshot, snapshot.context == context {
                     if snapshot.hadReadErrors {

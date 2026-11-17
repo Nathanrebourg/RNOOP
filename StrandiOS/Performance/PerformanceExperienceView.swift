@@ -9,6 +9,8 @@ struct PerformanceExperienceView: View {
     let initialContext: PerformanceContext
     var isRoot = false
     @EnvironmentObject private var repo: Repository
+    @EnvironmentObject private var profile: ProfileStore
+    @EnvironmentObject private var live: LiveState
     @EnvironmentObject private var router: NavRouter
     @Environment(\.dismiss) private var dismiss
     @Environment(\.dynamicTypeSize) private var typeSize
@@ -84,9 +86,16 @@ struct PerformanceExperienceView: View {
     private var dailyHeader: some View {
         HStack(spacing: NoopMetrics.space1) {
             Button { showSettings = true } label: {
-                Image(systemName: "person.crop.circle").font(StrandFont.headline)
+                ProfileAvatarView(imageData: profile.avatarImageData, size: 36)
                     .frame(width: PerformanceDesign.controlDiameter, height: PerformanceDesign.controlDiameter)
             }.accessibilityLabel("Profile and settings")
+            let days = repo.days
+            let streak = StreakCalculator.streaks(dayKeys: days.map { $0.day },
+                                                   qualified: days.map { $0.recovery != nil },
+                                                   today: today)
+            Label("\(streak.current)", systemImage: "flame.fill")
+                .font(StrandFont.caption).monospacedDigit()
+                .accessibilityLabel("\(streak.current) days in a row")
             Spacer(minLength: 0)
             HStack(spacing: 0) {
                 Button { shiftDay(-1) } label: { Image(systemName: "chevron.left").frame(width: PerformanceDesign.controlDiameter, height: PerformanceDesign.controlDiameter) }.accessibilityLabel("Previous day")
@@ -97,8 +106,12 @@ struct PerformanceExperienceView: View {
             }.background(StrandPalette.textPrimary.opacity(0.035), in: Capsule())
             Spacer(minLength: 0)
             Button { router.openDevices() } label: {
-                Image(systemName: "applewatch").font(StrandFont.headline)
-                    .frame(width: PerformanceDesign.controlDiameter, height: PerformanceDesign.controlDiameter)
+                VStack(spacing: 0) {
+                    Image(systemName: "battery.75").font(StrandFont.headline)
+                    if live.connected, live.activeIsWhoop, let pct = live.batteryPct {
+                        Text("\(Int(pct.rounded()))%") .font(StrandFont.overline).monospacedDigit()
+                    }
+                }.frame(width: PerformanceDesign.controlDiameter, height: PerformanceDesign.controlDiameter)
             }.accessibilityLabel("Manage devices")
         }.foregroundStyle(StrandPalette.textPrimary).font(StrandFont.caption)
     }
@@ -191,6 +204,8 @@ struct PerformanceExperienceView: View {
                 }
             }
             PerformanceCoachLink(context: context)
+            NavigationLink { WeeklyPlanView().modifier(PerformanceLegacyContextReset()) } label: { Label("My plan", systemImage: "calendar").font(StrandFont.headline) }
+            NavigationLink(value: TabRoute.workouts) { Label("All activities", systemImage: "figure.run").font(StrandFont.subhead) }
             activityList(snapshot, includeSleep: true)
             if day == today {
                 HStack(spacing: NoopMetrics.space3) {
@@ -207,11 +222,10 @@ struct PerformanceExperienceView: View {
         NavigationLink(value: TabRoute.performance(PerformanceContext(day: day, domain: .health)!)) {
             PerformancePanel {
                 VStack(alignment: .leading, spacing: NoopMetrics.space1) {
-                    Label("Vital signs", systemImage: "heart.text.square").font(StrandFont.overline)
-                    Text("\(snapshot.availableVitals.count)/5").font(StrandFont.title2)
+                    Label("Health Monitor", systemImage: "heart.text.square").font(StrandFont.overline)
+                    Text(snapshot.personalVitals.isEmpty ? "—/5" : "\(snapshot.inPersonalRange)/5").font(StrandFont.title2).monospacedDigit()
                     Text(snapshot.personalVitals.isEmpty ? String(localized: "Learning your personal reference") : String(localized: "\(snapshot.inPersonalRange) in your personal range"))
                         .font(StrandFont.overline).foregroundStyle(StrandPalette.textSecondary).fixedSize(horizontal: false, vertical: true)
-                    Text("Available measurements").font(StrandFont.overline).foregroundStyle(StrandPalette.textSecondary)
                 }
             }
         }.buttonStyle(.plain).foregroundStyle(StrandPalette.textPrimary)
@@ -331,7 +345,7 @@ struct PerformanceExperienceView: View {
     private func activityList(_ snapshot: PerformanceSnapshot, includeSleep: Bool) -> some View {
         PerformancePanel {
             VStack(alignment: .leading, spacing: NoopMetrics.space3) {
-                Text("Activities for this day").font(StrandFont.overline)
+                Text("Today’s Activities").font(StrandFont.overline)
                 if includeSleep, let night = snapshot.night {
                     NavigationLink(value: TabRoute.performance(PerformanceContext(day: day, domain: .sleep)!)) {
                         PerformanceMeasureRow(title: String(localized: "Sleep"), value: PerformanceFormat.duration(night.stages.asleep),
