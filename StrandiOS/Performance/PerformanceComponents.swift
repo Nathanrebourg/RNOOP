@@ -21,12 +21,12 @@ extension PerformanceContext.Domain {
     }
     func tint(score: Double? = nil) -> Color {
         switch self {
-        case .sleep: PerformanceDesign.sleep
-        case .effort, .activities: PerformanceDesign.effort
+        case .sleep: return PerformanceDesign.sleep
+        case .effort, .activities: return PerformanceDesign.effort
         case .recovery:
             guard let score else { return PerformanceDesign.recoveryHigh }
             return score >= 67 ? PerformanceDesign.recoveryHigh : score >= 34 ? PerformanceDesign.recoveryMedium : PerformanceDesign.recoveryLow
-        default: PerformanceDesign.coach
+        default: return PerformanceDesign.coach
         }
     }
 }
