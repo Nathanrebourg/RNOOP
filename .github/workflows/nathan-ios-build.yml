@@ -32,8 +32,9 @@ jobs:
           ls -d /Applications/Xcode*.app || true
           XC=$(ls -d /Applications/Xcode_26*.app 2>/dev/null | grep -v -i beta | sort -V | tail -1 || true)
           if [ -n "$XC" ]; then sudo xcode-select -s "$XC/Contents/Developer"; fi
-          xcodebuild -version
-          xcodebuild -version | grep -q '^Xcode 26' || { echo "Xcode 26 not available on this runner" >&2; exit 1; }
+          VER=$(xcodebuild -version)
+          echo "$VER"
+          case "$VER" in "Xcode 26"*) ;; *) echo "Xcode 26 not available on this runner" >&2; exit 1;; esac
       - name: Install XcodeGen
         run: brew install xcodegen
       - name: Generate project
