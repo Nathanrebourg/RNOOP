@@ -5,7 +5,7 @@ public enum GuidedWalkingTrial {
     public static let maximumDuration = 3600
     public static let maximumEdgeGap = 3
     public static let maximumSampleGap = 5
-    public static let maximumUnixTimestamp = 4_102_444_800
+    public static let maximumUnixTimestamp = Int(clamping: 4_102_444_800 as Int64)
 
     public struct Sample: Equatable, Sendable {
         public let ts: Int

@@ -77,7 +77,7 @@ extension WhoopStore {
             guard isCalculationDay(row.day), row.day >= from, row.day <= to,
                   dailyMetrics.contains(where: { $0.day == row.day }),
                   row.value.isFinite, (0...100).contains(row.value), suppliedValue == row.value,
-                  (1...4_102_444_800).contains(row.capturedAt), row.payload.utf8.count <= 16_384,
+                  (1...Int(clamping: 4_102_444_800 as Int64)).contains(row.capturedAt), row.payload.utf8.count <= 16_384,
                   !row.payload.isEmpty, !row.sourceId.isEmpty, !row.methodId.isEmpty, !row.fingerprint.isEmpty,
                   provenance.last(where: { $0.day == row.day && $0.key == row.key })?.sourceId == row.sourceId,
                   try String.fetchOne(db, sql: "SELECT sourceId FROM scoreInputProvenance WHERE deviceId = ? AND day = ? AND key = ?",

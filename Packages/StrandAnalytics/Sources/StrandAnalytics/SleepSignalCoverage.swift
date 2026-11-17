@@ -23,7 +23,7 @@ public enum SleepSignalCoverage {
     }
     public static func analyze(start: Int, end: Int, hr: [HRSample], gravity: [GravitySample]) -> Result {
         // Bounded before subtraction/grid allocation, also identical on 64-bit Kotlin/Swift.
-        guard start >= 0, end <= 4_102_444_800, end > start, end - start <= 172_800 else {
+        guard start >= 0, end <= Int(clamping: 4_102_444_800 as Int64), end > start, end - start <= 172_800 else {
             return .init(status: "invalid-window", intervals: [], bothSeconds: 0, hrOnlySeconds: 0,
                          motionOnlySeconds: 0, unknownSeconds: 0, distinctHRSeconds: 0, distinctMotionSeconds: 0)
         }

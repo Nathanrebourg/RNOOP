@@ -36,7 +36,7 @@ public enum SleepClockStressComparison {
         let d=abs(a-b);return min(d,1440-d)
     }
     private static func valid(_ n: Night) -> Bool {
-        n.start >= 0 && n.end <= 4_102_444_800 && n.end > n.start && Double(n.end)-Double(n.start) >= 10_800
+        n.start >= 0 && n.end <= Int(clamping: 4_102_444_800 as Int64) && n.end > n.start && Double(n.end)-Double(n.start) >= 10_800
             && Double(n.end)-Double(n.start) <= 57_600 && (0..<1440).contains(n.bedtimeMinute)
             && (0..<1440).contains(n.wakeMinute) && n.day >= 0
     }
