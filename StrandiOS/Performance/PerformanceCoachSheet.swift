@@ -42,6 +42,8 @@ final class PerformanceCoachSessions: ObservableObject {
 struct PerformanceCoachSheet: View {
     let session: PerformanceCoachSession
     @ObservedObject private var engine: AICoachEngine
+    @EnvironmentObject private var repo: Repository
+    @StateObject private var snapshotModel = PerformanceSnapshotModel()
     @EnvironmentObject private var settings: AICoachEngine
     @Environment(\.dismiss) private var dismiss
     @State private var draft = ""
@@ -64,7 +66,10 @@ struct PerformanceCoachSheet: View {
         case .recovery, .health: [String(localized: "Explain these measurements"), String(localized: "How do these measurements compare to my reference?")]
         case .effort, .activities: [String(localized: "Help me understand this day's effort"), String(localized: "Explain the recorded activities")]
         case .trend: [String(localized: "Explain this trend and its missing days"), String(localized: "How should I read this period's average?")]
-        case .today: [String(localized: "Help me understand this day"), String(localized: "Explain my sleep and recovery")]
+        case .today:
+            [String(localized: "How does my sleep relate to my recovery today?"),
+             String(localized: "How should I interpret today’s strain alongside recovery?"),
+             String(localized: "What should I know about my sleep, recovery and strain together?")]
         }
     }
 
@@ -79,7 +84,12 @@ struct PerformanceCoachSheet: View {
             ScrollViewReader { proxy in
                 ScrollView {
                     VStack(alignment: .leading, spacing: NoopMetrics.space4) {
-                        if engine.messages.isEmpty { introduction }
+                        if engine.messages.isEmpty {
+                            introduction
+                            if let snapshot = snapshotModel.snapshot, snapshot.context.day == session.context.day {
+                                scoreSummary(snapshot)
+                            }
+                        }
                         ForEach(engine.messages) { message in
                             messageRow(message)
                         }
@@ -120,6 +130,9 @@ struct PerformanceCoachSheet: View {
         }
         .onChange(of: settings.dataConsent) { _, value in engine.dataConsent = value }
         .onChange(of: enabled) { _, on in if !on { dismiss() } }
+        .task(id: session.context.id) {
+            await snapshotModel.load(repo: repo, context: session.context)
+        }
     }
 
     private var header: some View {
@@ -141,7 +154,7 @@ struct PerformanceCoachSheet: View {
 
     private var introduction: some View {
         VStack(alignment: .leading, spacing: NoopMetrics.space3) {
-            Text("Ask about the selected day").font(StrandFont.title2)
+            Text("Ask NROOP anything").font(StrandFont.title2)
             Text("This conversation keeps the screen, day and period you are viewing. No request is sent until you ask a question.")
                 .font(StrandFont.subhead).foregroundStyle(StrandPalette.textSecondary)
             if !engine.isConfigured {
@@ -151,6 +164,25 @@ struct PerformanceCoachSheet: View {
                 Text("Your measurements are not shared. You can ask general questions or change this in Coach settings.")
                     .font(StrandFont.footnote).foregroundStyle(StrandPalette.textSecondary)
                 Button("Coach settings") { showSetup = true }.font(StrandFont.subhead)
+            }
+        }
+    }
+
+    private func scoreSummary(_ snapshot: PerformanceSnapshot) -> some View {
+        PerformancePanel {
+            VStack(alignment: .leading, spacing: NoopMetrics.space2) {
+                Text("Scores for this day").font(StrandFont.overline)
+                HStack {
+                    ForEach([PerformanceContext.Domain.sleep, .recovery, .effort], id: \.self) { domain in
+                        VStack(alignment: .leading, spacing: NoopMetrics.space1) {
+                            Text(domain.title).font(StrandFont.caption)
+                            Text(domain == .effort ? PerformanceFormat.effort(snapshot.value(domain.metricKey)) : PerformanceFormat.number(snapshot.value(domain.metricKey)))
+                                .font(StrandFont.headline).monospacedDigit()
+                        }.frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                }
+                Text("Calculated on this device. Missing scores are shown as —.")
+                    .font(StrandFont.footnote).foregroundStyle(StrandPalette.textSecondary)
             }
         }
     }
@@ -171,7 +203,7 @@ struct PerformanceCoachSheet: View {
     private var composer: some View {
         VStack(spacing: NoopMetrics.space2) {
             HStack(alignment: .bottom, spacing: NoopMetrics.space2) {
-                TextField("Ask Coach…", text: $draft, axis: .vertical)
+                TextField("Ask NROOP anything…", text: $draft, axis: .vertical)
                     .font(StrandFont.body).lineLimit(1...5).focused($inputFocused)
                     .disabled(!engine.isConfigured || engine.sending || !enabled)
                 Button { send(draft) } label: {
