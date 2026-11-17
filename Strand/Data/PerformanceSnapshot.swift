@@ -282,7 +282,7 @@ final class PerformanceSnapshotModel: ObservableObject {
         // Noon in the local calendar avoids a UTC date drifting to the preceding logical day.
         if scope == .full, let localNoon = localNoon(context.day) {
             result.vitals = BodyVitalSigns.readings(sourceRows: sourceRows, temperatureUnit: temperature, now: localNoon, skinTempPreferred: preferredSkin)
-                .filter { $0.key != "spo2raw" }
+                .filter { $0.key != "spo2raw" && $0.key != "spo2" }
         }
         return result
     }

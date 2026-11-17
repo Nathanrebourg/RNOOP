@@ -1,5 +1,6 @@
 #if os(iOS)
 import SwiftUI
+import Charts
 import StrandDesign
 import StrandAnalytics
 import WhoopStore
@@ -26,6 +27,7 @@ struct PerformanceExperienceView: View {
     @State private var showDashboardEditor = false
     @State private var planWorkouts: [WorkoutRow] = []
     @State private var planReady = false
+    @State private var stressTimeline: [DaytimeStress.HourPoint] = []
     @AppStorage(WeeklyPlanGoals.sleepMinutesKey) private var planSleepMinutes = 480
     @AppStorage(WeeklyPlanGoals.sleepNightsKey) private var planSleepNights = 0
     @AppStorage(WeeklyPlanGoals.workoutDaysKey) private var planWorkoutDays = 0
@@ -94,6 +96,13 @@ struct PerformanceExperienceView: View {
                 hiddenSectionsRaw: $hiddenSectionsRaw, keyMetricsRaw: $keyMetricsRaw,
                 keyMetricsDetailed: $keyMetricsDetailed, keyMetricsWindowDays: $keyMetricsWindowDays,
                 dashboardCardsRaw: $dashboardCardsRaw, hostedCardsRaw: $hostedCardsRaw)
+        }
+        .task(id: "stress|\(repo.deviceId)|\(repo.refreshSeq)|\(day)") {
+            stressTimeline = []
+            guard day == today else { return }
+            let result = await StressDayCurve.today(repo: repo, personalBaseline: PuffinExperiment.stressPersonalBaselineEnabled)
+            guard !Task.isCancelled else { return }
+            stressTimeline = result?.result.timeline ?? []
         }
         .task(id: "\(repo.deviceId)|\(repo.refreshSeq)|\(today)") {
             planReady = false
@@ -344,7 +353,7 @@ struct PerformanceExperienceView: View {
             PerformancePanel {
                 VStack(alignment: .leading, spacing: NoopMetrics.space1) {
                     Label("Health Monitor", systemImage: "heart.text.square").font(StrandFont.overline)
-                    Text(snapshot.personalVitals.isEmpty ? "—/5" : "\(snapshot.inPersonalRange)/5").font(StrandFont.title2).monospacedDigit()
+                    Text(snapshot.personalVitals.isEmpty ? "—/4" : "\(snapshot.inPersonalRange)/4").font(StrandFont.title2).monospacedDigit()
                     Text(snapshot.personalVitals.isEmpty ? String(localized: "Learning your personal reference") : String(localized: "\(snapshot.inPersonalRange) in your personal range"))
                         .font(StrandFont.overline).foregroundStyle(StrandPalette.textSecondary).fixedSize(horizontal: false, vertical: true)
                 }
@@ -359,7 +368,12 @@ struct PerformanceExperienceView: View {
                     Label("Stress estimate", systemImage: "waveform.path.ecg").font(StrandFont.overline)
                     Text(PerformanceFormat.number(snapshot.stress, decimals: 1)).font(StrandFont.title2)
                     Text("Daily proxy, 0–3").font(StrandFont.overline).foregroundStyle(StrandPalette.textSecondary)
-                    Text(PerformanceFormat.date(day)).font(StrandFont.overline).foregroundStyle(StrandPalette.textSecondary)
+                    if day == today && !stressTimeline.isEmpty {
+                        DaytimeLoadLine(hours: stressTimeline).frame(height: PerformanceDesign.stageChartHeight)
+                        Text("Today · on-device estimate").font(StrandFont.overline).foregroundStyle(StrandPalette.textSecondary)
+                    } else {
+                        Text("Intraday curve unavailable").font(StrandFont.overline).foregroundStyle(StrandPalette.textSecondary)
+                    }
                 }
             }
         }.buttonStyle(.plain).foregroundStyle(StrandPalette.textPrimary)
@@ -396,6 +410,7 @@ struct PerformanceExperienceView: View {
                     measure("sleep_performance", snapshot)
                 }
             }
+            recoveryBars(snapshot)
             PerformanceFullHistoryLink(key: context.domain.metricKey)
             PerformanceCoachLink(context: context)
             Text("These measurements provide context; they are not a percentage breakdown of the recovery score.")
@@ -422,6 +437,25 @@ struct PerformanceExperienceView: View {
         }
     }
 
+    private func recoveryBars(_ snapshot: PerformanceSnapshot) -> some View {
+        let points = snapshot.series["recovery"] ?? []
+        return PerformancePanel {
+            VStack(alignment: .leading, spacing: NoopMetrics.space2) {
+                Text("Recovery · 7 days").font(StrandFont.headline)
+                if points.isEmpty {
+                    Text("No recovery measurements in this period.").font(StrandFont.footnote).foregroundStyle(StrandPalette.textSecondary)
+                } else {
+                    Chart(points, id: \.day) { point in
+                        if let date = PerformanceSnapshotModel.localNoon(point.day) {
+                            BarMark(x: .value("Day", date, unit: .day), y: .value("Recovery", point.value))
+                                .foregroundStyle(PerformanceContext.Domain.recovery.tint(score: point.value))
+                        }
+                    }.chartYScale(domain: 0...100).frame(height: PerformanceDesign.compactChartHeight)
+                }
+            }
+        }
+    }
+
     private func measure(_ key: String, _ snapshot: PerformanceSnapshot, fallback: Double? = nil) -> some View {
         let metric = PerformanceFormat.metric(key)
         let value = snapshot.value(key) ?? PerformanceContext.finite(fallback)
@@ -443,24 +477,9 @@ struct PerformanceExperienceView: View {
         if let night = snapshot.night {
             Text("My night").font(StrandFont.title2).padding(.top, NoopMetrics.space2)
             PerformancePanel {
-                VStack(alignment: .leading, spacing: NoopMetrics.space3) {
-                    HStack { Text("Asleep time").font(StrandFont.subhead); Spacer(); Text(PerformanceFormat.duration(night.stages.asleep)).font(StrandFont.title2) }
-                    Text("\(PerformanceFormat.clock(night.session.effectiveStartTs)) – \(PerformanceFormat.clock(night.session.endTs))")
-                        .font(StrandFont.caption).foregroundStyle(StrandPalette.textSecondary)
-                    if let segments = night.realSegments, !segments.isEmpty {
-                        Hypnogram(intervals: segments, height: PerformanceDesign.stageChartHeight,
-                                  showsHover: false, nightStart: Date(timeIntervalSince1970: TimeInterval(night.session.effectiveStartTs)), showsTimeAxis: true)
-                    } else {
-                        Text("Stage totals only; no recorded timeline is available.").font(StrandFont.footnote).foregroundStyle(StrandPalette.textSecondary)
-                    }
-                    HStack { stage("Deep", night.stages.deep); Spacer(); stage("REM", night.stages.rem); Spacer(); stage("Light", night.stages.light) }
-                }
+                StageDetailView(night: night, intervals: night.intervals)
             }
         }
-    }
-
-    private func stage(_ name: LocalizedStringKey, _ minutes: Double) -> some View {
-        VStack(alignment: .leading, spacing: NoopMetrics.space1) { Text(name).font(StrandFont.footnote).foregroundStyle(StrandPalette.textSecondary); Text(PerformanceFormat.duration(minutes)).font(StrandFont.headline) }
     }
 
     private func activityList(_ snapshot: PerformanceSnapshot, includeSleep: Bool) -> some View {
@@ -488,7 +507,10 @@ struct PerformanceExperienceView: View {
 
     private func healthContents(_ snapshot: PerformanceSnapshot) -> some View {
         VStack(alignment: .leading, spacing: NoopMetrics.space4) {
-            Text("Your personal reference").font(StrandFont.title1)
+            Text("Health").font(StrandFont.title1)
+            ageSummary(snapshot)
+            stressMonitor(snapshot)
+            Text("Health Monitor").font(StrandFont.headline)
             PerformancePanel {
                 VStack(alignment: .leading, spacing: NoopMetrics.space2) {
                     Text("\(snapshot.availableVitals.count) available measurements").font(StrandFont.headline)
@@ -503,7 +525,7 @@ struct PerformanceExperienceView: View {
                             PerformanceMeasureRow(title: vital.label,
                                                   value: vital.day == day ? PerformanceFormat.value(PerformanceContext.canonicalMetric(vital.key), vital.value) : "—",
                                                   caption: vital.day != day || vital.value == nil ? String(localized: "Measurement unavailable") : (vital.banding.basis == .personal ? String(localized: "Compared with your personal reference") : String(localized: "Personal reference not established")),
-                                                  symbol: PerformanceFormat.metric(vital.key)?.icon ?? "heart")
+                                                  symbol: vital.banding.basis == .personal && vital.day == day ? (vital.banding.band == .inRange ? "checkmark.circle.fill" : "exclamationmark.circle.fill") : "circle.dashed")
                         }.buttonStyle(.plain)
                         Divider()
                     }
@@ -512,6 +534,24 @@ struct PerformanceExperienceView: View {
             PerformanceCoachLink(context: context)
             NavigationLink { LongitudinalTrendsView(repo: repo).modifier(PerformanceLegacyContextReset()) } label: { Label("Long-term trends", systemImage: "chart.line.uptrend.xyaxis").font(StrandFont.subhead) }
             NavigationLink(value: TabRoute.health) { Label("All health tools", systemImage: "heart.text.square").font(StrandFont.subhead) }
+        }
+    }
+
+    private func ageSummary(_ snapshot: PerformanceSnapshot) -> some View {
+        PerformancePanel {
+            VStack(alignment: .leading, spacing: NoopMetrics.space3) {
+                Text("NROOP Age").font(StrandFont.headline)
+                Text("On-device approximations, not WHOOP scores. Pace of Aging is not available.")
+                    .font(StrandFont.footnote).foregroundStyle(StrandPalette.textSecondary)
+                ForEach(["fitness_age", "body_age", "vitality"], id: \.self) { key in
+                    let point = snapshot.series[key]?.last(where: { $0.day <= day })
+                    NavigationLink(value: TabRoute.performance(PerformanceContext(day: day, domain: .trend, metric: key)!)) {
+                        PerformanceMeasureRow(title: PerformanceFormat.title(key), value: PerformanceFormat.value(key, point?.value),
+                                              caption: point.map { PerformanceFormat.date($0.day) } ?? String(localized: "Measurement unavailable"),
+                                              symbol: PerformanceFormat.metric(key)?.icon ?? "heart")
+                    }.buttonStyle(.plain)
+                }
+            }
         }
     }
 
