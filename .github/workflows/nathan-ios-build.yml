@@ -12,7 +12,7 @@ on:
         options: [macos-26, macos-15, macos-15-intel]
 
 concurrency:
-  group: nathan-ios-build
+  group: nathan-ios-build-${{ inputs.runner || 'macos-26' }}
   cancel-in-progress: true
 
 permissions:
