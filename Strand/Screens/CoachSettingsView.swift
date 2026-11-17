@@ -14,6 +14,7 @@ import StrandDesign
 /// sheet), and a sheet is the one presentation that behaves the same in all three without depending on
 /// an enclosing NavigationStack.
 struct CoachSettingsView: View {
+    var refreshModelsOnOpen = true
     @EnvironmentObject var coach: AICoachEngine
     @Environment(\.dismiss) private var dismiss
 
@@ -58,7 +59,7 @@ struct CoachSettingsView: View {
         }
         // Opening this screen is the moment a stale catalogue is worth refreshing: a key exists here by
         // definition, and the picker above is about to be read. Rate-limited and silent on failure.
-        .task { await coach.refreshModelsIfStale() }
+        .task { if refreshModelsOnOpen { await coach.refreshModelsIfStale() } }
     }
 
     /// Which model answers, and the control that refreshes the list of them.

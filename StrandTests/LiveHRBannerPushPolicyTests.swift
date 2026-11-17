@@ -4,6 +4,19 @@ import XCTest
 /// When the Live HR banner is pushed. It shows three numbers and used to be pushed on the first heart-rate tick more
 /// than 2 s after the last push — every ~3 s while a strap was connected — whether or not any of them had moved.
 final class LiveHRBannerPushPolicyTests: XCTestCase {
+    func testReadingFreshnessUsesSampleTimeRatherThanBannerRefreshTime() {
+        let sample = Date(timeIntervalSince1970: 1000)
+        for age: TimeInterval in [0, 15, 29.9] {
+            XCTAssertEqual(LiveHRBannerPushPolicy.freshReading(62, measuredAt: sample,
+                now: sample.addingTimeInterval(age), validFor: 30), 62)
+        }
+        for age: TimeInterval in [-1, 30, 120] {
+            XCTAssertNil(LiveHRBannerPushPolicy.freshReading(62, measuredAt: sample,
+                now: sample.addingTimeInterval(age), validFor: 30))
+        }
+        XCTAssertNil(LiveHRBannerPushPolicy.freshReading(62, measuredAt: nil, now: sample, validFor: 30))
+    }
+
 
     private struct Shown: Equatable { var bpm: Int?; var recovery: Int?; var effort: Int? }
     private let staleAfter: TimeInterval = 120

@@ -7,6 +7,24 @@ import XCTest
 /// median itself, since it moves on the R-R alone (`LiveHRBannerInputs`). A tester's banner kept the last number for
 /// minutes after a WRIST_OFF (24 Sep 2026).
 final class LiveHRBannerInputsTests: XCTestCase {
+    @MainActor
+    func testSteadyHeartRateStillSignalsFreshPacketsAndClearsFreshness() {
+        let live = LiveState()
+        live.heartRate = 62
+        var arrivals = 0
+        let subscription = live.readableHeartRateReceived.sink { arrivals += 1 }
+        live.noteReadableHeartRate()
+        XCTAssertEqual(arrivals, 1)
+        XCTAssertNotNil(live.lastReadableHeartRateAt)
+        XCTAssertEqual(live.heartRate, 62)
+        live.clearLiveHeartRate()
+        XCTAssertNil(live.lastReadableHeartRateAt)
+        live.noteReadableHeartRate()
+        live.clearBiometrics()
+        XCTAssertNil(live.lastReadableHeartRateAt)
+        subscription.cancel()
+    }
+
 
     private func bannerSignal<P: Publisher>(_ publisher: P) -> AnyPublisher<Void, Never> where P.Failure == Never {
         publisher.map { _ in () }.eraseToAnyPublisher()

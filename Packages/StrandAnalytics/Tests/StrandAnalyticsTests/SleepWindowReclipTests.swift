@@ -3,6 +3,23 @@ import Foundation
 @testable import StrandAnalytics
 
 final class SleepWindowReclipTests: XCTestCase {
+    func testEarlierBedtimeFillsLeadingTimeWithoutAddingSleep() throws {
+        let json = #"[{"start":1000,"end":2000,"stage":"light"},{"start":2000,"end":3000,"stage":"deep"}]"#
+        let out = try XCTUnwrap(SleepWindowReclip.reclip(stagesJSON: json, sessionStart: 1000,
+            oldEnd: 3000, newStart: 400, newEnd: 3600))
+        XCTAssertEqual(segments(out), [Segment(start: 400, end: 1000, stage: "wake"),
+            Segment(start: 1000, end: 2000, stage: "light"),
+            Segment(start: 2000, end: 3000, stage: "deep"),
+            Segment(start: 3000, end: 3600, stage: "wake")])
+    }
+
+    func testInvalidCorrectedWindowsReturnNil() {
+        for end in [1000, 999] {
+            XCTAssertNil(SleepWindowReclip.reclip(stagesJSON: "[]", sessionStart: 1000,
+                oldEnd: 2000, newStart: 1000, newEnd: end))
+        }
+    }
+
 
     private struct Segment: Equatable {
         let start: Int

@@ -53,7 +53,13 @@ public final class LiveState: ObservableObject {
     /// source sets it true in its streaming branch and false at every teardown (stop / needs-pairing /
     /// radio-off / connect-fail / disconnect). Twin of the Android LiveState.streamingLiveHR.
     @Published public var streamingLiveHR: Bool = false
-    @Published public var heartRate: Int? = nil
+    @Published public var heartRate: Int? = nil {
+        didSet { lastReadableHeartRateAt = heartRate == nil ? nil : Date() }
+    }
+    // Packet freshness is independent of BPM changes. A steady BPM must keep the banner alive
+    // without publishing objectWillChange for every identical BLE sample.
+    public private(set) var lastReadableHeartRateAt: Date?
+    public let readableHeartRateReceived = PassthroughSubject<Void, Never>()
     /// Whether the heavy R10/R11 realtime burst is currently armed (the "live feed"). Tracks the
     /// realtime INTENT (startRealtime/stopRealtime), NOT `heartRate` — the lightweight 0x2A37 profile
     /// keeps setting heartRate while bonded, so a heartRate-driven toggle could never read "off". The
@@ -715,6 +721,7 @@ public final class LiveState: ObservableObject {
     /// R-R first: the heart-rate write is the one the surfaces listen for, and by the time it lands both are gone,
     /// so `AppModel`'s median resets on it and the banner is handed nil rather than the old number.
     public func clearLiveHeartRate() {
+        lastReadableHeartRateAt = nil
         if !rr.isEmpty { rr.removeAll() }
         if heartRate != nil { heartRate = nil }
     }
@@ -733,10 +740,12 @@ public final class LiveState: ObservableObject {
     /// silence deadline on. One timer, rescheduled at most every tenth of the wait (once a second in use), so it costs
     /// nothing while samples flow and fires once when they stop.
     public func noteReadableHeartRate() {
+        lastReadableHeartRateAt = Date()
         let now = DispatchTime.now()
         let rearmNanos = UInt64(heartRateSilence / 10 * 1_000_000_000)
         if let armed = heartRateSilenceArmedAt, now.uptimeNanoseconds &- armed.uptimeNanoseconds < rearmNanos { return }
         heartRateSilenceArmedAt = now
+        readableHeartRateReceived.send()
         let timer = heartRateSilenceTimer ?? {
             let t = DispatchSource.makeTimerSource(queue: .main)
             t.setEventHandler { [weak self] in MainActor.assumeIsolated { self?.heartRateWentSilent() } }
@@ -759,6 +768,7 @@ public final class LiveState: ObservableObject {
     /// R-R strip can't outlive the link. Called on CoreBluetooth disconnect (BLEManager), the twin of
     /// the `charging = nil` / `encryptedBond = false` clears on the same path.
     public func clearBiometrics() {
+        lastReadableHeartRateAt = nil
         heartRate = nil
         rr.removeAll()
         rrRecent.removeAll()

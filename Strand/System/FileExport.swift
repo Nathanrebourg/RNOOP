@@ -165,17 +165,42 @@ enum FileExport {
     /// if there are no entries. Pure file IO, no UI, so it is unit-testable. Uses ZIPFoundation's `Archive`
     /// which is available on macOS and iOS without shelling out. The caller presents the URL (NSSavePanel
     /// on macOS, share sheet on iOS) and cleans it up.
-    static func zipData(entries: [BundleEntry], baseName: String) -> URL? {
+    static func zipData(entries: [BundleEntry], baseName: String, strict: Bool = false) -> URL? {
         guard !entries.isEmpty else { return nil }
+        // Replay diagnostics must be complete before sharing. Existing callers retain their policy.
+        if strict && (Set(entries.map(\.name)).count != entries.count || entries.contains(where: {
+            $0.name.isEmpty || $0.name == "." || $0.name == ".." || $0.name.contains("/") || $0.name.contains("\\")
+        })) { return nil }
         let url = NoopScratch.file("\(baseName).zip")
         try? FileManager.default.removeItem(at: url)
         guard let archive = try? Archive(url: url, accessMode: .create) else { return nil }
         for entry in entries {
-            try? archive.addEntry(with: entry.name, type: .file, uncompressedSize: Int64(entry.data.count)) { position, size in
-                let start = Int(position)
-                let end = min(start + size, entry.data.count)
-                return entry.data.subdata(in: start..<end)
+            do {
+                try archive.addEntry(with: entry.name, type: .file, uncompressedSize: Int64(entry.data.count)) { position, size in
+                    let start = Int(position)
+                    let end = min(start + size, entry.data.count)
+                    return entry.data.subdata(in: start..<end)
+                }
+            } catch {
+                if strict { try? FileManager.default.removeItem(at: url); return nil }
             }
+        }
+        if strict {
+            do {
+                let check = try Archive(url: url, accessMode: .read)
+                guard Set(check.map(\.path)) == Set(entries.map(\.name)) else {
+                    try? FileManager.default.removeItem(at: url); return nil
+                }
+                for expected in entries {
+                    guard let entry = check[expected.name], entry.type == .file,
+                          entry.uncompressedSize == expected.data.count else {
+                        try? FileManager.default.removeItem(at: url); return nil
+                    }
+                    var actual = Data()
+                    _ = try check.extract(entry) { actual.append($0) }
+                    guard actual == expected.data else { try? FileManager.default.removeItem(at: url); return nil }
+                }
+            } catch { try? FileManager.default.removeItem(at: url); return nil }
         }
         return FileManager.default.fileExists(atPath: url.path) ? url : nil
     }
@@ -188,11 +213,11 @@ enum FileExport {
     /// pattern as `DataBackup.runExport`, so building a multi-entry bundle never beach-balls the UI. Only
     /// the save panel / share sheet presentation below hops back to the main actor.
     @MainActor @discardableResult
-    static func exportBundle(entries: [BundleEntry], suggestedName: String,
+    static func exportBundle(entries: [BundleEntry], suggestedName: String, strict: Bool = false,
                              completion: (() -> Void)? = nil) async -> URL? {
         let base = suggestedName.hasSuffix(".zip") ? String(suggestedName.dropLast(4)) : suggestedName
         let stagingTask = Task.detached(priority: .userInitiated) {
-            zipData(entries: entries, baseName: base)
+            zipData(entries: entries, baseName: base, strict: strict)
         }
         guard let staged = await stagingTask.value else { completion?(); return nil }
         #if os(macOS)

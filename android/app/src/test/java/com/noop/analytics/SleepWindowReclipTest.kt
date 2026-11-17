@@ -16,6 +16,21 @@ import org.junit.Test
  * not just trim the tail.
  */
 class SleepWindowReclipTest {
+    @Test
+    fun earlierBedtimeFillsLeadingTimeWithoutAddingSleep() {
+        val json = """[{"start":1000,"end":2000,"stage":"light"},{"start":2000,"end":3000,"stage":"deep"}]"""
+        val out = SleepWindowReclip.reclip(json, 1000, 3000, 400, 3600)!!
+        assertEquals(listOf(Seg(400, 1000, "wake"), Seg(1000, 2000, "light"),
+            Seg(2000, 3000, "deep"), Seg(3000, 3600, "wake")), segments(out))
+    }
+
+    @Test
+    fun invalidCorrectedWindowsReturnNull() {
+        for (end in listOf(1000L, 999L)) {
+            assertNull(SleepWindowReclip.reclip("[]", 1000, 2000, 1000, end))
+        }
+    }
+
 
     private data class Seg(val start: Long, val end: Long, val stage: String)
 

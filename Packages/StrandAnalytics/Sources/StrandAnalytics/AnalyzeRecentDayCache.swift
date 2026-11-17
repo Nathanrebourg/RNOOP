@@ -17,6 +17,7 @@ import Foundation
 /// it only has to invalidate correctly on one platform; the Kotlin twin (`AnalyzeRecentDayCache`) mirrors
 /// the shape but the two key strings are NOT required to match byte-for-byte across platforms.
 public enum AnalyzeRecentDayCache {
+    private static let effortTraceSuffix = "|effortCadence=1"
 
     /// WHICH part of a day's cache key moved, for the miss reason on the reuse line (#2073).
     ///
@@ -36,6 +37,7 @@ public enum AnalyzeRecentDayCache {
         if a.count < 3 || b.count < 3 { return "shape" }
         if a[0] != b[0] { return "owner" }
         if a[1] != b[1] { return "hr" }
+        if a[2].hasSuffix(effortTraceSuffix) != b[2].hasSuffix(effortTraceSuffix) { return "effortTrace" }
         let ra = a[2].range(of: "rrAlias5=").map { String(a[2][$0.upperBound...]) } ?? ""
         let rb = b[2].range(of: "rrAlias5=").map { String(b[2][$0.upperBound...]) } ?? ""
         return ra != rb ? "rrAlias5" : "streams"
@@ -78,8 +80,11 @@ public enum AnalyzeRecentDayCache {
                                 // cache's whole promise is that a reused night is indistinguishable from a
                                 // freshly-scored one. Costs one day's re-score per rollover, and only while
                                 // a trace mode is on.
-                                hrvWindowDetail: Bool) -> String {
+                                hrvWindowDetail: Bool,
+                                // Trace activation changes the cached diagnostic payload, not the score.
+                                effortCadenceTrace: Bool = false) -> String {
         let anchor = skinAnchorRaw.map { String($0.bitPattern) } ?? "nil"
         return "\(owner)|\(hrCount):\(hrMaxTs):\(anchor):\(hrvWindowDetail ? "d" : "s")|\(streams)"
+            + (effortCadenceTrace ? effortTraceSuffix : "")
     }
 }

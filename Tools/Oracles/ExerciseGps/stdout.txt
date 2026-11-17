@@ -1,0 +1,14 @@
+4003.017359|3.335848|150.000000|1200.000000|1.334339|slope-unknown,protocol-unverified
+4003.017359|3.335848|nil|0.000000|nil|hr-owner-unknown,slope-unknown,protocol-unverified
+4003.017359|3.335848|150.000000|1200.000000|nil|gps-timing-missing,gps-accuracy-missing,gps-coverage,slope-unknown,protocol-unverified
+nil|nil|nil|0.000000|nil|gps-invalid,slope-unknown,protocol-unverified
+4003.017359|3.335848|150.000000|798.000000|nil|hr-gap,hr-coverage,slope-unknown,protocol-unverified
+4003.017359|3.335848|nil|0.000000|nil|hr-owner-mismatch,slope-unknown,protocol-unverified
+4003.017359|3.335848|150.000000|1200.000000|nil|gps-accuracy,slope-unknown,protocol-unverified
+4003.017359|3.335848|150.000000|1200.000000|nil|gps-gap,slope-unknown,protocol-unverified
+4003.017359|3.335848|150.000000|1200.000000|nil|distance-mismatch,slope-unknown,protocol-unverified
+4003.017359|3.335848|150.000000|1200.000000|nil|gps-speed,stops,slope-unknown,protocol-unverified
+nil|nil|nil|0.000000|nil|window-invalid,slope-unknown,protocol-unverified
+4003.017359|3.335848|nil|0.000000|nil|hr-invalid,slope-unknown,protocol-unverified
+kline|2.601545|37.164923
+kline|3.197045|45.672066

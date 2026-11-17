@@ -1,0 +1,49 @@
+{
+  "dataset": "PhysioNet sleep-accel",
+  "version": "1.0.0",
+  "source": "https://physionet.org/content/sleep-accel/1.0.0/",
+  "archiveSHA256": "f0c1345070823a21e2bcc23a0a2f0cd82b85add5fc7797713dd7ab64a224ff8a",
+  "officialMemberChecksumsMatched": 125,
+  "subjects": 31,
+  "scoredEpochs": 26773,
+  "epochSeconds": 30,
+  "classOrder": [
+    "wake",
+    "light",
+    "deep",
+    "rem"
+  ],
+  "confusionRows": "PSG",
+  "confusionColumns": "prediction",
+  "confusion": [
+    [
+      749,
+      932,
+      193,
+      555
+    ],
+    [
+      276,
+      10023,
+      1941,
+      2535
+    ],
+    [
+      23,
+      1530,
+      1870,
+      262
+    ],
+    [
+      63,
+      2060,
+      35,
+      3726
+    ]
+  ],
+  "interpretation": "Previously used cohort benchmark; no fitting in this run; not new untouched holdout, WHOOP sensor validation or end-to-end sleep detection validation.",
+  "method": "Actual StrandAnalytics.SleepStagerV2.stageSession on supplied PSG window, Apple Watch HR/motion, no RR.",
+  "command": "sleeppsg --dataset /path/to/sleep-accel-1.0.0 --section baseline",
+  "license": "Open Data Commons Attribution 1.0",
+  "citation": "Walch O, Huang Y, Forger D, Goldstein C. Sleep stage prediction with raw acceleration and photoplethysmography heart rate data derived from a consumer wearable device. SLEEP 42(12), zsz180 (2019). doi:10.1093/sleep/zsz180. Dataset doi:10.13026/hmhs-py35. PhysioNet: Goldberger et al., Circulation 101(23), e215 (2000)."
+}

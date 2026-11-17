@@ -107,6 +107,8 @@ class SourceCoordinatorAdoptionTest {
             owners.entries.removeIf { it.value.deviceId == deviceId }
         }
         override suspend fun deleteScoreInputProvenanceFor(deviceId: String) {}
+        override suspend fun deleteScoreCalculationHeadsFor(deviceId: String) {}
+        override suspend fun deleteScoreCalculationEvidenceFor(deviceId: String) {}
 
         // #771 adopt-serial re-key: sample-table re-keys are unmodelled here (no per-table storage in
         // this fake), same as the delete*For no-ops above. dayOwnership IS modelled ([owners]), so its

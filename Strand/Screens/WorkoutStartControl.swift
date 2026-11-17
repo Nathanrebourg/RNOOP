@@ -15,20 +15,18 @@ import StrandDesign
 /// re-renders only this small leaf. Owns its own sheet-presentation state so nothing about it needs to
 /// live on the parent either.
 struct WorkoutStartControl: View {
+    /// Compact treatment for the Today's activities row; both variants share the same session flow.
+    var compact = false
     @EnvironmentObject var model: AppModel
     @State private var showLiveWorkout = false
     @State private var showStartSport = false
 
+    init(compact: Bool = false) {
+        self.compact = compact
+    }
+
     var body: some View {
-        NoopButton(model.activeWorkout == nil ? "Start workout" : "View active workout",
-                   systemImage: model.activeWorkout == nil ? "figure.run" : "timer",
-                   kind: .primary,
-                   fullWidth: true) {
-            // No active session → pick a named sport first (#519), then the sheet's onStart begins it
-            // and opens the in-exercise view. Already active → jump straight back into the live view.
-            if model.activeWorkout == nil { showStartSport = true }
-            else { showLiveWorkout = true }
-        }
+        button
         .accessibilityLabel(model.activeWorkout == nil ? "Start a workout" : "View the active workout")
         // #459: the in-exercise view, presented when Start Workout is tapped here (same screen LiveView
         // shows). activeWorkout is global on AppModel, so ending it from either surface stays in sync.
@@ -46,5 +44,32 @@ struct WorkoutStartControl: View {
                 showLiveWorkout = true
             }
         }
+    }
+
+    @ViewBuilder private var button: some View {
+        if compact {
+            Button(action: openWorkout) {
+                HStack(spacing: NoopMetrics.space1) {
+                    Image(systemName: "stopwatch")
+                    Text(model.activeWorkout == nil ? LocalizedStringKey("Start workout")
+                                                    : LocalizedStringKey("View active workout"))
+                        .font(StrandFont.overline).lineLimit(1).minimumScaleFactor(0.7)
+                }
+                .foregroundStyle(StrandPalette.textPrimary)
+                .frame(maxWidth: .infinity, minHeight: NoopButtonMetrics.minHitTarget)
+                .background(RoundedRectangle(cornerRadius: 10)
+                    .fill(NoopVisualStyle.borderHighlight.opacity(0.6)))
+            }
+            .buttonStyle(.plain)
+        } else {
+            NoopButton(model.activeWorkout == nil ? "Start workout" : "View active workout",
+                       systemImage: model.activeWorkout == nil ? "figure.run" : "timer",
+                       kind: .primary, fullWidth: true, action: openWorkout)
+        }
+    }
+
+    private func openWorkout() {
+        if model.activeWorkout == nil { showStartSport = true }
+        else { showLiveWorkout = true }
     }
 }

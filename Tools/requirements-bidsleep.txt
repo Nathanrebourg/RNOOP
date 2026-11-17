@@ -1,0 +1,2 @@
+# Optional: raw public MATLAB conversion only. The portable native tools do not need scipy.
+scipy>=1.10

@@ -96,6 +96,8 @@ public enum AnalyticsEngine {
         /// 0.20 + restorative share 0.20 + consistency 0.10). The downstream metric-series
         /// builder reads it from here; the Charge "Rest quality" term reads it ÷100.
         public let restScore: Double?
+        /// Observed HR integration recipe; absent when the caller cannot establish source ownership.
+        public let effortRecipe: ScoreRecipe?
         /// Per-score confidence tiers (Charge / Effort / Rest) for the small label under
         /// each score. Always present (worst case `.calibrating`).
         public let chargeConfidence: ScoreConfidence
@@ -136,7 +138,8 @@ public enum AnalyticsEngine {
                     chargeDrivers: [ChargeDriver] = [],
                     skinTempRelative: SkinTempRelative? = nil,
                     detectionFunnel: WorkoutDetector.DetectionFunnel? = nil,
-                    mainNightBlocks: [SleepStageTotals.NightBlock] = []) {
+                    mainNightBlocks: [SleepStageTotals.NightBlock] = [],
+                    effortRecipe: ScoreRecipe? = nil) {
             self.daily = daily; self.sleepSessions = sleepSessions
             self.mainNightBlocks = mainNightBlocks
             self.cachedSleep = cachedSleep; self.workouts = workouts
@@ -146,6 +149,7 @@ public enum AnalyticsEngine {
             self.skinTempRelative = skinTempRelative
             self.nightlySkinTempC = nightlySkinTempC
             self.restScore = restScore
+            self.effortRecipe = effortRecipe
             self.chargeConfidence = chargeConfidence
             self.effortConfidence = effortConfidence
             self.restConfidence = restConfidence
@@ -530,7 +534,12 @@ public enum AnalyticsEngine {
                                   // %HRR with no floor. Threaded rather than read from a global so this
                                   // stays a pure function, and defaulted so every existing caller and
                                   // test is byte-identical.
-                                  effortMethod: StrainScorer.Method = .edwards) -> DayResult {
+                                  effortMethod: StrainScorer.Method = .edwards,
+                                  // Measurement-only, default-off cadence comparison. No returned score changes.
+                                  effortCadenceSink: ((String) -> Void)? = nil,
+                                  recipeSource: String? = nil,
+                                  recipeWindowStart: Int? = nil,
+                                  recipeWindowEnd: Int? = nil) -> DayResult {
 
         // Precompute the day's UTC bounds ONCE (#996). `dayString(ts, offsetSec:)` formats the UTC
         // calendar day of (ts + offset) with a FIXED offset, so "== day" is exactly membership in
@@ -822,7 +831,10 @@ public enum AnalyticsEngine {
             // stager's pre-sorted rrS, so sort our own copy of the day's raw rr once here for the re-window.
             let rrSorted = rr.sortedByTsStable()
             var allWin: [SleepStager.HrvWindow] = []
-            for s in matched {
+            for (sessionIndex, s) in matched.enumerated() {
+                // Shadow estimator only: it never enters daily HRV, recovery or baseline storage.
+                let quality = NightlyHRVQuality.analyze(start: s.start, end: s.end, rr: rrSorted)
+                hrvTraceSink("day=\(day) session=\(sessionIndex + 1) " + quality.trace(original: s.avgHRV))
                 let wins = SleepStager.sessionHrvWindows(start: s.start, end: s.end, rr: rrSorted, stages: s.stages)
                 if hrvWindowDetail {
                     for w in wins {
@@ -964,6 +976,19 @@ public enum AnalyticsEngine {
         let strain = StrainScorer.strain(dayHr ?? hr, maxHR: effMaxHR, restingHR: restForStrain,
                                          method: effortMethod, sex: profile.sex,
                                          diag: strainDiag, day: day)
+        let effortRecipe: ScoreRecipe? = recipeSource.flatMap { source -> ScoreRecipe? in
+            let observed = ScoreRecipe.effort(hr: dayHr ?? hr, maxHR: effMaxHR, restingHR: restForStrain,
+                method: effortMethod, sex: profile.sex, source: source)
+            if let start = recipeWindowStart, let end = recipeWindowEnd {
+                return observed?.withEffortWindow(startInclusive: start, endExclusive: end, kind: "calendar")
+            }
+            return observed
+        }.flatMap { recipe -> ScoreRecipe? in recipe.score == strain ? recipe : nil }
+        if let effortCadenceSink {
+            let comparison = EffortCadenceComparison.analyze(dayHr ?? hr, maxHR: effMaxHR,
+                restingHR: restForStrain, method: effortMethod, sex: profile.sex)
+            effortCadenceSink(comparison.trace(original: strain) + " scope=day day=\(day)")
+        }
         // #2438 step 0 asks two things of a contributed log: whether the day was scored against the
         // user's own setting or against the age formula, and how far the day's own heart rate ran above
         // that. The `effort score` line above answers neither — it collapses override and Tanaka into
@@ -1166,7 +1191,8 @@ public enum AnalyticsEngine {
                          chargeDrivers: chargeDrivers,
                          skinTempRelative: skinTempRelative,
                          detectionFunnel: detectionFunnel,
-                         mainNightBlocks: mainGroup.map { SleepStageTotals.NightBlock(start: $0.start, end: $0.end) })
+                         mainNightBlocks: mainGroup.map { SleepStageTotals.NightBlock(start: $0.start, end: $0.end) },
+                         effortRecipe: effortRecipe)
     }
 
     /// The R-R rows the always-on `hrv diag` line describes (#2425). Pure. Byte-parity twin of Kotlin

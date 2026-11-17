@@ -29,6 +29,11 @@ struct RootTabView: View {
     /// that state; keeping it explicit here prevents this shell's window-level sheet from covering a gate.
     let homeScreenQuickActionsEnabled: Bool
 
+    @EnvironmentObject private var coach: AICoachEngine
+    @StateObject private var performanceCoachSessions = PerformanceCoachSessions()
+    @State private var performanceCoach: PerformanceCoachSession?
+    @State private var showLegacyTrends = false
+    @State private var showGeneralCoach = false
     @EnvironmentObject private var repo: Repository
     /// Cross-screen navigation requests (e.g. Live → "Manage devices"). Devices isn't a tab — it lives
     /// behind the More list — so a request presents it as a sheet, matching the quick-action screens.
@@ -71,7 +76,7 @@ struct RootTabView: View {
 
     /// The Today tab root, honouring the liquid/classic preference.
     @ViewBuilder private var todayTabRoot: some View {
-        if liquidTodayEnabled { LiquidTodayView() } else { TodayView() }
+        if liquidTodayEnabled { PerformanceExperienceView(domain: .today) } else { TodayView() }
     }
 
     /// Native tab selection binding. SwiftUI sends taps on the already-selected item through the
@@ -84,6 +89,7 @@ struct RootTabView: View {
                 if tag == selectedTab {
                     reselectTab(tag)
                 } else {
+                    router.performanceContext = nil
                     selectedTab = tag
                 }
             }
@@ -93,6 +99,7 @@ struct RootTabView: View {
     private func reselectTab(_ tag: Int) {
         Task { await repo.refresh() }
         if !tabPaths[tag].isEmpty {
+            router.performanceContext = nil
             tabPaths[tag] = NavigationPath()
         } else {
             scrollTop[tag] += 1
@@ -114,9 +121,11 @@ struct RootTabView: View {
                 guard selectedTab != 0 else { return }
                 let dx = v.translation.width, dy = v.translation.height
                 guard abs(dx) > 60, abs(dx) > abs(dy) * 1.6 else { return }
-                let next = min(4, max(0, selectedTab + (dx < 0 ? 1 : -1)))
+                let tabs = [0, 1, 2, 4]
+                guard let current = tabs.firstIndex(of: selectedTab) else { return }
+                let next = tabs[min(tabs.count - 1, max(0, current + (dx < 0 ? 1 : -1)))]
                 if next != selectedTab {
-                    withAnimation(.timingCurve(0.22, 1, 0.36, 1, duration: 0.24)) { selectedTab = next }
+                    withAnimation(.timingCurve(0.22, 1, 0.36, 1, duration: 0.24)) { nativeTabSelection.wrappedValue = next }
                 }
             }
     }
@@ -127,30 +136,27 @@ struct RootTabView: View {
         // the corresponding system material and safe-area behaviour from the same TabView.
         TabView(selection: nativeTabSelection) {
             tab(todayTabRoot, "Today", "square.grid.2x2", path: $tabPaths[0], scrollSignal: scrollTop[0]).tag(0)
-            tab(TrendsView(), "Trends", "chart.line.uptrend.xyaxis", path: $tabPaths[1], scrollSignal: scrollTop[1]).tag(1)
-            tab(SleepView(), "Sleep", "bed.double", path: $tabPaths[2], scrollSignal: scrollTop[2]).tag(2)
+            tab(PerformanceExperienceView(domain: .health), "Health", "heart.text.square", path: $tabPaths[1], scrollSignal: scrollTop[1]).tag(1)
+            tab(PerformanceExperienceView(domain: .activities), "Activities", "figure.run", path: $tabPaths[2], scrollSignal: scrollTop[2]).tag(2)
             // K3: Coach promoted to a top-level tab (was behind the More list). The sparkles icon
             // matches the More-tab row and the macOS sidebar entry.
             // Conditional on the master switch. The tags stay LITERAL rather than being renumbered when
             // Coach is absent: `tabPaths` and `scrollTop` are indexed by tag, and More stays tag 4 in both
             // shapes, so a wearer's More tab keeps its identity, its navigation path and its scroll
             // position across a flip instead of inheriting Coach's.
-            if coachEnabled {
-                tab(CoachView(), "Coach", "sparkles", path: $tabPaths[3], scrollSignal: scrollTop[3]).tag(3)
-            }
             moreTab(path: $tabPaths[4], scrollSignal: scrollTop[4]).tag(4)
         }
+        .toolbar(.hidden, for: .tabBar)
         .tint(StrandPalette.accent)
         // Switching Coach off while STANDING on it leaves `selectedTab` pointing at a tag no tab claims
         // any more, which renders as an empty tab rather than as an error. Send that wearer to Today, and
         // only in that case, so a flip made from anywhere else does not move them.
         .onChangeCompat(of: coachEnabled) { enabled in
-            if !enabled && selectedTab == 3 { selectedTab = 0 }
+            if !enabled { performanceCoach = nil; showGeneralCoach = false; performanceCoachSessions.removeAll() }
         }
         // #1841: the same "Hide bar when scrolling" preference Android drives its own bar with. Here the
         // system owns the behaviour — iOS 26's tab bar MINIMISES to a pill on scroll down rather than
         // sliding away entirely, so this is the platform's read of the same intent, not a copy of ours.
-        .noopTabBarAutoHide(bottomBarAutoHide)
             // Tab crossfade — README §Motion: ~240ms opacity swap between tab roots, global calm
             // easing cubic-bezier(0.22,1,0.36,1).
             .animation(.timingCurve(0.22, 1, 0.36, 1, duration: 0.24), value: selectedTab)
@@ -195,6 +201,19 @@ struct RootTabView: View {
         .sheet(isPresented: $showDevices) {
             devicesScreen
         }
+        .sheet(item: $performanceCoach) { session in
+            PerformanceCoachSheet(session: session)
+        }
+        .sheet(isPresented: $showLegacyTrends) {
+            NavigationStack { TrendsView().tabRouteDestinations() }
+        }
+        .sheet(isPresented: $showGeneralCoach) { NavigationStack { CoachView() } }
+        .onChange(of: router.requestedPerformanceCoach) { _, context in
+            guard let context else { return }
+            router.requestedPerformanceCoach = nil
+            if coachEnabled { presentPerformanceCoach(context) }
+        }
+
         // v5 pillar deep-links (Insights hub / Lab Book / fused record / Rhythm) present as a sheet in
         // their own nav stack — the same idiom the quick-action + Devices screens use on iPhone.
         .sheet(item: $routedPillar) { dest in
@@ -223,11 +242,11 @@ struct RootTabView: View {
                     router.requestedDestination = nil
                     break
                 }
-                withAnimation(.timingCurve(0.22, 1, 0.36, 1, duration: 0.24)) { selectedTab = 3 }
+                showGeneralCoach = true
                 router.requestedDestination = nil
             case .trends:
                 // Trends is a primary tab on iPhone (not a pillar sheet) — switch to it.
-                withAnimation(.timingCurve(0.22, 1, 0.36, 1, duration: 0.24)) { selectedTab = 1 }
+                showLegacyTrends = true
                 router.requestedDestination = nil
             case .activeWorkout:
                 // The Today active-workout indicator opens Live through the quick-action Live sheet; once
@@ -271,13 +290,20 @@ struct RootTabView: View {
         // inside the Lift Log screen, because a workout outlives whichever screen you wandered to —
         // and because swiping the sheet away must minimise the session, not end it.
         .safeAreaInset(edge: .bottom, spacing: 0) {
+            VStack(spacing: NoopMetrics.space2) {
             if liftSession.isActive {
                 LiftSessionBar()
                     .padding(.horizontal, 14)
                     // Clear the floating tab bar with the same constant every screen uses, or the
                     // session bar sits on top of the tab labels.
-                    .padding(.bottom, NoopMetrics.tabBarClearance)
                     .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
+            PerformanceTabBar(selection: nativeTabSelection, coachEnabled: coachEnabled) {
+                if let context = router.performanceContext { presentPerformanceCoach(context) }
+                else { showGeneralCoach = true }
+            }
+            .padding(.horizontal, NoopMetrics.space3)
+            .padding(.bottom, NoopMetrics.space2)
             }
         }
         .animation(.easeInOut(duration: 0.25), value: liftSession.isActive)
@@ -287,6 +313,11 @@ struct RootTabView: View {
         .sheet(isPresented: $liftSession.isPresented) {
             LiftSessionView { }
         }
+    }
+
+    private func presentPerformanceCoach(_ context: PerformanceContext) {
+        guard coachEnabled else { return }
+        performanceCoach = performanceCoachSessions.session(context: context, repo: repo, settings: coach)
     }
 
     /// Mandatory launch gates defer an external action. Once the shell is available, an explicit Home
@@ -450,6 +481,7 @@ struct RootTabView: View {
         // Drive this tab's root scroll-to-top on an at-root re-tap (#198 follow-up); read by ScreenScaffold
         // / LiquidTodayView inside. Only THIS tab's token changes on its reselect, so the others don't scroll.
         .environment(\.scrollToTopSignal, scrollSignal)
+        .toolbar(.hidden, for: .tabBar)
         .tabItem { Label(title, systemImage: icon) }
     }
 
@@ -464,7 +496,13 @@ struct RootTabView: View {
                            onRefresh: { await repo.refresh() },
                            topBackground: liquidScaffoldSky()) {
                 moreSection("Insights") {
+                    if coachEnabled {
+                        Button { showGeneralCoach = true } label: { MoreIndexRowLabel("Coach", "sparkles") }.buttonStyle(.plain)
+                    }
+                    Button { showLegacyTrends = true } label: { MoreIndexRowLabel("Trends", "chart.line.uptrend.xyaxis") }.buttonStyle(.plain)
+                    NavigationLink(value: TabRoute.sleep) { MoreIndexRowLabel("Detailed sleep tools", "moon.zzz") }.buttonStyle(.plain)
                     MoreRow("What Moves You", "wand.and.sparkles", .insightsHub)
+                    MoreRow("Local improvements", "slider.horizontal.3", .localImprovements)
                     MoreRow("Intelligence", "brain.head.profile", .intelligence)
                     // K3: Coach promoted to a top-level tab — no longer listed under More.
                     MoreRow("Insights", "lightbulb.fill", .insights)
@@ -489,6 +527,7 @@ struct RootTabView: View {
                     MoreRow("Mi Band", "figure.walk.motion", .miBand)
                     MoreRow("Data Sources", "externaldrive.fill", .dataSources)
                     MoreRow("Backup & Sync", "externaldrive.fill.badge.icloud", .backupSync)
+                    MoreRow("Night diagnostic", "waveform.path.ecg", .nightDiagnostic)
                     // #155: HealthKit-free Apple Health path for sideloaded installs (Siri Shortcut
                     // reads the opt-in Documents/noop_sync.txt drop file).
                     MoreRow("Shortcuts Export", "square.and.arrow.up.fill", .shortcutsExport)
@@ -525,6 +564,7 @@ struct RootTabView: View {
             // sky; an opaque surfaceBase nav-bar band sat over it and clipped the top on scroll. A hidden
             // bar background keeps the sky edge-to-edge. On the flat (no-sky) screens this is visually
             // identical at rest — the destination's own surfaceBase background shows through the bar.
+            .tabRouteDestinations()
             .navigationDestination(for: MoreDestination.self) { route in
                 route.destination
                     .background(StrandPalette.surfaceBase.ignoresSafeArea())
@@ -534,6 +574,7 @@ struct RootTabView: View {
         }
         // Scroll the More index to the top on an at-root re-tap (#198 follow-up); read by its ScreenScaffold.
         .environment(\.scrollToTopSignal, scrollSignal)
+        .toolbar(.hidden, for: .tabBar)
         .tabItem { Label("More", systemImage: "ellipsis") }
     }
 
@@ -561,7 +602,7 @@ struct RootTabView: View {
                 }
             } label: {
                 HStack(spacing: 6) {
-                    Text(title).strandOverline()
+                    Text(LocalizedStringKey(title)).strandOverline()
                     Spacer(minLength: 8)
                     Image(systemName: "chevron.down")
                         .font(.system(size: 11, weight: .semibold))
@@ -572,7 +613,7 @@ struct RootTabView: View {
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .accessibilityLabel(Text(title))
+            .accessibilityLabel(Text(LocalizedStringKey(title)))
             .accessibilityValue(Text(isOpen ? String(localized: "Expanded") : String(localized: "Collapsed")))
             .accessibilityHint(Text(isOpen ? String(localized: "Double tap to collapse") : String(localized: "Double tap to expand")))
 
@@ -597,13 +638,14 @@ struct RootTabView: View {
 /// per-screen chrome the old inline links applied lives at the single `navigationDestination(for:)`
 /// registration in `moreTab`.
 private enum MoreDestination: Hashable {
-    case insightsHub, intelligence, coach, insights, explore, compare
+    case localImprovements, insightsHub, intelligence, coach, insights, explore, compare
     case live, workouts, liftLog, health, labBook, stress, breathe, intervals, rhythm
-    case fusedRecord, appleHealth, miBand, dataSources, backupSync, shortcutsExport, noopLimitations
+    case fusedRecord, appleHealth, miBand, dataSources, backupSync, shortcutsExport, noopLimitations, nightDiagnostic
     case alarms, automations, testCentre, siriShortcuts, powerSaving, settings
 
     @ViewBuilder var destination: some View {
         switch self {
+        case .localImprovements: ImprovementsView()
         case .insightsHub:     InsightsHubView()
         case .intelligence:    IntelligenceView()
         case .coach:           CoachView()
@@ -625,6 +667,7 @@ private enum MoreDestination: Hashable {
         case .dataSources:     DataSourcesView()
         case .noopLimitations: NoopLimitationsView()
         case .backupSync:      BackupSyncView()
+        case .nightDiagnostic: NightDiagnosticExportView()
         case .shortcutsExport: ShortcutExportSettingsView()
         case .alarms:          SmartAlarmView()
         case .automations:     AutomationsView()
@@ -652,36 +695,37 @@ private struct MoreRow: View {
 
     var body: some View {
         NavigationLink(value: route) {
-            HStack(spacing: 14) {
-                // Pin the icon to the accent explicitly. A plain inherited tint gets re-resolved by iOS to
-                // its default blue a beat after first render — so the icons flashed green→blue (#184). The
-                // explicit foregroundStyle on the image overrides that; the title keeps the primary colour.
-                Image(systemName: icon)
-                    .font(.system(size: 17, weight: .regular))
-                    .foregroundStyle(StrandPalette.accent)
-                    .frame(width: 26, alignment: .center)
-                Text(title)
-                    .font(StrandFont.body)
-                    .foregroundStyle(StrandPalette.textPrimary)
-                Spacer(minLength: 8)
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(StrandPalette.textTertiary)
-            }
-            .padding(.horizontal, 16)
-            .frame(minHeight: 44)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .contentShape(Rectangle())
-            // Hairline under every row; the grouped container clips the last one's overflow so the bottom
-            // edge stays clean (the divider sits inside the card's rounded corners).
-            .overlay(alignment: .bottom) {
-                Rectangle()
-                    .fill(StrandPalette.hairline)
-                    .frame(height: 1)
-                    .padding(.leading, 16)
-            }
+            MoreIndexRowLabel(title, icon)
         }
         .buttonStyle(.plain)
+    }
+}
+
+/// Shared row chrome for sheet actions and navigation destinations in the More index.
+private struct MoreIndexRowLabel: View {
+    let title: LocalizedStringKey
+    let icon: String
+    init(_ title: LocalizedStringKey, _ icon: String) { self.title = title; self.icon = icon }
+
+    var body: some View {
+        HStack(spacing: 14) {
+            Image(systemName: icon)
+                .font(.system(size: 17, weight: .regular))
+                .foregroundStyle(StrandPalette.accent)
+                .frame(width: 26, alignment: .center)
+            Text(title).font(StrandFont.body).foregroundStyle(StrandPalette.textPrimary)
+            Spacer(minLength: 8)
+            Image(systemName: "chevron.right")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(StrandPalette.textTertiary)
+        }
+        .padding(.horizontal, 16)
+        .frame(minHeight: 44)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .contentShape(Rectangle())
+        .overlay(alignment: .bottom) {
+            Rectangle().fill(StrandPalette.hairline).frame(height: 1).padding(.leading, 16)
+        }
     }
 }
 

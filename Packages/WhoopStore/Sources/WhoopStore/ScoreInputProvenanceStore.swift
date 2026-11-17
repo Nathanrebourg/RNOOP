@@ -46,7 +46,8 @@ extension WhoopStore {
         to: String,
         replaceMetricKeys: [String] = [],
         additionalMetricPoints: [SourcedMetricPoint] = [],
-        replaceMetricSourceIds: [String] = []
+        replaceMetricSourceIds: [String] = [],
+        calculationEvidence: [ScoreCalculationEvidence] = []
     ) async throws {
         // #1196: an empty scoring pass must not destructively rewrite the window — with no daily rows to
         // write, the provenance wide-delete below would blank the window's attribution while a degenerate
@@ -81,6 +82,8 @@ extension WhoopStore {
                     ON CONFLICT(deviceId, day,key) DO UPDATE SET sourceId = excluded.sourceId
                     """, arguments: [deviceId, row.day, row.key, row.sourceId])
             }
+            try Self.persistCalculationEvidence(calculationEvidence, deviceId: deviceId, from: from, to: to,
+                dailyMetrics: dailyMetrics, metricPoints: metricPoints, provenance: provenance, in: db)
         }
     }
 

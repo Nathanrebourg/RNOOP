@@ -270,6 +270,7 @@ struct SettingsView: View {
                 #endif
                 streakCard.staggeredAppear(index: 4)
                 featuresCard.staggeredAppear(index: 5)
+                localImprovementsCard.staggeredAppear(index: 6)
                 #if os(iOS)
                 syncCard.staggeredAppear(index: 6)
                 #endif
@@ -1153,22 +1154,6 @@ struct SettingsView: View {
                     // still be looking at AI output on their home screen after turning the AI off.
                     CoachBriefScheduler.applyMasterSwitch(on)
                 }
-                #if os(iOS)
-                rowDivider
-                // #1841: the same preference Android drives its own bar with, by name and meaning. Here
-                // the SYSTEM owns the behaviour — iOS 26 minimises the tab bar to a pill on scroll rather
-                // than sliding it away — so this asks for the platform's reading of the intent rather
-                // than reproducing ours. Below iOS 26 the modifier is inert and the row simply does
-                // nothing, which is why it is not offered there.
-                if #available(iOS 26.0, *) {
-                    FormRow(label: "Hide bar when scrolling") {
-                        Toggle("", isOn: $bottomBarAutoHide)
-                            .labelsHidden()
-                            .tint(StrandPalette.accent)
-                            .accessibilityLabel("Hide bar when scrolling")
-                    }
-                }
-                #endif
                 rowDivider
                 // Theme presets — one-tap bundles coordinating accent + chart world + backdrop + card
                 // opacity. Derived (no stored value): tweaking any control below flips this to Custom.
@@ -1634,6 +1619,19 @@ struct SettingsView: View {
         backupAlertTitle = String(localized: "Charge baseline recalibrating")
         backupAlertMessage = String(localized: "NOOP will re-learn your baseline from tonight's data onward. Your history is kept, and it takes a few nights to settle.")
         showBackupAlert = true
+    }
+
+    private var localImprovementsCard: some View {
+        SettingsSection(icon:"slider.horizontal.3",title:"Local improvements",
+                        blurb:"Goals, calibration and transparent trends from your own data.") {
+            NavigationLink { ImprovementsView().environmentObject(model.repo) } label: {
+                HStack {
+                    Text("Open local improvements").font(StrandFont.body).foregroundStyle(StrandPalette.textPrimary)
+                    Spacer()
+                    Image(systemName:"chevron.right").font(.system(size:12,weight:.semibold)).foregroundStyle(StrandPalette.textTertiary)
+                }.contentShape(Rectangle())
+            }.buttonStyle(LiquidPressStyle())
+        }
     }
 
     // MARK: - Test Centre (the diagnostic home, #507/#509)
@@ -2344,7 +2342,7 @@ struct SettingsView: View {
         ) {
             VStack(alignment: .leading, spacing: 16) {
                 HStack(spacing: 10) {
-                    Text("NOOP")
+                    Text("NROOP")
                         .font(StrandFont.title2)
                         .foregroundStyle(StrandPalette.textPrimary)
                     StatePill("v\(bundleVersionString)", tone: .neutral, showsDot: false)

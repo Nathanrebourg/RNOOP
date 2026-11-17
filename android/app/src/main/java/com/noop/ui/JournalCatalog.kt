@@ -1,5 +1,7 @@
 package com.noop.ui
 
+import com.noop.analytics.ContextualSleepNeed
+
 import android.content.Context
 import org.json.JSONArray
 import org.json.JSONObject
@@ -83,6 +85,9 @@ val STARTER_JOURNAL_GROUPS: Map<String, JournalGroup> = mapOf(
     "Did you read before bed?" to JournalGroup.Lifestyle,
     "Did you feel sick or ill?" to JournalGroup.Health,
     "Did you feel stressed?" to JournalGroup.Behaviour,
+    ContextualSleepNeed.naturalWakeQuestion to JournalGroup.Lifestyle,
+    ContextualSleepNeed.restedQuestion to JournalGroup.Health,
+    ContextualSleepNeed.disruptedQuestion to JournalGroup.Lifestyle,
 )
 
 // MARK: - Pure catalog logic (JVM-testable; mirrors macOS)

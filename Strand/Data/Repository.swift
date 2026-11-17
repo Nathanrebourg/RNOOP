@@ -30,6 +30,11 @@ struct ResolvedMetricPoint: Equatable, Sendable {
     let value: Double
     let source: String
     let sourceKey: String
+    let origin: MetricReadOrigin
+
+    init(day: String, value: Double, source: String, sourceKey: String, origin: MetricReadOrigin = .unknown) {
+        self.day = day; self.value = value; self.source = source; self.sourceKey = sourceKey; self.origin = origin
+    }
 }
 
 /// A candidate (source, key) pair the resolver will try, in precedence order.
@@ -43,6 +48,13 @@ struct MetricSeriesResolution: Equatable, Sendable {
     let requestedSource: String
     let candidates: [MetricSourceCandidate]
     let points: [ResolvedMetricPoint]
+    let hadReadErrors: Bool
+
+    init(requestedSource: String, candidates: [MetricSourceCandidate], points: [ResolvedMetricPoint],
+         hadReadErrors: Bool = false) {
+        self.requestedSource = requestedSource; self.candidates = candidates
+        self.points = points; self.hadReadErrors = hadReadErrors
+    }
 
     /// Plain `(day, value)` rows , the shape the chart/correlation code already consumes.
     var values: [(day: String, value: Double)] { points.map { ($0.day, $0.value) } }
@@ -259,6 +271,7 @@ final class Repository: ObservableObject {
         let trimmed = id.trimmingCharacters(in: .whitespaces)
         guard !trimmed.isEmpty, trimmed != deviceId else { return false }
         deviceId = trimmed
+        performanceSnapshotCache.invalidate()
         return true
     }
 
@@ -933,6 +946,10 @@ final class Repository: ObservableObject {
     /// (no store queries, no hrBuckets/hrSamples reads) instead of re-running the heavy load. Not @Published.
     var todayDayScopedCache: TodayDayScopedCache?
 
+    /// Shared only by this repository instance; revision, device, date and display preferences key it.
+    let performanceSnapshotCache = PerformanceSnapshotCache()
+    private var performanceStoreStamp: StoreChangeStamp?
+
     #if DEBUG
     /// v7.7.2 regression guard: DEBUG-only tally of how many times each cached heavy load actually ran its
     /// store reads (keyed "appleHealth" / "xiaomi" / "todayDayScoped"). A same-state re-mount that restores
@@ -1008,6 +1025,7 @@ final class Repository: ObservableObject {
 
         // Generation guard (#review): if a newer refresh() started while this one merged off-actor, drop
         // this now-stale result so it can't clobber the newer caches or re-fire loadAll out of order.
+        let currentStamp = try? await store.performanceChangeStamp()
         guard myGen == refreshGen else { return }
 
         // DIFF before publishing (FIX 3): if this refresh produced byte-identical caches AND we've already
@@ -1021,7 +1039,12 @@ final class Repository: ObservableObject {
             && merged.importedSleep == importedSleep
             && merged.vitalRows == vitalRows
             && merged.freshness == freshness
-        guard !unchanged else { return }
+        let storeChanged = currentStamp == nil || currentStamp != performanceStoreStamp
+        performanceStoreStamp = currentStamp
+        if unchanged {
+            if storeChanged { performanceSnapshotCache.invalidate() }
+            return
+        }
 
         // One consistent publish per refresh: assign every cache, flip `loaded`, then bump `refreshSeq` so
         // the intraday-updating views reload exactly once for this real change.
@@ -1044,6 +1067,7 @@ final class Repository: ObservableObject {
         // and an appended line after the bump is how that invariant quietly stops being true.
         self.exploreAllCache = nil
         self.refreshSeq += 1
+        self.performanceSnapshotCache.invalidate()
     }
 
     /// Per-source coverage counts for the Freshness Pipeline card. Pure over the rows already read.
@@ -1177,6 +1201,29 @@ final class Repository: ObservableObject {
     }
 
     // MARK: - Detail passthroughs
+
+    /// Explicit-range daily history with the same import/computed/edit/activity precedence as refresh().
+    /// This does not narrow the shared dashboard cache or silently omit computed-only users.
+    func mergedHistoryDays(fromDay: String, toDay: String, calendar: Calendar) async -> [DailyMetric] {
+        let anchor = Date(), midnight = calendar.startOfDay(for: anchor)
+        guard fromDay <= toDay,
+              let fromAge = LongitudinalTrends.dayAge(day: fromDay, asOf: anchor, calendar: calendar),
+              let toAge = LongitudinalTrends.dayAge(day: toDay, asOf: anchor, calendar: calendar),
+              let from = calendar.date(byAdding: .day, value: -fromAge, to: midnight),
+              let to = calendar.date(byAdding: .day, value: -toAge, to: midnight),
+              let next = calendar.date(byAdding: .day, value: 1, to: to),
+              let span = calendar.dateComponents([.day], from: from, to: next).day,
+              (1...181).contains(span), let store = await ensureStore() else { return [] }
+        let owner = deviceId
+        let imported = await unionDailyMetrics(store: store, from: fromDay, to: toDay)
+        let computed = await unionComputedDailyMetrics(store: store, from: fromDay, to: toDay)
+        let activity = (try? await store.dailyMetrics(deviceId: Self.activityFileSource, from: fromDay, to: toDay)) ?? []
+        let sessions = await unionComputedSleepSessions(store: store, from: Int(from.timeIntervalSince1970)-86400,
+                                                        to: Int(next.timeIntervalSince1970), limit: 4000)
+        guard owner == deviceId else { return [] }
+        return Self.mergeActivityFileSteps(into: Self.mergeDaily(imported: imported, computed: computed,
+                                          userEditedDays: Self.userEditedDays(sessions)), activity)
+    }
 
     func dailyMetrics(fromDay: String, toDay: String) async -> [DailyMetric] {
         guard let store = await ensureStore() else { return [] }
@@ -2272,20 +2319,23 @@ final class Repository: ObservableObject {
         let candidates = Self.sourceCandidates(forKey: key, preferredSource: preferredSource,
                                                actualWhoopSource: deviceId)
         guard let store = await ensureStore() else {
-            return MetricSeriesResolution(requestedSource: preferredSource, candidates: candidates, points: [])
+            return MetricSeriesResolution(requestedSource: preferredSource, candidates: candidates, points: [], hadReadErrors: true)
         }
 
         // First candidate wins per day; later candidates only fill days no earlier one covered.
         var byDay: [String: ResolvedMetricPoint] = [:]
+        var hadReadErrors = false
         for candidate in candidates {
-            let rows = await resolvedRows(store: store, candidate: candidate, from: from, to: to)
-            for row in rows where byDay[row.day] == nil {
+            let result = await resolvedRows(store: store, candidate: candidate, from: from, to: to)
+            hadReadErrors = hadReadErrors || result.failed
+            for row in result.rows where byDay[row.day] == nil {
                 byDay[row.day] = ResolvedMetricPoint(day: row.day, value: row.value,
-                                                     source: candidate.source, sourceKey: candidate.key)
+                                                     source: candidate.source, sourceKey: candidate.key, origin: row.origin)
             }
         }
         let points = byDay.values.sorted { $0.day < $1.day }
-        return MetricSeriesResolution(requestedSource: preferredSource, candidates: candidates, points: points)
+        return MetricSeriesResolution(requestedSource: preferredSource, candidates: candidates, points: points,
+                                      hadReadErrors: hadReadErrors)
     }
 
     /// Resolve a displayed score back to the provider that supplied its inputs. Direct imported points
@@ -2333,17 +2383,21 @@ final class Repository: ObservableObject {
     /// precedence is unchanged, so an imported series point still wins its day. Mirrors Android
     /// WhoopRepository.resolvedRows.
     private func resolvedRows(store: WhoopStore, candidate: MetricSourceCandidate,
-                             from: String, to: String) async -> [(day: String, value: Double)] {
-        let metricRows = (try? await store.metricSeries(deviceId: candidate.source, key: candidate.key,
-                                                        from: from, to: to)) ?? []
-        var byDay = Dictionary(metricRows.map { ($0.day, $0.value) }, uniquingKeysWith: { _, last in last })
-        if let dailyRows = try? await store.dailyMetrics(deviceId: candidate.source,
-                                                         from: from, to: Self.dayAfter(to)) {
+                             from: String, to: String) async -> (rows: [(day: String, value: Double, origin: MetricReadOrigin)], failed: Bool) {
+        var failed = false
+        let metricRows: [MetricPoint]
+        do { metricRows = try await store.metricSeries(deviceId: candidate.source, key: candidate.key, from: from, to: to) }
+        catch { metricRows = []; failed = true }
+        var byDay = Dictionary(metricRows.map { ($0.day, (value: $0.value, origin: MetricReadOrigin.series)) },
+                               uniquingKeysWith: { _, last in last })
+        do {
+            let dailyRows = try await store.dailyMetrics(deviceId: candidate.source, from: from, to: Self.dayAfter(to))
             for row in dailyRows where byDay[row.day] == nil {
-                if let value = Self.dailyColumn(key: candidate.key, day: row) { byDay[row.day] = value }
+                if let value = Self.dailyColumn(key: candidate.key, day: row) { byDay[row.day] = (value, .daily) }
             }
-        }
-        return byDay.keys.sorted().compactMap { day in byDay[day].map { (day, $0) } }
+        } catch { failed = true }
+        let rows = byDay.keys.sorted().compactMap { day in byDay[day].map { (day: day, value: $0.value, origin: $0.origin) } }
+        return (rows, failed)
     }
 
     /// The candidate (source, key) pairs to try for `key`, in precedence order, given the user's

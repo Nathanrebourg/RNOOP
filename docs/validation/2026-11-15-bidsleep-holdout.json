@@ -1,0 +1,166 @@
+{
+  "chosen": "awake-014",
+  "confidence": {
+    "all": {
+      "budgetAchieved": false,
+      "meanError": 0.4013089392632715,
+      "n": 17,
+      "participants": 17
+    },
+    "bins": [
+      {
+        "budgetAchieved": null,
+        "fromInclusive": 0,
+        "meanError": null,
+        "n": 0,
+        "participants": 0,
+        "to": 0.25,
+        "upperInclusive": false
+      },
+      {
+        "budgetAchieved": false,
+        "fromInclusive": 0.25,
+        "meanError": 0.41309523809523807,
+        "n": 1,
+        "participants": 1,
+        "to": 0.5,
+        "upperInclusive": false
+      },
+      {
+        "budgetAchieved": false,
+        "fromInclusive": 0.5,
+        "meanError": 0.4610226320201174,
+        "n": 1,
+        "participants": 1,
+        "to": 0.75,
+        "upperInclusive": false
+      },
+      {
+        "budgetAchieved": true,
+        "fromInclusive": 0.75,
+        "meanError": 0.39654227315735063,
+        "n": 15,
+        "participants": 15,
+        "to": 1,
+        "upperInclusive": true
+      }
+    ],
+    "context": {
+      "metric": "sleep-stage-error",
+      "model": "nroop-sleep-selection-v1:awake-014",
+      "qualityMethod": "apple-watch-availability-v1",
+      "source": "dreem2-expert",
+      "unit": "fraction"
+    },
+    "excludedSynthetic": 0,
+    "excludedUnavailable": 0,
+    "interpretation": "Recording-quality threshold against declared reference error, selected on training participants only. Not a calibrated probability, clinical validation or evidence that filtering improves everyone.",
+    "retainedFraction": 0.0,
+    "selected": {
+      "budgetAchieved": null,
+      "meanError": null,
+      "n": 0,
+      "participants": 0
+    },
+    "status": "evaluated",
+    "threshold": null,
+    "version": "nroop-confidence-v1"
+  },
+  "confidenceSHA256": "f240e5bfcc023b4fbd706c1b188c7b209a7a101ccec472a3299145c6607ec8fc",
+  "excluded": [],
+  "interpretation": "Recipe chosen only on training participants; heldout must evaluate shipped and chosen only. EEG reference is not full PSG; hardware is Apple Watch, RR absent.",
+  "selectionSHA256": "34061af484aa3d1dea91ba718565e9bfeaefae5543dc5e267943ec7e4211a4c1",
+  "variants": {
+    "awake-014": {
+      "confusion": [
+        [
+          481,
+          612,
+          83,
+          285
+        ],
+        [
+          280,
+          4951,
+          580,
+          1163
+        ],
+        [
+          72,
+          965,
+          1536,
+          179
+        ],
+        [
+          102,
+          1630,
+          19,
+          1914
+        ]
+      ],
+      "epochs": 14852,
+      "meanParticipantMacroF1": 0.5374224995577466,
+      "meanParticipantStageF1": {
+        "deep": 0.6045412493125635,
+        "light": 0.6500683166395408,
+        "rem": 0.5139490146443877,
+        "wake": 0.3811314176344941
+      },
+      "nights": 17,
+      "participants": 17,
+      "pooledAccuracy": 0.5980339348235928,
+      "pooledStageFractionBiasPP": {
+        "deep": -3.595475356854296,
+        "light": 7.971990304336116,
+        "rem": -0.8349043899811474,
+        "wake": -3.541610557500673
+      }
+    },
+    "shipped": {
+      "confusion": [
+        [
+          454,
+          632,
+          83,
+          292
+        ],
+        [
+          222,
+          4957,
+          580,
+          1215
+        ],
+        [
+          60,
+          977,
+          1536,
+          179
+        ],
+        [
+          61,
+          1610,
+          19,
+          1975
+        ]
+      ],
+      "epochs": 14852,
+      "meanParticipantMacroF1": 0.5386445382045822,
+      "meanParticipantStageF1": {
+        "deep": 0.6045412493125635,
+        "light": 0.6494692786637182,
+        "rem": 0.5219000400135385,
+        "wake": 0.37866758482850904
+      },
+      "nights": 17,
+      "participants": 17,
+      "pooledAccuracy": 0.6007271747912739,
+      "pooledStageFractionBiasPP": {
+        "deep": -3.595475356854296,
+        "light": 8.093186102881766,
+        "rem": -0.026932399676811204,
+        "wake": -4.470778346350659
+      }
+    }
+  },
+  "version": "nroop-sleep-selection-v1"
+}

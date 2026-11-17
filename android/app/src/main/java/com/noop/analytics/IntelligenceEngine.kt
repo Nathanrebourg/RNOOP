@@ -754,6 +754,7 @@ object IntelligenceEngine {
         val hrvOverCountByDay = LinkedHashMap<String, Boolean>()
         // #1169: primary-session mean RHR shadow metric per day, carried from pass 1 for persistence.
         val primarySessionRHRByDay = LinkedHashMap<String, Double>()
+        val recoveryLabQualities = LinkedHashMap<String, QualityRecovery.Quality>()
         // #1169: its coverage inputs (valid-sample count + primary-session duration), same lifetime as the mean.
         val primarySessionRHRCoverageByDay = LinkedHashMap<String, PrimarySessionRestingHR.Coverage>()
 
@@ -914,7 +915,10 @@ object IntelligenceEngine {
             // and replays them in pass 2 the same way). Route each scored-day diag through [dayDiag]; the
             // <200-HR SKIPPED line below stays a plain diag (that day is never cached).
             val dayDiagLines = ArrayList<String>()
-            fun dayDiag(line: String) { dayDiagLines.add(line); diag(line) }
+            fun dayDiag(line: String) {
+                dayDiagLines.add(line)
+                AlgorithmLab.replayDiagnostic(line, diag, workoutsTraceSink, recoveryTraceSink, sleepTraceSink)
+            }
             // #2517: the day window is a fixed SECONDS_PER_DAY and a transition day is not, so the hour it
             // misplaces is RECORDED here rather than corrected. Two offset lookups per scored day and a
             // null on every ordinary one; see `dayWindowSkewLine` for why this is always-on and for
@@ -958,7 +962,7 @@ object IntelligenceEngine {
             // UN-coalesced registered WHOOP family (null for a ring/import/unknown → never cached; a ring's
             // providedSleep could change a day without an HR move), memoised per owner. WHOOP4 and WHOOP5 are
             // both cacheable. Mirrors the Swift gate's inline DeviceFamily.forRegistryDevice.
-            val cacheOwnerFamily: DeviceFamily? = if (dayCacheEligible) {
+            val cacheOwnerFamily: DeviceFamily? = if (dayCacheEligible && !((sleepTraceSink != null || hrvTraceSink != null || workoutsTraceSink != null || recoveryTraceSink != null) && dayStart == nowLocalMidnight)) {
                 if (!cacheFamilyByOwner.containsKey(owner)) {
                     cacheFamilyByOwner[owner] = ownerSource?.registeredWhoopFamily(owner)
                 }
@@ -983,7 +987,8 @@ object IntelligenceEngine {
                     // midnight and invalidate yesterday, charging EVERY user an extra day's re-score to
                     // protect lines they never see. Gating it keeps the default path exactly as it was and
                     // makes the cost what this change claims: paid only while a trace is on.
-                    hrvWindowDetail = hrvTraceSink != null && dayStart == nowLocalMidnight)
+                    hrvWindowDetail = hrvTraceSink != null && dayStart == nowLocalMidnight,
+                    effortCadenceTrace = workoutsTraceSink != null)
                 dayCacheKey = key
                 val cached = reusableDayScan(day, key)
                 if (cached != null) {
@@ -1004,7 +1009,7 @@ object IntelligenceEngine {
                     cached.primaryRhrCoverage?.let { primarySessionRHRCoverageByDay[day] = it }
                     scoredNights.add(cached.res)
                     resolvedScoreOwnerByDay[day] = cached.owner
-                    for (line in cached.diagLines) diag(line)
+                    for (line in cached.diagLines) AlgorithmLab.replayDiagnostic(line, diag, workoutsTraceSink, recoveryTraceSink, sleepTraceSink)
                     // #1575: replay this night's trace lines to their own channels, so a reused night is
                     // indistinguishable from a freshly-scored one in the export as well as in the numbers.
                     replayDayTraces(cached.traces, sleepTraceSink, hrvTraceSink, stepsTraceSink)
@@ -1172,6 +1177,15 @@ object IntelligenceEngine {
                 emptyList()
             }
 
+            // Only the newest opt-in comparison bypasses reuse; its candidate is never persisted or cached.
+            if (sleepTraceSink != null && dayStart == nowLocalMidnight) {
+                dayTrace.sleep.add(SleepBaselineExperiment.run(repo, owner, day, dayStart, from, tzOffsetSeconds,
+                    hr, rr, resp, grav, wristOff, bandSleepState, useExperimentalSleepV2))
+            }
+            if (hrvTraceSink != null && dayStart == nowLocalMidnight) {
+                dayTrace.hrv.addAll(StressCadenceComparison.analyze(dayHr, dayGrav, dayMidnight, nowSeconds,
+                    tzOffsetSeconds, dayHr.size >= 200_000 || dayGrav.size >= 200_000).lines(day))
+            }
             val tScore0 = System.nanoTime()
             dayPrepNanos += tScore0 - tPrep0
             val res = AnalyticsEngine.analyzeDay(
@@ -1179,6 +1193,7 @@ object IntelligenceEngine {
                 // #1770 follow-up: route the Effort funnel through the SAME per-day recorder as the
                 // `workout detect` and `sleep-detect` lines, so a report explains all three the same way.
                 strainDiag = ::dayDiag,
+                effortCadenceSink = if (workoutsTraceSink == null) null else ::dayDiag,
                 hr = hr,
                 rr = rr,
                 resp = resp,
@@ -1225,8 +1240,18 @@ object IntelligenceEngine {
                 hrvWindowDetail = dayStart == nowLocalMidnight,
                 deepHrvWindow = deepHrvWindow,
                 effortMethod = effortMethod,
+                recipeSource = owner,
+                recipeWindowStart = dayMidnight,recipeWindowEnd = dayEnd+1,
             )
             dayScoreNanos += System.nanoTime() - tScore0
+            if (dayStart == nowLocalMidnight && (workoutsTraceSink != null || recoveryTraceSink != null || sleepTraceSink != null)) {
+                val capture = AlgorithmLabCapture.run(repo, owner, computedId, day, dayMidnight, nowSeconds,
+                    tzOffsetSeconds, profile, maxHROverride, res, dayHr, dayGrav, hr, rr, deepHrvWindow,
+                    workoutsTraceSink != null, recoveryTraceSink != null, sleepTraceSink != null, providedSleep.isEmpty(),
+                    hr.size >= StreamReadCap.HR || rr.size >= StreamReadCap.RR || grav.size >= StreamReadCap.GRAVITY)
+                capture.lines.forEach(::dayDiag)
+                capture.recoveryQuality?.let { recoveryLabQualities[day] = it }
+            }
 
             // #195: whole-night HRV cleaning-pipeline summary to the always-on strap log, so a "reads ~2x too
             // high" report is triageable without the HRV test mode: RMSSD vs SDNN (rmssd >> sdnn = beat-to-beat
@@ -1625,6 +1650,9 @@ object IntelligenceEngine {
         // Rest composite (0–100) per night → persisted as the sleep_performance metric series so the
         // dashboard Rest score reflects the new composite, not raw efficiency. Swift parity.
         val restRows = ArrayList<MetricSeriesRow>()
+        val calculationEvidence=ArrayList<com.noop.data.ScoreCalculationEvidenceEntity>()
+        val recipeContext=ScoreEvidenceBridge.settings(profile.age.toDouble(),profile.sex,maxHROverride,deepHrvWindow,
+            useExperimentalSleepV2,useMotionAwareWake,dayCycleMode.persistedValue,baselineEpoch,recoveryEpoch,respEpoch)
 
         // User-corrected sleep windows for the COMPUTED source over the recompute window. They override
         // the detected sleep when scoring a day's sleep aggregates (so Rest + recovery honor the edit,
@@ -1693,6 +1721,14 @@ object IntelligenceEngine {
                 physiologicalSteps, computedId, restRows,
             )
             val daily = recomputeRecoveryDaily(editedDaily, res.nightlySkinTempC, baselines2)
+            resolvedScoreOwnerByDay[daily.day]?.let {owner ->
+                val cycleEstablished=physiologicalSteps.firstWakeDay?.let{daily.day>=it}?:false
+                val effortRecipe=if(cycleEstablished)physiologicalSteps.recipesByWakeDay[daily.day] else res.effortRecipe
+                listOf(ScoreRecipe.recovery(daily,baselines2,owner) to daily.recovery,
+                    ScoreRecipe.rest(daily,owner) to RestScorer.restFromDaily(daily),effortRecipe to daily.strain).forEach {(recipe,value)->
+                    ScoreEvidenceBridge.row(recipe,daily.day,owner,value,recipeContext,nowSeconds,computedId)?.let{calculationEvidence.add(it)}
+                }
+            }
             val recovery = daily.recovery
             val skinTempDevC = daily.skinTempDevC
             // Charge term-breakdown trace (Test Centre Group G): only when the Recovery test mode is on
@@ -1701,6 +1737,9 @@ object IntelligenceEngine {
             // `recovery` written above is unchanged. Zero cost when off (the sink stays null, this branch
             // is skipped, recoveryTraceLines is never built). Mirrors the Swift recoveryTraceActive wiring.
             if (recoveryTraceSink != null) {
+                recoveryLabQualities[daily.day]?.let { q ->
+                    recoveryTraceSink(AlgorithmLab.recoveryLine(AlgorithmLab.recoveryComparison(daily, baselines2, q, dayEditedRows.isEmpty()), q, daily.day))
+                }
                 for (line in recoveryTraceLines(daily, baselines2)) recoveryTraceSink(line)
             }
             RestScorer.restFromDaily(daily)?.let { rest ->
@@ -1962,6 +2001,7 @@ object IntelligenceEngine {
             repo, importedDeviceId, computedId, oldestDay, newestDay, dailies, restRows, physiologicalSteps,
             candidatePriorities, resolvedScoreOwnerByDay,
             IntelligencePersistence.LegacyScoreClock(nowLocalMidnight, nowSeconds, tzOffsetSeconds), out,
+            calculationEvidence = calculationEvidence,
         )
         IntelligencePersistence.persistComputedWindow(repo, computedWindow, preserveUnscoredHistoryForRun)
 
@@ -3008,11 +3048,13 @@ object IntelligenceEngine {
     private suspend fun rrAwareDayCacheKey(
         repo: com.noop.data.WhoopRepository, owner: String, from: Long, to: Long,
         skinAnchor: Double?, unlabelledAliasOfWhoop5: Boolean, hrvWindowDetail: Boolean,
+        effortCadenceTrace: Boolean,
     ): String {
         val (count, maxTs) = repo.hrFingerprintWindow(owner, from, to)
         val streams = repo.dayStreamFingerprint(owner, from, to)
         return AnalyzeRecentDayCache.cacheKey(owner, count, maxTs, skinAnchor,
-            streams = streams + "|rrAlias5=$unlabelledAliasOfWhoop5", hrvWindowDetail = hrvWindowDetail)
+            streams = streams + "|rrAlias5=$unlabelledAliasOfWhoop5", hrvWindowDetail = hrvWindowDetail,
+            effortCadenceTrace = effortCadenceTrace)
     }
 
     /** The pass-1 R-R sliding read window. Same reason as [hrReadWindow] for living out here. */

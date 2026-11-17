@@ -21,14 +21,39 @@ import WhoopProtocol
 struct FusedRecordHost: View {
     @EnvironmentObject private var model: AppModel
     @EnvironmentObject private var repo: Repository
+    @Environment(\.scenePhase) private var scenePhase
 
     @State private var record = FusedRecord(rows: [], dayOwner: nil, contributingSourceCount: 0)
     @State private var loaded = false
+    @State private var generation = 0
+    @State private var dataRevision = 0
+    @State private var logicalDay: String
+    @State private var selectedDay: String
+    @State private var loadedScope: String?
+    @State private var retryToken = 0
+    @AppStorage(UnitPrefs.skinTempDisplayKey) private var skinPreference = ""
+    private let rolloverTimer = Timer.publish(every: 30, on: .main, in: .common).autoconnect()
+
+    init() {
+        let day = Repository.logicalDayKey(Date())
+        _logicalDay = State(initialValue: day)
+        _selectedDay = State(initialValue: day)
+    }
+
+    private var displayScope: String { "\(selectedDay)|\(repo.deviceId)|\(skinPreference)" }
+    private var dayLabel: String {
+        guard selectedDay != logicalDay, let date = PerformanceSnapshotModel.localNoon(selectedDay) else {
+            return String(localized: "Today")
+        }
+        return date.formatted(.dateTime.weekday(.wide).day().month(.wide).locale(AppLanguage.activeLocale))
+    }
 
     var body: some View {
         Group {
-            if loaded {
-                FusedRecordView(record: record)
+            if loaded && loadedScope == displayScope {
+                FusedRecordView(record: record, dayLabel: dayLabel,
+                                onPreviousDay: { moveDay(-1) }, onNextDay: { moveDay(1) },
+                                canGoForward: selectedDay < logicalDay, onRetry: { retryToken += 1 })
             } else {
                 ScreenScaffold(title: "Your Data, Fused",
                                subtitle: "Building your best-sourced record…") {
@@ -36,10 +61,34 @@ struct FusedRecordHost: View {
                 }
             }
         }
-        .task(id: repo.refreshSeq) {
-            record = await model.buildTodayFusedRecord()
+        .task(id: "\(dataRevision)|\(retryToken)|\(displayScope)") {
+            generation += 1
+            let token = generation
+            let scope = displayScope
+            let day = selectedDay
+            let updated = await model.buildTodayFusedRecord(day: day)
+            guard !Task.isCancelled, generation == token, scope == displayScope else { return }
+            record = updated
             loaded = true
+            loadedScope = scope
         }
+        .onReceive(repo.performanceSnapshotCache.$revision) { dataRevision = $0 }
+        .onReceive(rolloverTimer) { _ in updateLogicalDay() }
+        .onChangeCompat(of: scenePhase) { phase in if phase == .active { updateLogicalDay() } }
+    }
+
+    private func updateLogicalDay() {
+        let current = Repository.logicalDayKey(Date())
+        if current != logicalDay {
+            let wasToday = selectedDay == logicalDay
+            logicalDay = current
+            if wasToday || selectedDay > current { selectedDay = current }
+        }
+    }
+
+    private func moveDay(_ offset: Int) {
+        guard let context = PerformanceContext(day: selectedDay, domain: .today) else { return }
+        selectedDay = min(logicalDay, context.shiftedDay(by: offset))
     }
 }
 

@@ -1153,6 +1153,33 @@ extension WhoopStore {
                 t.primaryKey(["deviceId", "ts", "sequence"])
             }
         }
+        // Observed calculation revisions and the current pointer are separate from daily-score retention.
+        migrator.registerMigration("v49-score-calculation-evidence") { db in
+            try db.create(table: "scoreCalculationEvidence") { t in
+                t.column("deviceId", .text).notNull()
+                t.column("day", .text).notNull()
+                t.column("key", .text).notNull()
+                t.column("fingerprint", .text).notNull()
+                t.column("capturedAt", .integer).notNull()
+                t.column("sourceId", .text).notNull()
+                t.column("methodId", .text).notNull()
+                t.column("value", .double).notNull()
+                t.column("payload", .text).notNull()
+                t.primaryKey(["deviceId", "day", "key", "fingerprint"])
+            }
+            try db.create(table: "scoreCalculationHead") { t in
+                t.column("deviceId", .text).notNull()
+                t.column("day", .text).notNull()
+                t.column("key", .text).notNull()
+                t.column("fingerprint", .text).notNull()
+                t.primaryKey(["deviceId", "day", "key"])
+            }
+            try db.execute(sql: """
+                CREATE TRIGGER scoreCalculationDailyDelete AFTER DELETE ON dailyMetric BEGIN
+                DELETE FROM scoreCalculationHead WHERE deviceId = OLD.deviceId AND day = OLD.day;
+                END
+                """)
+        }
         return migrator
     }
 }

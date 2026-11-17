@@ -8,7 +8,14 @@ public enum WhoopStoreInfo {
     /// The store schema-version marker, bumped per migration. Surfaced in the backup manifest (#1410) so an
     /// export records the platform's schema version (a platform-scoped indicator — Android reports its Room
     /// version independently; the two numbering schemes are not expected to match).
-    public static let schemaVersion = 18
+    public static let schemaVersion = 49
+}
+
+/// Read-only SQLite change marker for one open store's persistent writer connection.
+public struct StoreChangeStamp: Equatable, Sendable {
+    public let instance: String
+    public let externalVersion: Int64
+    public let localChanges: Int64
 }
 
 /// Serializes `DatabasePool` creation + migration so two concurrent opens of the SAME file can never
@@ -176,6 +183,17 @@ public actor WhoopStore {
     @inline(__always)
     func syncWrite<T>(_ block: (Database) throws -> T) throws -> T {
         try dbWriter.write(block)
+    }
+
+    /// Changes from this writer advance total_changes; commits from other SQLite connections advance
+    /// data_version. Both are read on the same writer connection, so an unchanged refresh stays unchanged.
+    public func performanceChangeStamp() throws -> StoreChangeStamp {
+        let instance = revisionInstanceToken
+        return try dbWriter.writeWithoutTransaction { db in
+            let version = try Int64.fetchOne(db, sql: "PRAGMA data_version") ?? 0
+            let changes = try Int64.fetchOne(db, sql: "SELECT total_changes()") ?? 0
+            return StoreChangeStamp(instance: instance, externalVersion: version, localChanges: changes)
+        }
     }
 
     // MARK: - Maintenance

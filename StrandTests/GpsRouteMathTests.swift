@@ -137,6 +137,20 @@ final class GpsRouteMathTests: XCTestCase {
         XCTAssertNil(TrackFilter().accept(fix(0, 200, acc: 5, t: 0)))      // lon > 180
     }
 
+    func testFilterRejectsStaleAndDuplicateFixesWithoutMovingItsAnchor() {
+        let f = TrackFilter()
+        XCTAssertNotNil(f.accept(fix(51.5000, -0.1200, acc: 5, t: 10_000)))
+        XCTAssertNil(f.accept(fix(51.52, -0.12, acc: 5, t: 10_000)))
+        XCTAssertNil(f.accept(fix(51.52, -0.12, acc: 5, t: 9_000)))
+        // The rejected fixes must not poison the next valid point.
+        XCTAssertNotNil(f.accept(fix(51.50013, -0.12, acc: 5, t: 20_000)))
+    }
+
+    func testFilterRejectsNonFiniteReadings() {
+        XCTAssertNil(TrackFilter().accept(fix(51.5, -0.12, acc: .nan, t: 0)))
+        XCTAssertNil(TrackFilter().accept(fix(.nan, -0.12, acc: 5, t: 0)))
+    }
+
     // MARK: - RouteStore (on-device side-store round-trip)
 
     private func freshDefaults() -> UserDefaults {

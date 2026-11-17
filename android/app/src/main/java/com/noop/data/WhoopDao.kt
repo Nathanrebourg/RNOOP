@@ -500,6 +500,81 @@ interface WhoopDao : DeviceRegistryDao {
     )
     suspend fun deleteScoreInputProvenanceInRange(deviceId: String, from: String, to: String)
 
+    @Insert(onConflict = OnConflictStrategy.ABORT)
+    suspend fun insertScoreCalculationEvidence(row: ScoreCalculationEvidenceEntity)
+
+    @Upsert
+    suspend fun upsertScoreCalculationHead(row: ScoreCalculationHeadEntity)
+
+    @Query("SELECT * FROM scoreCalculationEvidence WHERE deviceId = :deviceId AND day = :day AND `key` = :key AND fingerprint = :fingerprint")
+    suspend fun scoreCalculationRevision(deviceId: String, day: String, key: String, fingerprint: String): ScoreCalculationEvidenceEntity?
+
+    @Query("SELECT * FROM scoreCalculationEvidence WHERE deviceId = :deviceId AND day = :day AND `key` = :key ORDER BY capturedAt DESC, fingerprint DESC LIMIT MIN(8, MAX(0, :limit))")
+    suspend fun scoreCalculationHistory(deviceId: String, day: String, key: String, limit: Int = 8): List<ScoreCalculationEvidenceEntity>
+
+    @Query("SELECT e.* FROM scoreCalculationEvidence e JOIN scoreCalculationHead h ON e.deviceId = h.deviceId AND e.day = h.day AND e.`key` = h.`key` AND e.fingerprint = h.fingerprint WHERE h.deviceId = :deviceId AND h.day = :day AND h.`key` = :key")
+    suspend fun scoreCalculationCurrent(deviceId: String, day: String, key: String): ScoreCalculationEvidenceEntity?
+
+    @Query("DELETE FROM scoreCalculationHead WHERE deviceId = :deviceId AND day >= :from AND day <= :to")
+    suspend fun deleteScoreCalculationHeadsInRange(deviceId: String, from: String, to: String)
+
+    @Query("DELETE FROM scoreCalculationEvidence WHERE rowid IN (SELECT e.rowid FROM scoreCalculationEvidence e WHERE e.deviceId = :deviceId AND e.day = :day AND e.`key` = :key ORDER BY EXISTS (SELECT 1 FROM scoreCalculationHead h WHERE h.deviceId = e.deviceId AND h.day = e.day AND h.`key` = e.`key` AND h.fingerprint = e.fingerprint) DESC, e.capturedAt DESC, e.fingerprint DESC LIMIT -1 OFFSET 8)")
+    suspend fun trimScoreCalculationCell(deviceId: String, day: String, key: String)
+
+    @Query("DELETE FROM scoreCalculationEvidence WHERE rowid IN (SELECT e.rowid FROM scoreCalculationEvidence e WHERE e.deviceId = :deviceId ORDER BY EXISTS (SELECT 1 FROM scoreCalculationHead h WHERE h.deviceId = e.deviceId AND h.day = e.day AND h.`key` = e.`key` AND h.fingerprint = e.fingerprint) DESC, e.capturedAt DESC, e.day DESC, e.`key` DESC, e.fingerprint DESC LIMIT -1 OFFSET 12000)")
+    suspend fun trimScoreCalculationDevice(deviceId: String)
+
+    @Query("DELETE FROM scoreCalculationHead WHERE deviceId = :deviceId AND NOT EXISTS (SELECT 1 FROM scoreCalculationEvidence e WHERE e.deviceId = scoreCalculationHead.deviceId AND e.day = scoreCalculationHead.day AND e.`key` = scoreCalculationHead.`key` AND e.fingerprint = scoreCalculationHead.fingerprint)")
+    suspend fun deleteDanglingScoreCalculationHeads(deviceId: String)
+
+    @Query("SELECT recovery FROM dailyMetric WHERE deviceId = :deviceId AND day = :day")
+    suspend fun calculationRecoveryValue(deviceId: String, day: String): Double?
+
+    @Query("SELECT strain FROM dailyMetric WHERE deviceId = :deviceId AND day = :day")
+    suspend fun calculationStrainValue(deviceId: String, day: String): Double?
+
+    @Query("SELECT value FROM metricSeries WHERE deviceId = :deviceId AND day = :day AND `key` = 'sleep_performance'")
+    suspend fun calculationRestValue(deviceId: String, day: String): Double?
+
+    suspend fun persistCalculationEvidence(
+        rows: List<ScoreCalculationEvidenceEntity>, deviceId: String, from: String, to: String,
+        dailyMetrics: List<DailyMetric>, metricPoints: List<MetricSeriesRow>, provenance: List<ScoreInputProvenanceRow>,
+    ) {
+        deleteScoreCalculationHeadsInRange(deviceId, from, to)
+        for (row in rows) {
+            val supplied = when (row.key) {
+                "recovery" -> dailyMetrics.lastOrNull { it.deviceId == deviceId && it.day == row.day }?.recovery
+                "strain" -> dailyMetrics.lastOrNull { it.deviceId == deviceId && it.day == row.day }?.strain
+                "sleep_performance" -> metricPoints.lastOrNull { it.deviceId == deviceId && it.day == row.day && it.key == row.key }?.value
+                else -> null
+            }
+            val validDay = row.day.matches(Regex("[0-9]{4}-[0-9]{2}-[0-9]{2}")) &&
+                row.day.take(4) != "0000" && runCatching { java.time.LocalDate.parse(row.day) }.isSuccess
+            require(row.deviceId == deviceId && validDay && row.day >= from && row.day <= to &&
+                dailyMetrics.any { it.deviceId == deviceId && it.day == row.day } &&
+                row.value.isFinite() && row.value in 0.0..100.0 && supplied == row.value &&
+                row.capturedAt in 1L..4_102_444_800L && row.payload.toByteArray(Charsets.UTF_8).size <= 16_384 &&
+                row.payload.isNotEmpty() && row.sourceId.isNotEmpty() && row.methodId.isNotEmpty() && row.fingerprint.isNotEmpty() &&
+                provenance.lastOrNull { it.deviceId == deviceId && it.day == row.day && it.key == row.key }?.sourceId == row.sourceId &&
+                scoreInputSource(deviceId, row.day, row.key) == row.sourceId) { "Invalid calculation evidence" }
+            val persisted = when (row.key) {
+                "recovery" -> calculationRecoveryValue(deviceId, row.day)
+                "strain" -> calculationStrainValue(deviceId, row.day)
+                "sleep_performance" -> calculationRestValue(deviceId, row.day)
+                else -> null
+            }
+            require(persisted == row.value) { "Calculation does not match persisted score" }
+            val old = scoreCalculationRevision(deviceId, row.day, row.key, row.fingerprint)
+            if (old == null) insertScoreCalculationEvidence(row)
+            else require(old.payload == row.payload && old.value == row.value && old.sourceId == row.sourceId &&
+                old.methodId == row.methodId) { "Calculation fingerprint collision" }
+            upsertScoreCalculationHead(ScoreCalculationHeadEntity(deviceId, row.day, row.key, row.fingerprint))
+        }
+        for (cell in rows.map { it.day to it.key }.distinct()) trimScoreCalculationCell(deviceId, cell.first, cell.second)
+        trimScoreCalculationDevice(deviceId)
+        deleteDanglingScoreCalculationHeads(deviceId)
+    }
+
     /** Persist a metric-series batch and its specialized provenance in one transaction. Used by weekly
      *  VO₂max so a method label can never describe an older/newer value after a partial write. */
     @Transaction
@@ -533,6 +608,7 @@ interface WhoopDao : DeviceRegistryDao {
         provenance: List<ScoreInputProvenanceRow>,
         replaceMetricKeys: List<String> = emptyList(),
         replaceMetricSourceIds: List<String> = listOf(deviceId),
+        calculationEvidence: List<ScoreCalculationEvidenceEntity> = emptyList(),
     ) {
         // #1196: a scoring pass that produced NO computed daily rows must NOT wipe the persisted window.
         // That happens transiently during a reconnect+offload storm (a pass runs over a still-incomplete
@@ -551,6 +627,7 @@ interface WhoopDao : DeviceRegistryDao {
         upsertDailyMetrics(dailyMetrics)
         if (metricPoints.isNotEmpty()) upsertMetricSeries(metricPoints)
         if (provenance.isNotEmpty()) upsertScoreInputProvenance(provenance)
+        persistCalculationEvidence(calculationEvidence, deviceId, from, to, dailyMetrics, metricPoints, provenance)
     }
 
     @Upsert

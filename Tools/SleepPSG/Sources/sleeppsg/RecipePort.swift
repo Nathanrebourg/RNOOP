@@ -413,7 +413,7 @@ enum V2Recipe {
         return path.reversed()
     }
 
-    static func stageEpochs(_ feats: [Epoch], cfg: RecipeConfig = .shipped) -> [String] {
+    static func emissions(_ feats: [Epoch], cfg: RecipeConfig = .shipped) -> [[String: Double]] {
         if feats.isEmpty { return [] }
         let prior = cfg.baseLogPrior
 
@@ -470,6 +470,12 @@ enum V2Recipe {
             seq.append(em)
         }
 
+        return seq
+    }
+
+    static func stageEpochs(_ feats: [Epoch], cfg: RecipeConfig = .shipped) -> [String] {
+        if feats.isEmpty { return [] }
+        var seq = emissions(feats, cfg: cfg)
         if cfg.remLatencyMode == .preNine30FractionStep { return viterbi(seq, cfg) }
 
         let provisional = viterbi(seq, cfg)

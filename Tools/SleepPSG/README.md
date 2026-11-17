@@ -119,9 +119,10 @@ and every bias column use. The per-subject mean is what a clinician comparing in
 is the one the self-check below is stated in, because it is the convention the previous harness reported.
 **Quote either, never both interchangeably, and always say which.**
 
-`SleepStagerV2` fits nothing to data — every coefficient is fixed a priori — so there is no train/test split
-to make for the recipe itself. The leave-one-subject-out machinery exists for the fitted comparison models
-in section 5, which do need it.
+The shipped recipe is fixed during each run, but this cohort has informed previous recipe development
+(including the priors discussed below). These results are a reproducible benchmark, not a new untouched
+holdout. Leave-one-subject-out applies to fitted comparison models only; it cannot undo earlier recipe
+selection on this cohort.
 
 ### 4. Stratified by night length
 
@@ -229,7 +230,7 @@ F1 0.515" is exactly this harness's measured REM **precision** (0.515), against 
 - **The R-R stream is empty.** `sleep-accel` carries no beat-to-beat intervals, so `respRegularity` returns
   nil on every epoch, `zrg` collapses to a constant 0, and the recipe's RSA respiration term contributes
   exactly 0.0 to every emission. Five of the recipe's six inputs are live here; the sixth is silent. Results
-  are a lower bound on the same recipe with an R-R stream present.
+  do not predict whether adding a WHOOP R-R stream will improve or worsen agreement.
 - **Different hardware.** This is an Apple Watch's ~50 Hz raw accelerometer collapsed to a per-second mean,
   not a WHOOP gravity decode. The absolute scale differs — which is precisely the thing `SleepStagerV2` was
   built not to depend on, since every motion threshold is a multiple of the night's own median per-second
@@ -238,3 +239,36 @@ F1 0.515" is exactly this harness's measured REM **precision** (0.515), against 
   detection is not exercised, and nothing here says anything about it.
 - **n = 31 subjects**, in a sleep-lab setting, wearing a device on the wrist alongside PSG leads. That is
   more independent subjects than any other reference NOOP has, and it is still 31 people.
+
+
+## Separate BIDSleep research mode
+
+The later four-track NROOP study uses Apple Watch streams and expert-reviewed Dreem2 EEG from BIDSleep1.0.1, a different reference from the PSG cohort described above. `--research-case` accepts a prepared single-night JSON and runs the actual shipped stager plus explicitly named guarded variants:
+
+```sh
+sleeppsg --research-case case.json --research-output new-report.json --variants shipped,awake-020
+```
+
+`Tools/prepare_bidsleep.py` performs optional local MATLAB/CSV conversion; `Tools/nroop_sleep_selection.py` freezes training-only model and confidence artifacts before separate-participant evaluation. The native executable hash and confidence checksum are pinned. Prepared vectors retain dataset-native units without an assumed physical conversion. This does not alter the shipped recipe. See `docs/NROOP_STABILITY_CONFIDENCE.md` and the delivered attributed study report for selection, limits and actual results.
+
+### Two-step experimental candidate
+
+`hierarchical-v1` is opt-in in the research executable only:
+
+```sh
+sleeppsg --research-case case.json --research-output new-report.json --variants shipped,hierarchical-v1
+```
+
+It first decodes wake/sleep, then light/deep/REM inside sleep runs. Missing input cells are `unknown`,
+not a sleep stage. Its `coverage.referenceAccuracy` counts unknown predictions as errors against every
+available reference epoch. The candidate's `metricScope` explicitly marks top-level `accuracy`,
+`macroF1`, `confusion` and `perStage` as conditional on nonunknown predictions; `accuracy` and `macroF1`
+are absent when no epoch is predicted. Its separate `fullReference` block includes every known
+reference epoch, a fifth `unknown` prediction column, full stage supports and false-negative penalties. Unknown reference labels are excluded from both. The shipped variant's numerical recipe
+and ordinary JSON values stay unchanged. The guarded V2 port shares only its emission extraction with
+the new candidate; the existing epoch-equivalence test still checks the shipped recipe.
+
+`Tools/nroop_hierarchical.py` runs a fixed retrospective comparison and records input/executable hashes,
+participant-weighted macro F1, wake F1, coverage, and paired common-support metrics. Both named BIDSleep
+cohorts have already been examined, so this command does not create a new independent holdout.
+See `docs/NROOP_HIERARCHICAL_SLEEP.md` for the frozen design, measured results and limitations.

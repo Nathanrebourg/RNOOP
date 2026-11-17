@@ -533,14 +533,18 @@ struct SleepView: View {
         VStack(spacing: 0) {
             Text("Sleep")
                 .font(StrandFont.rounded(24, weight: .semibold))
-                .foregroundStyle(Color.white.opacity(0.96))
-                .shadow(color: .black.opacity(0.35), radius: 5, y: 1)
+                .foregroundStyle(StrandPalette.textPrimary)
                 .padding(.top, 6)
                 .accessibilityAddTraits(.isHeader)
 
             if let score {
-                // Same LiquidVessel gauge as Home (`LiquidTodayView` / `HeroScoreCell`).
+                // Match the iPhone dashboard ring; macOS keeps its existing liquid gauge.
                 VStack(spacing: 8) {
+                    #if os(iOS)
+                    PerformanceScoreRing(score: score, tint: NoopVisualStyle.dashboardSleep,
+                                         suffix: "%", diameter: 184,
+                                         numberFont: StrandFont.number(48, weight: .bold))
+                    #else
                     LiquidScoreGauge(
                         score: score,
                         tint: StrandPalette.restColor,
@@ -550,10 +554,10 @@ struct SleepView: View {
                         numberColor: Color.white.opacity(0.98),
                         captionColor: Color.white.opacity(0.52)
                     )
+                    #endif
                     Text(sleepScoreWord(score))
                         .font(StrandFont.subhead.weight(.semibold))
-                        .foregroundStyle(Color.white.opacity(0.90))
-                        .shadow(color: .black.opacity(0.30), radius: 2, y: 1)
+                        .foregroundStyle(StrandPalette.textPrimary)
                 }
                 .padding(.top, 8)
                 .accessibilityElement(children: .ignore)
@@ -564,11 +568,11 @@ struct SleepView: View {
                         value: night.stages.asleep,
                         format: { durationText($0) },
                         font: StrandFont.number(42),
-                        color: Color.white.opacity(0.96)
+                        color: StrandPalette.textPrimary
                     )
                     Text("asleep last night")
                         .font(StrandFont.subhead)
-                        .foregroundStyle(Color.white.opacity(0.72))
+                        .foregroundStyle(StrandPalette.textSecondary)
                 }
                 .padding(.top, 14)
                 .padding(.bottom, 4)
@@ -593,11 +597,20 @@ struct SleepView: View {
     /// Fixed night-scene band behind Sleep scroll content — same ScreenScaffold.topBackground pattern
     /// as Home's sky. Tall enough for safe-area + hero; fades to surfaceBase before the first card.
     private var sleepNightTopBackground: some View {
+        #if os(iOS)
+        LinearGradient(colors: [NoopVisualStyle.dashboardTop, NoopVisualStyle.dashboardBottom],
+                       startPoint: .top, endPoint: .bottom)
+            .frame(maxWidth: .infinity)
+            .frame(height: 440, alignment: .top)
+            .allowsHitTesting(false)
+            .accessibilityHidden(true)
+        #else
         SleepPerformanceNightScene()
             .frame(maxWidth: .infinity)
             .frame(height: 440, alignment: .top)
             .allowsHitTesting(false)
             .accessibilityHidden(true)
+        #endif
     }
 
     /// A short Rest state word for the hero gauge — same banding the synthesis hero uses.

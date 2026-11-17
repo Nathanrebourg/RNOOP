@@ -874,9 +874,10 @@ class WhoopRepository(
         provenance: List<ScoreInputProvenanceRow>,
         replaceMetricKeys: List<String> = emptyList(),
         replaceMetricSourceIds: List<String> = listOf(deviceId),
+        calculationEvidence: List<ScoreCalculationEvidenceEntity> = emptyList(),
     ) = dao.replaceComputedScoreWindow(
         deviceId, from, to, dailyMetrics, metricPoints, provenance,
-        replaceMetricKeys, replaceMetricSourceIds,
+        replaceMetricKeys, replaceMetricSourceIds, calculationEvidence,
     )
 
     /** Computed-only daily rows; unlike daysMerged this can never substitute imported/calendar steps. */
@@ -905,6 +906,12 @@ class WhoopRepository(
 
     suspend fun scoreInputSource(deviceId: String, day: String, key: String): String? =
         dao.scoreInputSource(deviceId, day, key)
+
+    suspend fun scoreCalculationHistory(deviceId: String, day: String, key: String, limit: Int = 8): List<ScoreCalculationEvidenceEntity> =
+        dao.scoreCalculationHistory(deviceId, day, key, limit)
+
+    suspend fun scoreCalculationCurrent(deviceId: String, day: String, key: String): ScoreCalculationEvidenceEntity? =
+        dao.scoreCalculationCurrent(deviceId, day, key)
 
     suspend fun upsertMetricSeriesWithProvenance(
         rows: List<MetricSeriesRow>,

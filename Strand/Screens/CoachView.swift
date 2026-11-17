@@ -13,6 +13,8 @@ import StrandDesign
 /// contract): `hasKey`, `provider` / `provider.modelOptions`, `model`, `messages`,
 /// `sending`, `errorText`, `setKey(_:)`, `clearKey()`, and `send(_:)`.
 struct CoachView: View {
+    var configurationOnly = false
+    @Environment(\.dismiss) private var dismissConfiguration
     @EnvironmentObject var coach: AICoachEngine
     /// K8: used by "Save to Journal" — saves the coach advice as a journal entry with the text
     /// in the notes field, so it appears alongside other journal entries in Insights.
@@ -58,13 +60,24 @@ struct CoachView: View {
     private var suggestions: [String] { coach.suggestions }
 
     var body: some View {
-        ScreenScaffold(title: "Coach",
+        ScreenScaffold(title: configurationOnly ? "Coach settings" : "Coach",
                        subtitle: "Ask about your charge, effort, rest and workouts, grounded in your own numbers.",
                        // Liquid finish: the same full-bleed day-of-sky backdrop Today + the other liquid
                        // tabs carry, so Coach sits in one atmosphere. Static + non-interactive; the frosted
                        // message/setup cards below sit on the opaque canvas and stay legible.
-                       topBackground: liquidScaffoldSky()) {
-            if coach.isConfigured {
+                       topBackground: liquidScaffoldSky(), trailing: {
+                           if configurationOnly {
+                               Button("Done") { dismissConfiguration() }.font(StrandFont.subhead)
+                           }
+                       }) {
+            if configurationOnly {
+                if coach.isConfigured {
+                    connectedHeader
+                    if coach.keyRejected || showKeyEditor { keyRepairPanel }
+                } else { setupCard }
+                Button("Privacy and coaching preferences") { showSettings = true }
+                    .font(StrandFont.subhead)
+            } else if coach.isConfigured {
                 connectedHeader
                 transcript
                 if let error = coach.errorText, !error.isEmpty {
@@ -133,7 +146,7 @@ struct CoachView: View {
         // #2243: coach settings. `repo` rides along because the scaffold's environment is not
         // inherited by a sheet's own view tree.
         .sheet(isPresented: $showSettings) {
-            CoachSettingsView()
+            CoachSettingsView(refreshModelsOnOpen: !configurationOnly)
                 .environmentObject(coach)
                 .environmentObject(repo)
         }
@@ -154,6 +167,7 @@ struct CoachView: View {
         // `startBriefIfNeeded` only ever runs over the network when BOTH of the above left the
         // transcript genuinely empty.
         .task {
+            guard !configurationOnly else { return }
             await coach.loadPersistedMessagesIfNeeded()
             coach.retireStaleConversationIfNeeded()
             // Gated on the transcript BEFORE consuming. `consumeStoredBrief()` clears the unconsumed
@@ -171,6 +185,7 @@ struct CoachView: View {
         // (which the launcher does not produce, but a future caller might) degrades to showing setup
         // rather than a failed request.
         .task(id: coach.pendingPrompt) {
+            guard !configurationOnly else { return }
             guard let prompt = coach.pendingPrompt, !prompt.isEmpty else { return }
             coach.pendingPrompt = nil
             guard coach.isConfigured else { return }
@@ -190,6 +205,7 @@ struct CoachView: View {
         // behaviour); the guard inside `startBriefIfNeeded` (messages.isEmpty) keeps this a no-op once
         // a conversation exists.
         .onChangeCompat(of: coach.dataConsent) { _ in
+            guard !configurationOnly else { return }
             Task { await coach.startBriefIfNeeded() }
         }
     }

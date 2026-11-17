@@ -1,0 +1,261 @@
+{
+  "dataset": "bidsleep-dataset/1.0.1",
+  "selection": "lexically first night per subject before reading values",
+  "subjectSplit": "sha256(nroop-bidsleep-v1|subject)%5 < 2 => holdout",
+  "cases": [
+    {
+      "subject": "Bidslab00",
+      "night": "Bidslab00/1",
+      "split": "holdout"
+    },
+    {
+      "subject": "Bidslab01",
+      "night": "Bidslab01/1",
+      "split": "training"
+    },
+    {
+      "subject": "Bidslab02",
+      "night": "Bidslab02/1",
+      "split": "training"
+    },
+    {
+      "subject": "Bidslab06",
+      "night": "Bidslab06/1",
+      "split": "training"
+    },
+    {
+      "subject": "Bidslab07",
+      "night": "Bidslab07/1",
+      "split": "training"
+    },
+    {
+      "subject": "Bidslab08",
+      "night": "Bidslab08/1",
+      "split": "training"
+    },
+    {
+      "subject": "Bidslab09",
+      "night": "Bidslab09/1",
+      "split": "training"
+    },
+    {
+      "subject": "Bidslab10",
+      "night": "Bidslab10/1",
+      "split": "training"
+    },
+    {
+      "subject": "Bidslab11",
+      "night": "Bidslab11/1",
+      "split": "training"
+    },
+    {
+      "subject": "Bidslab13",
+      "night": "Bidslab13/1",
+      "split": "holdout"
+    },
+    {
+      "subject": "Bidslab14",
+      "night": "Bidslab14/1",
+      "split": "training"
+    },
+    {
+      "subject": "Bidslab15",
+      "night": "Bidslab15/1",
+      "split": "training"
+    },
+    {
+      "subject": "Bidslab16",
+      "night": "Bidslab16/1",
+      "split": "training"
+    },
+    {
+      "subject": "Bidslab17",
+      "night": "Bidslab17/1",
+      "split": "holdout"
+    },
+    {
+      "subject": "Bidslab18",
+      "night": "Bidslab18/1",
+      "split": "training"
+    },
+    {
+      "subject": "Bidslab19",
+      "night": "Bidslab19/1",
+      "split": "holdout"
+    },
+    {
+      "subject": "Bidslab20",
+      "night": "Bidslab20/1",
+      "split": "holdout"
+    },
+    {
+      "subject": "Bidslab22",
+      "night": "Bidslab22/1",
+      "split": "training"
+    },
+    {
+      "subject": "Bidslab30",
+      "night": "Bidslab30/1",
+      "split": "holdout"
+    },
+    {
+      "subject": "Bidslab31",
+      "night": "Bidslab31/1",
+      "split": "training"
+    },
+    {
+      "subject": "Bidslab32",
+      "night": "Bidslab32/1",
+      "split": "training"
+    },
+    {
+      "subject": "Bidslab34",
+      "night": "Bidslab34/1",
+      "split": "training"
+    },
+    {
+      "subject": "Bidslab35",
+      "night": "Bidslab35/1",
+      "split": "training"
+    },
+    {
+      "subject": "Bidslab36",
+      "night": "Bidslab36/1",
+      "split": "training"
+    },
+    {
+      "subject": "Bidslab38",
+      "night": "Bidslab38/1",
+      "split": "training"
+    },
+    {
+      "subject": "Bidslab39",
+      "night": "Bidslab39/1",
+      "split": "holdout"
+    },
+    {
+      "subject": "Bidslab40",
+      "night": "Bidslab40/1",
+      "split": "training"
+    },
+    {
+      "subject": "Bidslab41",
+      "night": "Bidslab41/1",
+      "split": "holdout"
+    },
+    {
+      "subject": "Bidslab42",
+      "night": "Bidslab42/1",
+      "split": "training"
+    },
+    {
+      "subject": "Bidslab43",
+      "night": "Bidslab43/1",
+      "split": "training"
+    },
+    {
+      "subject": "Bidslab44",
+      "night": "Bidslab44/1",
+      "split": "training"
+    },
+    {
+      "subject": "Bidslab45",
+      "night": "Bidslab45/1",
+      "split": "holdout"
+    },
+    {
+      "subject": "Bidslab47",
+      "night": "Bidslab47/1",
+      "split": "training"
+    },
+    {
+      "subject": "Bidslab49",
+      "night": "Bidslab49/1",
+      "split": "training"
+    },
+    {
+      "subject": "Bidslab50",
+      "night": "Bidslab50/1",
+      "split": "holdout"
+    },
+    {
+      "subject": "Bidslab51",
+      "night": "Bidslab51/1",
+      "split": "training"
+    },
+    {
+      "subject": "Bidslab52",
+      "night": "Bidslab52/1",
+      "split": "holdout"
+    },
+    {
+      "subject": "Bidslab53",
+      "night": "Bidslab53/1",
+      "split": "training"
+    },
+    {
+      "subject": "Bidslab55",
+      "night": "Bidslab55/1",
+      "split": "holdout"
+    },
+    {
+      "subject": "Bidslab56",
+      "night": "Bidslab56/1",
+      "split": "training"
+    },
+    {
+      "subject": "Bidslab60",
+      "night": "Bidslab60/1",
+      "split": "holdout"
+    },
+    {
+      "subject": "Bidslab62",
+      "night": "Bidslab62/1",
+      "split": "holdout"
+    },
+    {
+      "subject": "Bidslab63",
+      "night": "Bidslab63/1",
+      "split": "holdout"
+    },
+    {
+      "subject": "Bidslab64",
+      "night": "Bidslab64/1",
+      "split": "training"
+    },
+    {
+      "subject": "Bidslab65",
+      "night": "Bidslab65/1",
+      "split": "training"
+    },
+    {
+      "subject": "Bidslab66",
+      "night": "Bidslab66/1",
+      "split": "holdout"
+    },
+    {
+      "subject": "Bidslab68",
+      "night": "Bidslab68/1",
+      "split": "holdout"
+    }
+  ],
+  "version": "nroop-bidsleep-study-v1",
+  "source": "https://physionet.org/content/bidsleep-dataset/1.0.1/",
+  "sourceManifestSHA256": "13333dff4d4640167435188bc6019c1782684b96d09838cb7e7b3ad005a51460",
+  "reference": "Dreem2 expert-reviewed EEG; not full PSG",
+  "trainingParticipants": 30,
+  "holdoutParticipants": 17,
+  "recipes": [
+    "shipped",
+    "awake-014",
+    "awake-020",
+    "awake-026",
+    "rem-018",
+    "rem-016",
+    "awake020-rem018"
+  ],
+  "selector": "training mean-participant four-class macroF1, ties retain earlier recipe",
+  "errorBudget": 0.4,
+  "qualityMethod": "apple-watch-availability-v1",
+  "notes": "One lexically first night per participant chosen before result inspection. Any exclusions reported; no night substitution or heldout retuning."
+}

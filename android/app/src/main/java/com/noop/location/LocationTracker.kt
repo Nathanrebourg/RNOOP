@@ -29,14 +29,15 @@ class TrackFilter(
 ) {
     private var last: RawFix? = null
     fun accept(fix: RawFix): LatLng? {
-        if (fix.accuracyM > maxAccuracyM) return null
+        if (!fix.accuracyM.isFinite() || fix.accuracyM < 0f || fix.accuracyM > maxAccuracyM) return null
+        if (fix.lat !in -90.0..90.0 || fix.lon !in -180.0..180.0) return null
         val prev = last
         if (prev != null) {
             val dt = (fix.tMs - prev.tMs) / 1000.0
-            if (dt > 0) {
-                val d = RouteMath.haversineMeters(LatLng(prev.lat, prev.lon), LatLng(fix.lat, fix.lon))
-                if (d / dt > maxSpeedMps) return null
-            }
+            // A duplicate or older timestamp cannot prove the jump was physically possible.
+            if (dt <= 0) return null
+            val d = RouteMath.haversineMeters(LatLng(prev.lat, prev.lon), LatLng(fix.lat, fix.lon))
+            if (d / dt > maxSpeedMps) return null
         }
         last = fix
         return LatLng(fix.lat, fix.lon)

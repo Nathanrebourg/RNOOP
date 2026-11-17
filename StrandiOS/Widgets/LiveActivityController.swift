@@ -55,7 +55,8 @@ final class LiveActivityController {
         // Refreshed once a change has landed, never from inside it (`LiveHRBannerInputs`). AppModel's median (`bpm`)
         // is an input in its own right: it moves on the R-R alone, and a clear that reached it that way refreshed
         // nothing, so the banner kept the last number until iOS's stale date drew the dash.
-        LiveHRBannerInputs.settled([model.live.$heartRate.map { _ in () }.eraseToAnyPublisher(),
+        LiveHRBannerInputs.settled([model.live.readableHeartRateReceived.eraseToAnyPublisher(),
+                                    model.live.$heartRate.map { _ in () }.eraseToAnyPublisher(),
                                     model.live.$connected.map { _ in () }.eraseToAnyPublisher(),
                                     model.$bpm.map { _ in () }.eraseToAnyPublisher()])
             .sink { [weak self] in self?.refreshBanner() }
@@ -150,7 +151,11 @@ final class LiveActivityController {
         // Link down: the dash, never the last number (`bonded` stays true across a disconnect, and keying off it once
         // left a fabricated "live" HR standing). No timed end: a timer in a suspended app fires at its next wake,
         // which is typically the strap coming back — exactly when the banner should stay.
-        let state = NOOPActivityAttributes.ContentState(bpm: connected ? bpm : nil, recovery: recovery,
+        let readingAt = model?.live.lastReadableHeartRateAt
+        let freshBpm = LiveHRBannerPushPolicy.freshReading(bpm, measuredAt: readingAt, now: now,
+                                                          validFor: Self.staleAfter)
+        let staleDate = readingAt.map { $0.addingTimeInterval(Self.staleAfter) } ?? now
+        let state = NOOPActivityAttributes.ContentState(bpm: connected ? freshBpm : nil, recovery: recovery,
                                                         bonded: connected, effort: effort)
 
         if step == .renew, activity != nil {
@@ -170,7 +175,6 @@ final class LiveActivityController {
             if let shown = shownState, (shown.bpm == nil) != (state.bpm == nil) { logReading(state) }
             lastPush = now
             shownState = state
-            let staleDate = now.addingTimeInterval(Self.staleAfter)
             Task { await activity.update(ActivityContent(state: state, staleDate: staleDate)) }
         } else if start(state, at: now) {
             log(state.bpm == nil ? "started, showing – until a heart rate arrives" : "started")
@@ -205,7 +209,8 @@ final class LiveActivityController {
         do {
             let started = try Activity.request(
                 attributes: NOOPActivityAttributes(title: String(localized: "Live HR")),
-                content: ActivityContent(state: state, staleDate: now.addingTimeInterval(Self.staleAfter)),
+                content: ActivityContent(state: state, staleDate: model?.live.lastReadableHeartRateAt
+                    .map { $0.addingTimeInterval(Self.staleAfter) } ?? now),
                 pushType: nil
             )
             activity = started

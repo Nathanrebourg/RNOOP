@@ -65,6 +65,18 @@ extension WhoopStore {
         }
     }
 
+    /// Every metric for a device and day range, used by the fused read without one query per metric.
+    public func metricSeries(deviceId: String, from: String, to: String) async throws -> [MetricPoint] {
+        try syncRead { db in
+            try Row.fetchAll(db, sql: """
+                SELECT day, key, value FROM metricSeries
+                WHERE deviceId = ? AND day >= ? AND day <= ?
+                ORDER BY day ASC, key ASC
+                """, arguments: [deviceId, from, to])
+                .map { MetricPoint(day: $0["day"], key: $0["key"], value: $0["value"]) }
+        }
+    }
+
     /// Distinct metric keys present for a device, sorted ascending.
     public func metricKeys(deviceId: String) async throws -> [String] {
         try syncRead { db in

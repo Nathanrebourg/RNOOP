@@ -25,6 +25,7 @@ import WhoopStore
         let onsetByWakeDay: [String: Int]
         let firstWakeDay: String?
         let markerUpdate: MarkerUpdate
+        var recipesByWakeDay: [String: ScoreRecipe] = [:]
     }
     struct PersistedBoundary {
         let boundary: PhysiologicalSteps.CycleBoundary
@@ -39,6 +40,7 @@ import WhoopStore
     /// A cycle's Effort and calories, with the key of the inputs they were computed from.
     fileprivate struct CachedLoad {
         let key: String; let strain: Double?; let calories: Double?
+        let effortRecipe: ScoreRecipe?
     }
     final class Cache {
         fileprivate var cycles: [String: CachedCycle] = [:]
@@ -188,6 +190,7 @@ import WhoopStore
         var steps: [String: Int] = [:], onsets: [String: Int] = [:]
         var strains: [String: Double] = [:], calories: [String: Double] = [:]
         var workoutCounts: [String: Int] = [:]
+        var recipes: [String: ScoreRecipe] = [:]
         windowLoop: for window in windows {
             guard let day = wakeDayById[window.sleepId], let fallback = ownerById[window.sleepId] else { continue }
             do {
@@ -233,10 +236,14 @@ import WhoopStore
                     strain: StrainScorer.strain(cycleHR, maxHR: effectiveMaxHR, restingHR: restingHR,
                                                 method: effortMethod, sex: profile.sex),
                     calories: cycleHR.isEmpty ? nil : Calories.estimateDayCalories(
-                        cycleHR, profile: profile, hrmax: effectiveMaxHR, restingHR: restingHR))
+                        cycleHR, profile: profile, hrmax: effectiveMaxHR, restingHR: restingHR),
+                    effortRecipe: ScoreRecipe.effort(hr: cycleHR, maxHR: effectiveMaxHR, restingHR: restingHR,
+                        method: effortMethod, sex: profile.sex, source: fallback)?
+                        .withEffortWindow(startInclusive: window.onset, endExclusive: window.endExclusive))
                 cache.loads[window.sleepId] = load
             }
             if let strain = load.strain { strains[day] = strain }
+            if let recipe = load.effortRecipe, recipe.score == load.strain { recipes[day] = recipe }
             if let kcal = load.calories { calories[day] = kcal }
             let persistedWorkoutKeys = workouts
                 .filter { $0.startTs >= window.onset && $0.startTs < window.endExclusive }
@@ -341,7 +348,8 @@ import WhoopStore
             workoutCountByWakeDay: workoutCounts, onsetByWakeDay: onsets,
             firstWakeDay: wakeDayById.values.min(), markerUpdate: .replace(
                 points: recoveredMarkers,
-                sourceIds: Array(Set(candidates.map { computedId($0.owner) })).sorted()))
+                sourceIds: Array(Set(candidates.map { computedId($0.owner) })).sorted()),
+            recipesByWakeDay: recipes)
     }
 
     static func applying(_ result: Result, to daily: DailyMetric) -> DailyMetric {

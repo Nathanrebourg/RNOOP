@@ -1111,7 +1111,16 @@ struct MetricDetailView: View {
         // A range tap changes the task identity. Do not let a cancelled bounded read overwrite a newer
         // full-history ALL read (or vice versa) if the underlying store await completes late.
         guard !Task.isCancelled, !isStepsDetail || requestedRange == range else { return }
-        series = loadedSeries
+        // Efficiency is stored as a fraction on some sources and as a percentage on others.
+        // Normalize for this presentation before hero, charts, and history consume the values.
+        if metric.key == "sleep_efficiency" {
+            series = resolution.points.compactMap { point in
+                PerformanceContext.sleepEfficiencyPercent(point.value, origin: point.origin, source: point.source)
+                    .map { (day: point.day, value: $0) }
+            }
+        } else {
+            series = loadedSeries
+        }
         // Per-day provenance for the readings table (task #8). resolvedSeries names the source that
         // actually supplied each day (imported strap / on-device / Apple Health / Health Connect).
         if metric.key == "vo2max_est" {

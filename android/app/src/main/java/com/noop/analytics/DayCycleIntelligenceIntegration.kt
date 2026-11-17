@@ -7,6 +7,12 @@ import com.noop.data.WhoopRepository
 
 /** Narrow adapter between the generic day-cycle domain and the legacy scoring orchestrator. */
 internal object DayCycleIntelligenceIntegration {
+    internal fun effortRecipe(hr: List<com.noop.data.HrSample>, maxHR: Double?, restingHR: Double,
+                              method: StrainScorer.Method, sex: String, source: String,
+                              onset: Long, endExclusive: Long): ScoreRecipe? =
+        ScoreRecipe.effort(hr, maxHR, restingHR, method, sex, source)
+            ?.withEffortWindow(onset, endExclusive)
+
     const val ONSET_KEY = "day_cycle_onset_ts"
 
     internal data class PersistedBoundary(

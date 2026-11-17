@@ -38,11 +38,11 @@ struct StrandiOSApp: App {
     @StateObject private var liftSession: LiftSessionController
     @Environment(\.scenePhase) private var scenePhase
     /// Appearance preference (System/Light/Dark). Default follows the OS; the Settings picker writes it.
-    @AppStorage(AppearanceMode.storageKey) private var appearanceRaw = AppearanceMode.system.rawValue
+    @AppStorage(AppearanceMode.storageKey) private var appearanceRaw = AppearanceMode.dark.rawValue
     /// Chart data-colour style (Titanium / Classic throwback). Re-colours gauges + charts.
     @AppStorage(ChartStyle.storageKey) private var chartStyleRaw = ChartStyle.titanium.rawValue
     /// Chrome accent colour (mint / WHOOP blue / custom). Chrome only — never the data colour worlds.
-    @AppStorage(AccentColor.storageKey) private var accentRaw = AccentColor.mint.rawValue
+    @AppStorage(AccentColor.storageKey) private var accentRaw = AccentColor.whoopBlue.rawValue
     @AppStorage(AccentColor.customHexKey) private var accentCustomHex = AccentColor.defaultCustomHex
     /// Effort's display scale is also embedded in the shared widget snapshot. Observe it here so a
     /// Settings change gets one accurate full rebuild instead of waiting for an unrelated repo refresh.
@@ -52,6 +52,8 @@ struct StrandiOSApp: App {
     @AppStorage(UnitPrefs.systemKey) private var unitSystemRaw = UnitSystem.metric.rawValue
 
     init() {
+        // NROOP presents Effort on the 0–21 scale by default, without overwriting an existing choice.
+        UserDefaults.standard.register(defaults: [UnitPrefs.effortScaleKey: EffortScale.whoop.rawValue])
         // #1008: pin the pre-change Overnight-only default for existing installs before
         // anything reads it. Idempotent; a no-op on fresh installs and after the first launch.
         PuffinExperiment.migrateContinuousHrvOvernightDefault()

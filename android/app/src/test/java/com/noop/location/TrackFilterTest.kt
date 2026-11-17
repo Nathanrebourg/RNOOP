@@ -39,4 +39,19 @@ class TrackFilterTest {
         val p = f.accept(fix(51.50013, -0.1200, 8f, 10_000))
         assertEquals(51.50013, p!!.lat, 1e-6)
     }
+
+    @Test fun staleAndDuplicateFixes_doNotMoveAnchor() {
+        val f = TrackFilter()
+        f.accept(fix(51.5000, -0.1200, 5f, 10_000))
+        assertNull(f.accept(fix(51.52, -0.12, 5f, 10_000)))
+        assertNull(f.accept(fix(51.52, -0.12, 5f, 9_000)))
+        assertEquals(LatLng(51.50013, -0.12), f.accept(fix(51.50013, -0.12, 5f, 20_000)))
+    }
+
+    @Test fun invalidAccuracyAndCoordinates_rejected() {
+        assertNull(TrackFilter().accept(fix(51.5, -0.12, Float.NaN, 0)))
+        assertNull(TrackFilter().accept(fix(51.5, -0.12, -1f, 0)))
+        assertNull(TrackFilter().accept(fix(Double.NaN, -0.12, 5f, 0)))
+        assertNull(TrackFilter().accept(fix(120.0, -0.12, 5f, 0)))
+    }
 }

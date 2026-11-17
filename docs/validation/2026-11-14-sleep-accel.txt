@@ -1,0 +1,78 @@
+
+================================================================================
+2. DATASET
+================================================================================
+PhysioNet sleep-accel v1.0.0 — Walch, Huang, Forger & Goldstein, SLEEP 42(12) zsz180 (2019).
+Licence: Open Data Commons Attribution v1.0. Root: /private/tmp/nroop-research/dataset/extracted/motion-and-heart-rate-from-a-wrist-worn-wearable-and-labeled-sleep-from-polysomnography-1.0.0
+
+subjects              31
+PSG-scored epochs     26773
+scored night length   median  476.0 min   range 208.5–490.5 min
+
+The R-R stream is EMPTY for every subject — this dataset carries no beat-to-beat intervals — so the
+recipe's RSA respiration term returns nil on every epoch and contributes exactly 0.0 to every emission.
+Five of the recipe's six inputs are live here; the sixth is silent, not wrong.
+
+================================================================================
+3. SHIPPED SleepStagerV2 vs PSG TRUTH
+================================================================================
+Four-class agreement over every PSG-scored epoch, using the fixed shipped recipe with no fitting
+in this run. This cohort has informed previous recipe development (see README priors); these are
+benchmark results, NOT a new untouched holdout. Leave-one-subject-out evaluation elsewhere in this
+tool applies to fitted comparison models only and does not erase prior recipe selection.
+
+epochs scored     26773
+accuracy           61.14 %
+Cohen's kappa      0.371   (per-subject mean  0.357 ± 0.129)
+
+per stage             precision   recall       F1   support
+      wake                 0.674    0.308    0.423   2429
+      light                0.689    0.678    0.684   14775
+      deep                 0.463    0.507    0.484   3685
+      rem                  0.526    0.633    0.575   5884
+
+CONFUSION MATRIX — rows=PSG, columns=prediction; order: wake light deep rem
+wake: 749 932 193 555
+light: 276 10023 1941 2535
+deep: 23 1530 1870 262
+rem: 63 2060 35 3726
+
+STAGE FRACTIONS — reported as a first-class result, not an appendix.
+Kappa does not constrain them: PR #348 raised kappa on all three of its benchmarks and was reverted
+48 h later for re-scoring a healthy night from 6 % to 23 % awake.
+
+stage        predicted %   truth %      bias pp   (pooled over all scored epochs)
+      wake            4.15      9.07       -4.92
+      light          54.33     55.19       -0.86
+      deep           15.09     13.76        1.32
+      rem            26.44     21.98        4.46
+
+    stage        predicted %   truth %      bias pp   (mean of per-subject percentages)
+      wake            4.17      9.30       -5.13
+      light          54.28     54.61       -0.32
+      deep           15.16     14.76        0.40
+      rem            26.39     21.33        5.05
+
+FIRST-REM LATENCY — minutes from staged sleep onset to the first REM epoch.
+nights with no REM in the prediction: 0 of 31
+
+                    predicted     truth
+  median               102.0      88.5  min
+  mean                 113.1     104.7  min
+  MAE (paired)          49.9            min  (n = 30)
+
+SELF-CHECK against the previous harness's reported figures
+Printed to expose disagreement, not to be matched. Nothing here is tuned to these numbers. Stage
+fractions use the per-subject-mean convention, which is the one those figures were reported on.
+
+quantity                        measured   previously      delta
+      subjects                           31           31          0
+      PSG-scored epochs               26773        26773          0
+      kappa (4-class)                 0.371        0.349      0.022
+      REM F1                          0.575        0.515      0.060
+      REM % of night                  26.39        20.80       5.59
+      deep % predicted                15.16        19.25      -4.09
+      deep % truth                    14.76        14.76       0.00
+      first-REM predicted, min        102.0        142.0      -40.0
+      first-REM truth, min             88.5         88.5        0.0
+

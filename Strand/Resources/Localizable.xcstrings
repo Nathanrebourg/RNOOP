@@ -1,6 +1,506 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "counts directly": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "counts directly"}}, "fr": {"stringUnit": {"state": "translated", "value": "compte directement"}}}},
+    "step estimate": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "step estimate"}}, "fr": {"stringUnit": {"state": "translated", "value": "estime les pas"}}}},
+    "best stager": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "best stager"}}, "fr": {"stringUnit": {"state": "translated", "value": "détaille les phases de sommeil"}}}},
+    "computed stages": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "computed stages"}}, "fr": {"stringUnit": {"state": "translated", "value": "calcule les phases de sommeil"}}}},
+    "phone sleep buckets": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "phone sleep buckets"}}, "fr": {"stringUnit": {"state": "translated", "value": "regroupe les phases de sommeil"}}}},
+    "worn sensor": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "worn sensor"}}, "fr": {"stringUnit": {"state": "translated", "value": "est porté au poignet"}}}},
+    "direct sensor": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "direct sensor"}}, "fr": {"stringUnit": {"state": "translated", "value": "mesure directement"}}}},
+    "computed on device": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "computed on device"}}, "fr": {"stringUnit": {"state": "translated", "value": "est calculé sur cet appareil"}}}},
+    "phone aggregate": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "phone aggregate"}}, "fr": {"stringUnit": {"state": "translated", "value": "regroupe les données"}}}},
+    "estimate": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "estimate"}}, "fr": {"stringUnit": {"state": "translated", "value": "est une estimation"}}}},
+    "Try again to reload the available measurements.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Try again to reload the available measurements."}}, "fr": {"stringUnit": {"state": "translated", "value": "Réessaie pour recharger les mesures disponibles."}}}},
+    "Some measurements could not be read": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Some measurements could not be read"}}, "fr": {"stringUnit": {"state": "translated", "value": "Certaines mesures n’ont pas pu être lues"}}}},
+    "Measurements from %lld sources": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Measurements from %lld sources"}}, "fr": {"stringUnit": {"state": "translated", "value": "Mesures provenant de %lld sources"}}}},
+    "Asleep time": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Asleep time"}}, "fr": {"stringUnit": {"state": "translated", "value": "Temps endormi"}}}},
+    "Workout history": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Workout history"}}, "fr": {"stringUnit": {"state": "translated", "value": "Historique des entraînements"}}}},
+    "HR Zones 1-3": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "HR Zones 1-3"}}, "fr": {"stringUnit": {"state": "translated", "value": "Zones cardio 1–3"}}}},
+    "HR Zones 4-5": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "HR Zones 4-5"}}, "fr": {"stringUnit": {"state": "translated", "value": "Zones cardio 4–5"}}}},
+    "Data": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Data"}}, "fr": {"stringUnit": {"state": "translated", "value": "Données"}}}},
+    "App": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "App"}}, "fr": {"stringUnit": {"state": "translated", "value": "Application"}}}},
+    "Today's scores": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Today's scores"}}, "fr": {"stringUnit": {"state": "translated", "value": "Scores du jour"}}}},
+    "Recovery score": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Recovery score"}}, "fr": {"stringUnit": {"state": "translated", "value": "Score de récupération"}}}},
+    "View full history": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "View full history"}}, "fr": {"stringUnit": {"state": "translated", "value": "Voir l’historique complet"}}}},
+    "Charts, history and comparisons": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Charts, history and comparisons"}}, "fr": {"stringUnit": {"state": "translated", "value": "Graphiques et comparaisons sur toutes les dates"}}}},
+    "No score for this day": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "No score for this day"}}, "fr": {"stringUnit": {"state": "translated", "value": "Score indisponible pour ce jour"}}}},
+    "Some measurements may still be available even when this score has not been calculated.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Some measurements may still be available even when this score has not been calculated."}}, "fr": {"stringUnit": {"state": "translated", "value": "Certaines mesures restent disponibles même lorsque ce score n’a pas encore été calculé."}}}},
+    "Activities": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Activities"}}, "fr": {"stringUnit": {"state": "translated", "value": "Activités"}}}},
+    "Your Daily Outlook": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Your Daily Outlook"}}, "fr": {"stringUnit": {"state": "translated", "value": "Ton aperçu du jour"}}}},
+    "Privacy and coaching preferences": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Privacy and coaching preferences"}}, "fr": {"stringUnit": {"state": "translated", "value": "Confidentialité et préférences du coach"}}}},
+    "breaths/min": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "breaths/min"}}, "fr": {"stringUnit": {"state": "translated", "value": "/min"}}}},
+    "steps": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "steps"}}, "fr": {"stringUnit": {"state": "translated", "value": "pas"}}}},
+    "Reading your measurements…": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Reading your measurements…"}}, "fr": {"stringUnit": {"state": "translated", "value": "Lecture de tes mesures…"}}}},
+    "Discuss with Coach": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Discuss with Coach"}}, "fr": {"stringUnit": {"state": "translated", "value": "En parler avec le coach"}}}},
+    "Your recorded results and activities for this day.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Your recorded results and activities for this day."}}, "fr": {"stringUnit": {"state": "translated", "value": "Tes résultats et tes activités enregistrés pour ce jour."}}}},
+    "Your measurements will appear here after synchronization.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Your measurements will appear here after synchronization."}}, "fr": {"stringUnit": {"state": "translated", "value": "Tes mesures apparaîtront ici après la synchronisation."}}}},
+    "Vital signs": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Vital signs"}}, "fr": {"stringUnit": {"state": "translated", "value": "Constantes"}}}},
+    "Learning your personal reference": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Learning your personal reference"}}, "fr": {"stringUnit": {"state": "translated", "value": "Référence personnelle en cours d’apprentissage"}}}},
+    "Available measurements": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Available measurements"}}, "fr": {"stringUnit": {"state": "translated", "value": "Mesures disponibles"}}}},
+    "Stress estimate": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Stress estimate"}}, "fr": {"stringUnit": {"state": "translated", "value": "Stress estimé"}}}},
+    "Daily proxy, 0–3": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Daily proxy, 0–3"}}, "fr": {"stringUnit": {"state": "translated", "value": "Indicateur quotidien, sur 3"}}}},
+    "Tonight’s sleep": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Tonight’s sleep"}}, "fr": {"stringUnit": {"state": "translated", "value": "Cette nuit"}}}},
+    "Prepare your sleep and alarm": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Prepare your sleep and alarm"}}, "fr": {"stringUnit": {"state": "translated", "value": "Préparer ton sommeil et ton réveil"}}}},
+    "Explore all metrics": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Explore all metrics"}}, "fr": {"stringUnit": {"state": "translated", "value": "Explorer toutes les mesures"}}}},
+    "Detailed sleep tools": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Detailed sleep tools"}}, "fr": {"stringUnit": {"state": "translated", "value": "Détails et outils du sommeil"}}}},
+    "Your personal reference": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Your personal reference"}}, "fr": {"stringUnit": {"state": "translated", "value": "Tes repères personnels"}}}},
+    "Compared with your personal reference": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Compared with your personal reference"}}, "fr": {"stringUnit": {"state": "translated", "value": "Comparé à ta référence personnelle"}}}},
+    "Personal reference not established": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Personal reference not established"}}, "fr": {"stringUnit": {"state": "translated", "value": "Référence personnelle à établir"}}}},
+    "All health tools": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "All health tools"}}, "fr": {"stringUnit": {"state": "translated", "value": "Tous les outils de santé"}}}},
+    "Measurement unavailable": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Measurement unavailable"}}, "fr": {"stringUnit": {"state": "translated", "value": "Mesure indisponible"}}}},
+    "Explore this trend": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Explore this trend"}}, "fr": {"stringUnit": {"state": "translated", "value": "Explorer cette tendance"}}}},
+    "Calculated on this device": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Calculated on this device"}}, "fr": {"stringUnit": {"state": "translated", "value": "Calculé sur cet appareil"}}}},
+    "Recorded measurement": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Recorded measurement"}}, "fr": {"stringUnit": {"state": "translated", "value": "Mesure enregistrée"}}}},
+    "No recorded activity for this day.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "No recorded activity for this day."}}, "fr": {"stringUnit": {"state": "translated", "value": "Aucune activité enregistrée pour ce jour."}}}},
+    "Activities for this day": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Activities for this day"}}, "fr": {"stringUnit": {"state": "translated", "value": "Activités de ce jour"}}}},
+    "My night": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "My night"}}, "fr": {"stringUnit": {"state": "translated", "value": "Ma nuit"}}}},
+    "Stage totals only; no recorded timeline is available.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Stage totals only; no recorded timeline is available."}}, "fr": {"stringUnit": {"state": "translated", "value": "Durées par stade uniquement : aucune chronologie enregistrée n’est disponible."}}}},
+    "These measurements provide context; they are not a percentage breakdown of the recovery score.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "These measurements provide context; they are not a percentage breakdown of the recovery score."}}, "fr": {"stringUnit": {"state": "translated", "value": "Ces mesures donnent du contexte ; elles ne représentent pas une décomposition du score de récupération en pourcentages."}}}},
+    "Prepare your activity": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Prepare your activity"}}, "fr": {"stringUnit": {"state": "translated", "value": "Préparer ton activité"}}}},
+    "Your WHOOP 5.0 sensor": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Your WHOOP 5.0 sensor"}}, "fr": {"stringUnit": {"state": "translated", "value": "Ton capteur WHOOP 5.0"}}}},
+    "No measurements for this day": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "No measurements for this day"}}, "fr": {"stringUnit": {"state": "translated", "value": "Aucune mesure pour ce jour"}}}},
+    "Missing measurements stay empty. Earlier results are available by changing the day.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Missing measurements stay empty. Earlier results are available by changing the day."}}, "fr": {"stringUnit": {"state": "translated", "value": "Les mesures manquantes restent vides. Change de jour pour consulter les résultats précédents."}}}},
+    "This recorded activity is unavailable.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "This recorded activity is unavailable."}}, "fr": {"stringUnit": {"state": "translated", "value": "Cette activité enregistrée est indisponible."}}}},
+    "Period": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Period"}}, "fr": {"stringUnit": {"state": "translated", "value": "Période"}}}},
+    "4 weeks": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "4 weeks"}}, "fr": {"stringUnit": {"state": "translated", "value": "4 semaines"}}}},
+    "No measurements in this period.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "No measurements in this period."}}, "fr": {"stringUnit": {"state": "translated", "value": "Aucune mesure sur cette période."}}}},
+    "Gaps represent missing measurements, not zero.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Gaps represent missing measurements, not zero."}}, "fr": {"stringUnit": {"state": "translated", "value": "Les ruptures correspondent à des mesures manquantes, pas à des zéros."}}}},
+    "Measurements in this period": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Measurements in this period"}}, "fr": {"stringUnit": {"state": "translated", "value": "Mesures de la période"}}}},
+    "Help me understand this night": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Help me understand this night"}}, "fr": {"stringUnit": {"state": "translated", "value": "Aide-moi à comprendre cette nuit"}}}},
+    "How should I read sleep consistency?": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "How should I read sleep consistency?"}}, "fr": {"stringUnit": {"state": "translated", "value": "Comment lire la régularité du sommeil ?"}}}},
+    "Explain these measurements": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Explain these measurements"}}, "fr": {"stringUnit": {"state": "translated", "value": "Explique-moi ces mesures"}}}},
+    "How do these measurements compare to my reference?": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "How do these measurements compare to my reference?"}}, "fr": {"stringUnit": {"state": "translated", "value": "Comment ces mesures se comparent-elles à mes repères ?"}}}},
+    "Help me understand this day's effort": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Help me understand this day's effort"}}, "fr": {"stringUnit": {"state": "translated", "value": "Aide-moi à comprendre l’effort de ce jour"}}}},
+    "Explain the recorded activities": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Explain the recorded activities"}}, "fr": {"stringUnit": {"state": "translated", "value": "Explique-moi les activités enregistrées"}}}},
+    "Explain this trend and its missing days": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Explain this trend and its missing days"}}, "fr": {"stringUnit": {"state": "translated", "value": "Explique-moi cette tendance et les jours manquants"}}}},
+    "How should I read this period's average?": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "How should I read this period's average?"}}, "fr": {"stringUnit": {"state": "translated", "value": "Comment lire la moyenne de cette période ?"}}}},
+    "Help me understand this day": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Help me understand this day"}}, "fr": {"stringUnit": {"state": "translated", "value": "Aide-moi à comprendre cette journée"}}}},
+    "Explain my sleep and recovery": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Explain my sleep and recovery"}}, "fr": {"stringUnit": {"state": "translated", "value": "Explique-moi mon sommeil et ma récupération"}}}},
+    "Coach is replying…": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Coach is replying…"}}, "fr": {"stringUnit": {"state": "translated", "value": "Le coach répond…"}}}},
+    "Clear this conversation?": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Clear this conversation?"}}, "fr": {"stringUnit": {"state": "translated", "value": "Effacer cette conversation ?"}}}},
+    "New conversation": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "New conversation"}}, "fr": {"stringUnit": {"state": "translated", "value": "Nouvelle conversation"}}}},
+    "Close Coach": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Close Coach"}}, "fr": {"stringUnit": {"state": "translated", "value": "Fermer le coach"}}}},
+    "Ask about the selected day": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Ask about the selected day"}}, "fr": {"stringUnit": {"state": "translated", "value": "Comprendre le jour sélectionné"}}}},
+    "This conversation keeps the screen, day and period you are viewing. No request is sent until you ask a question.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "This conversation keeps the screen, day and period you are viewing. No request is sent until you ask a question."}}, "fr": {"stringUnit": {"state": "translated", "value": "Cette conversation conserve l’écran, le jour et la période que tu consultes. Aucune requête n’est envoyée avant ta question."}}}},
+    "Connect your existing AI provider to receive answers.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Connect your existing AI provider to receive answers."}}, "fr": {"stringUnit": {"state": "translated", "value": "Connecte ton fournisseur IA pour recevoir des réponses."}}}},
+    "Configure Coach": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Configure Coach"}}, "fr": {"stringUnit": {"state": "translated", "value": "Configurer le coach"}}}},
+    "Your measurements are not shared. You can ask general questions or change this in Coach settings.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Your measurements are not shared. You can ask general questions or change this in Coach settings."}}, "fr": {"stringUnit": {"state": "translated", "value": "Tes mesures ne sont pas partagées. Tu peux poser des questions générales ou modifier ce choix dans les réglages du coach."}}}},
+    "You": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "You"}}, "fr": {"stringUnit": {"state": "translated", "value": "Toi"}}}},
+    "Ask Coach…": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Ask Coach…"}}, "fr": {"stringUnit": {"state": "translated", "value": "Pose une question…"}}}},
+    "Send question": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Send question"}}, "fr": {"stringUnit": {"state": "translated", "value": "Envoyer la question"}}}},
+    "Only a dated text summary is shared with your configured provider.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Only a dated text summary is shared with your configured provider."}}, "fr": {"stringUnit": {"state": "translated", "value": "Seul un résumé textuel daté est partagé avec le fournisseur que tu as configuré."}}}},
+    "Measurement sharing is off.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Measurement sharing is off."}}, "fr": {"stringUnit": {"state": "translated", "value": "Le partage des mesures est désactivé."}}}},
+    "Open contextual Coach": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Open contextual Coach"}}, "fr": {"stringUnit": {"state": "translated", "value": "Ouvrir le coach de cet écran"}}}},
+    "Selected day": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Selected day"}}, "fr": {"stringUnit": {"state": "translated", "value": "Jour sélectionné"}}}},
+    "%lld in your personal range": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "%lld in your personal range"}}, "fr": {"stringUnit": {"state": "translated", "value": "%lld dans ta plage personnelle"}}}},
+    "%lld available measurements": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "%lld available measurements"}}, "fr": {"stringUnit": {"state": "translated", "value": "%lld mesures disponibles"}}}},
+    "%lld measured days": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "%lld measured days"}}, "fr": {"stringUnit": {"state": "translated", "value": "%lld jours mesurés"}}}},
+    "Choose a day": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Choose a day"}}, "fr": {"stringUnit": {"state": "translated", "value": "Choisir un jour"}}}},
+    "Coach NROOP": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Coach NROOP"}}, "fr": {"stringUnit": {"state": "translated", "value": "Coach NROOP"}}}},
+    "Calculation history": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Calculation history"}}, "fr": {"stringUnit": {"state": "translated", "value": "Historique des calculs"}}}},
+    "Saved recipes, exact replay and changes between revisions.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Saved recipes, exact replay and changes between revisions."}}, "fr": {"stringUnit": {"state": "translated", "value": "Recettes enregistrées, recalcul à l’identique et différences entre révisions."}}}},
+    "Score date": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Score date"}}, "fr": {"stringUnit": {"state": "translated", "value": "Date du score"}}}},
+    "Score": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Score"}}, "fr": {"stringUnit": {"state": "translated", "value": "Score"}}}},
+    "Only calculations observed since this feature was added can have a saved recipe. Imported or preserved historical values can remain unknown. A replay match verifies arithmetic, not physiological accuracy.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Only calculations observed since this feature was added can have a saved recipe. Imported or preserved historical values can remain unknown. A replay match verifies arithmetic, not physiological accuracy."}}, "fr": {"stringUnit": {"state": "translated", "value": "Seuls les calculs observés depuis l’ajout de cette fonction peuvent avoir une recette enregistrée. Les valeurs importées ou anciennes conservées peuvent rester inconnues. Un recalcul identique vérifie l’arithmétique, pas la précision physiologique."}}}},
+    "Refresh calculations": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Refresh calculations"}}, "fr": {"stringUnit": {"state": "translated", "value": "Actualiser les calculs"}}}},
+    "The current score has no matching saved recipe for this strap.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "The current score has no matching saved recipe for this strap."}}, "fr": {"stringUnit": {"state": "translated", "value": "Le score actuel n’a pas de recette enregistrée correspondante pour ce bracelet."}}}},
+    "Current calculation": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Current calculation"}}, "fr": {"stringUnit": {"state": "translated", "value": "Calcul actuel"}}}},
+    "Earlier calculation": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Earlier calculation"}}, "fr": {"stringUnit": {"state": "translated", "value": "Calcul antérieur"}}}},
+    "Calculation version: %@": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Calculation version: %@"}}, "fr": {"stringUnit": {"state": "translated", "value": "Version du calcul : %@"}}}},
+    "Recipe cannot be verified": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Recipe cannot be verified"}}, "fr": {"stringUnit": {"state": "translated", "value": "La recette ne peut pas être vérifiée"}}}},
+    "Saved recipe reproduces the recorded value": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Saved recipe reproduces the recorded value"}}, "fr": {"stringUnit": {"state": "translated", "value": "La recette enregistrée reproduit la valeur conservée"}}}},
+    "Changed recorded fields: %lld": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Changed recorded fields: %lld"}}, "fr": {"stringUnit": {"state": "translated", "value": "Paramètres enregistrés différents : %lld"}}}},
+    "Captured scoring settings changed between these revisions.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Captured scoring settings changed between these revisions."}}, "fr": {"stringUnit": {"state": "translated", "value": "Les réglages de calcul enregistrés ont changé entre ces révisions."}}}},
+    "Recorded calculation inputs": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Recorded calculation inputs"}}, "fr": {"stringUnit": {"state": "translated", "value": "Données utilisées pour le calcul"}}}},
+    "Export this calculation recipe": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Export this calculation recipe"}}, "fr": {"stringUnit": {"state": "translated", "value": "Exporter cette recette de calcul"}}}},
+    "Up to eight saved revisions per score and twelve thousand per computed source are retained. Unchanged recipes keep their first observation time. Missing or evicted evidence is shown as unavailable. Effort replay preserves the integrated load and final mapping; it does not recreate discarded sensor rows.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Up to eight saved revisions per score and twelve thousand per computed source are retained. Unchanged recipes keep their first observation time. Missing or evicted evidence is shown as unavailable. Effort replay preserves the integrated load and final mapping; it does not recreate discarded sensor rows."}}, "fr": {"stringUnit": {"state": "translated", "value": "Jusqu’à huit révisions par score et douze mille par source calculée sont conservées. Une recette inchangée garde sa première date d’observation. Les traces absentes ou retirées sont indiquées comme indisponibles. Le recalcul de l’Effort conserve la charge intégrée et sa conversion finale ; il ne recrée pas les données du capteur supprimées."}}}},
+    "Recipe export is a local text file for inspection. It is not a backup of learning or personal reference records.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Recipe export is a local text file for inspection. It is not a backup of learning or personal reference records."}}, "fr": {"stringUnit": {"state": "translated", "value": "L’export produit un fichier texte local à examiner. Ce n’est pas une sauvegarde de l’apprentissage ni des mesures personnelles."}}}},
+    "HRV (ms)": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "HRV (ms)"}}, "fr": {"stringUnit": {"state": "translated", "value": "VFC (ms)"}}}},
+    "Resting heart rate (bpm)": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Resting heart rate (bpm)"}}, "fr": {"stringUnit": {"state": "translated", "value": "Fréquence cardiaque de repos (bpm)"}}}},
+    "Respiration (breaths/min)": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Respiration (breaths/min)"}}, "fr": {"stringUnit": {"state": "translated", "value": "Respiration (cycles/min)"}}}},
+    "Sleep input (0–1)": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Sleep input (0–1)"}}, "fr": {"stringUnit": {"state": "translated", "value": "Composante sommeil (0–1)"}}}},
+    "Skin temperature deviation (°C)": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Skin temperature deviation (°C)"}}, "fr": {"stringUnit": {"state": "translated", "value": "Écart de température cutanée (°C)"}}}},
+    "HRV reference (ms)": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "HRV reference (ms)"}}, "fr": {"stringUnit": {"state": "translated", "value": "Référence de VFC (ms)"}}}},
+    "HRV reference spread (ms)": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "HRV reference spread (ms)"}}, "fr": {"stringUnit": {"state": "translated", "value": "Dispersion de référence de VFC (ms)"}}}},
+    "Resting HR reference (bpm)": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Resting HR reference (bpm)"}}, "fr": {"stringUnit": {"state": "translated", "value": "Référence cardiaque de repos (bpm)"}}}},
+    "Resting HR spread (bpm)": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Resting HR spread (bpm)"}}, "fr": {"stringUnit": {"state": "translated", "value": "Dispersion cardiaque de repos (bpm)"}}}},
+    "Respiration reference": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Respiration reference"}}, "fr": {"stringUnit": {"state": "translated", "value": "Référence respiratoire"}}}},
+    "Respiration reference spread": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Respiration reference spread"}}, "fr": {"stringUnit": {"state": "translated", "value": "Dispersion de référence respiratoire"}}}},
+    "Sleep duration (minutes)": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Sleep duration (minutes)"}}, "fr": {"stringUnit": {"state": "translated", "value": "Durée de sommeil (minutes)"}}}},
+    "Sleep efficiency (0–1)": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Sleep efficiency (0–1)"}}, "fr": {"stringUnit": {"state": "translated", "value": "Efficacité du sommeil (0–1)"}}}},
+    "Deep sleep (minutes)": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Deep sleep (minutes)"}}, "fr": {"stringUnit": {"state": "translated", "value": "Sommeil profond (minutes)"}}}},
+    "REM sleep (minutes)": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "REM sleep (minutes)"}}, "fr": {"stringUnit": {"state": "translated", "value": "Sommeil paradoxal (minutes)"}}}},
+    "Integrated cardiac load": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Integrated cardiac load"}}, "fr": {"stringUnit": {"state": "translated", "value": "Charge cardiaque intégrée"}}}},
+    "Logarithmic mapping denominator": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Logarithmic mapping denominator"}}, "fr": {"stringUnit": {"state": "translated", "value": "Dénominateur de conversion logarithmique"}}}},
+    "Maximum heart rate used (bpm)": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Maximum heart rate used (bpm)"}}, "fr": {"stringUnit": {"state": "translated", "value": "Fréquence cardiaque maximale utilisée (bpm)"}}}},
+    "Integrated duration (minutes)": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Integrated duration (minutes)"}}, "fr": {"stringUnit": {"state": "translated", "value": "Durée intégrée (minutes)"}}}},
+    "Scoring recipes are unavailable or incompatible. Refresh calculations before capturing a recipe-compatible snapshot.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Scoring recipes are unavailable or incompatible. Refresh calculations before capturing a recipe-compatible snapshot."}}, "fr": {"stringUnit": {"state": "translated", "value": "Les recettes de calcul sont indisponibles ou incompatibles. Actualisez les calculs avant d’enregistrer une capture compatible avec ces recettes."}}}},
+    "Compatible with today's capture: %lld · Legacy context: %lld": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Compatible with today's capture: %lld · Legacy context: %lld"}}, "fr": {"stringUnit": {"state": "translated", "value": "Compatibles avec la capture du jour : %lld · Ancien contexte : %lld"}}}},
+    "Interface updates preserve compatible learning. Changes to numerical recipes or captured scoring settings separate contexts. Older captures remain saved in their original context; missing historical settings are not guessed.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Interface updates preserve compatible learning. Changes to numerical recipes or captured scoring settings separate contexts. Older captures remain saved in their original context; missing historical settings are not guessed."}}, "fr": {"stringUnit": {"state": "translated", "value": "Les mises à jour d’interface conservent l’apprentissage compatible. Les changements de formule ou de réglages enregistrés séparent les contextes. Les anciennes captures restent conservées dans leur contexte d’origine ; les paramètres historiques manquants ne sont pas devinés."}}}},
+    "View calculation history": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "View calculation history"}}, "fr": {"stringUnit": {"state": "translated", "value": "Voir l’historique des calculs"}}}},
+    "Capture once per day after 20:00. The first capture is immutable; missed days are not backfilled. Source, numerical-recipe, setting or timezone changes separate learning contexts. Enough future observations must accumulate before any forecast appears.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Capture once per day after 20:00. The first capture is immutable; missed days are not backfilled. Source, numerical-recipe, setting or timezone changes separate learning contexts. Enough future observations must accumulate before any forecast appears."}}, "fr": {"stringUnit": {"state": "translated", "value": "Effectuez une capture par jour après 20 h. La première est figée ; les jours manqués ne sont pas reconstitués. Les changements de source, de formule, de réglages ou de fuseau séparent les contextes d’apprentissage. Il faut accumuler suffisamment de nouvelles observations avant l’affichage d’une prévision."}}}},
+    "Calibration already has eight trials. Further walks can be saved as verification only.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Calibration already has eight trials. Further walks can be saved as verification only."}}, "fr": {"stringUnit": {"state": "translated", "value": "La calibration contient déjà huit essais. Les nouvelles marches peuvent être enregistrées comme vérification uniquement."}}}},
+    "Personal evidence": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Personal evidence"}}, "fr": {"stringUnit": {"state": "translated", "value": "Analyses personnelles"}}}},
+    "Matched habits, reference shifts and tested forecasts.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Matched habits, reference shifts and tested forecasts."}}, "fr": {"stringUnit": {"state": "translated", "value": "Habitudes comparées, évolutions des références et prévisions évaluées."}}}},
+    "Enable personal research": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Enable personal research"}}, "fr": {"stringUnit": {"state": "translated", "value": "Activer les analyses personnelles expérimentales"}}}},
+    "Clear forecast snapshot archive": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Clear forecast snapshot archive"}}, "fr": {"stringUnit": {"state": "translated", "value": "Effacer l’archive des captures de prévision"}}}},
+    "Experimental comparisons only. Existing scores and recommendations are unchanged. Missing evidence can withhold every result.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Experimental comparisons only. Existing scores and recommendations are unchanged. Missing evidence can withhold every result."}}, "fr": {"stringUnit": {"state": "translated", "value": "Comparaisons expérimentales uniquement. Les scores et conseils habituels restent inchangés. Des données manquantes peuvent empêcher tout résultat."}}}},
+    "My verification measurements": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "My verification measurements"}}, "fr": {"stringUnit": {"state": "translated", "value": "Mes mesures de vérification"}}}},
+    "Matched journal comparisons": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Matched journal comparisons"}}, "fr": {"stringUnit": {"state": "translated", "value": "Comparaisons du journal par journées appariées"}}}},
+    "Native journal only. Yes and No days are matched within a week on prior-day Effort, same-morning sleep and weekday/weekend. Unlogged days are unknown. The outcome is next-day Recovery.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Native journal only. Yes and No days are matched within a week on prior-day Effort, same-morning sleep and weekday/weekend. Unlogged days are unknown. The outcome is next-day Recovery."}}, "fr": {"stringUnit": {"state": "translated", "value": "Journal saisi dans NOOP uniquement. Les jours Oui et Non sont comparés dans une même semaine selon l’Effort de la veille, le sommeil du matin et le type de jour. Les jours sans réponse sont inconnus. Le résultat étudié est la récupération du lendemain."}}}},
+    "No eligible journal questions yet.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "No eligible journal questions yet."}}, "fr": {"stringUnit": {"state": "translated", "value": "Aucune question du journal exploitable pour le moment."}}}},
+    "Weekly pairs: %lld · Nonzero pairs: %lld": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Weekly pairs: %lld · Nonzero pairs: %lld"}}, "fr": {"stringUnit": {"state": "translated", "value": "Paires hebdomadaires : %lld · Écarts non nuls : %lld"}}}},
+    "Median paired difference (points)": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Median paired difference (points)"}}, "fr": {"stringUnit": {"state": "translated", "value": "Écart médian entre jours appariés (points)"}}}},
+    "Holm-adjusted nominal p": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Holm-adjusted nominal p"}}, "fr": {"stringUnit": {"state": "translated", "value": "Valeur p nominale corrigée par Holm"}}}},
+    "Exploratory association after correction": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Exploratory association after correction"}}, "fr": {"stringUnit": {"state": "translated", "value": "Association exploratoire après correction"}}}},
+    "No association established by this comparison": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "No association established by this comparison"}}, "fr": {"stringUnit": {"state": "translated", "value": "Aucune association établie par cette comparaison"}}}},
+    "One pair per week reduces repetition. Eight nonzero pairs are required for a nominal test. Correction covers all displayed questions, including unavailable tests. Other habits and dependence remain uncontrolled; this is not a causal effect or a probability that a conclusion is true.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "One pair per week reduces repetition. Eight nonzero pairs are required for a nominal test. Correction covers all displayed questions, including unavailable tests. Other habits and dependence remain uncontrolled; this is not a causal effect or a probability that a conclusion is true."}}, "fr": {"stringUnit": {"state": "translated", "value": "Une paire par semaine limite les répétitions. Huit écarts non nuls sont nécessaires au test nominal. La correction couvre toutes les questions affichées, y compris les tests indisponibles. Les autres habitudes et les dépendances ne sont pas contrôlées ; ce résultat ne prouve pas une cause ni la probabilité qu’une conclusion soit vraie."}}}},
+    "Personal reference shifts": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Personal reference shifts"}}, "fr": {"stringUnit": {"state": "translated", "value": "Évolution des références personnelles"}}}},
+    "Recent 7 versus previous 28 completed days. At least 5 recent and 20 prior observations are required. A provisional shift needs a two-scale median change and four consistent recent observations. No baseline is reset. Illness, adaptation and recording changes are not distinguished automatically.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Recent 7 versus previous 28 completed days. At least 5 recent and 20 prior observations are required. A provisional shift needs a two-scale median change and four consistent recent observations. No baseline is reset. Illness, adaptation and recording changes are not distinguished automatically."}}, "fr": {"stringUnit": {"state": "translated", "value": "Comparaison des 7 derniers jours terminés aux 28 précédents, avec au moins 5 mesures récentes et 20 antérieures. Le seuil provisoire exige un écart médian de deux échelles de dispersion et quatre mesures récentes cohérentes. Aucune référence n’est réinitialisée. Maladie, adaptation et changement d’enregistrement ne sont pas distingués automatiquement."}}}},
+    "Computed cache source tags are checked. Historical scoring settings and calibration changes are unknown, so an observed shift does not prove a physiological change.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Computed cache source tags are checked. Historical scoring settings and calibration changes are unknown, so an observed shift does not prove a physiological change."}}, "fr": {"stringUnit": {"state": "translated", "value": "Les sources des données calculées sont vérifiées. Les anciens réglages de calcul et changements de calibration sont inconnus ; un écart observé ne prouve donc pas un changement physiologique."}}}},
+    "Training response forecasts": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Training response forecasts"}}, "fr": {"stringUnit": {"state": "translated", "value": "Prévisions de réponse à l’entraînement"}}}},
+    "Uses first-captured evening snapshots only. Current Effort is partial at capture; Recovery is the value observed then. Remaining and future activity are unknown. Recalculated historical caches never train these forecasts.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Uses first-captured evening snapshots only. Current Effort is partial at capture; Recovery is the value observed then. Remaining and future activity are unknown. Recalculated historical caches never train these forecasts."}}, "fr": {"stringUnit": {"state": "translated", "value": "Seules les premières captures du soir sont utilisées. L’Effort est partiel au moment de la capture ; la récupération est la valeur observée à cet instant. L’activité restante et future est inconnue. Les anciens scores recalculés ne servent jamais à entraîner ces prévisions."}}}},
+    "Saved snapshots for this strap and zone: %lld": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Saved snapshots for this strap and zone: %lld"}}, "fr": {"stringUnit": {"state": "translated", "value": "Captures enregistrées pour ce bracelet et ce fuseau : %lld"}}}},
+    "Capture today's evening snapshot": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Capture today's evening snapshot"}}, "fr": {"stringUnit": {"state": "translated", "value": "Capturer les valeurs de ce soir"}}}},
+    "Capture once per day after 20:00. The first capture is immutable; missed days are not backfilled. Source, capture-version or timezone changes separate learning contexts. Enough future observations must accumulate before any forecast appears.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Capture once per day after 20:00. The first capture is immutable; missed days are not backfilled. Source, capture-version or timezone changes separate learning contexts. Enough future observations must accumulate before any forecast appears."}}, "fr": {"stringUnit": {"state": "translated", "value": "Effectuez une capture par jour après 20 h. La première est figée ; les jours manqués ne sont pas reconstitués. Les changements de source, de version ou de fuseau séparent les contextes d’apprentissage. Il faut accumuler suffisamment de nouvelles observations avant l’affichage d’une prévision."}}}},
+    "Horizon: %lld days": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Horizon: %lld days"}}, "fr": {"stringUnit": {"state": "translated", "value": "Horizon : %lld jours"}}}},
+    "Experimental Recovery forecast": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Experimental Recovery forecast"}}, "fr": {"stringUnit": {"state": "translated", "value": "Prévision expérimentale de récupération"}}}},
+    "Training examples: %lld · Evaluated forecasts: %lld": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Training examples: %lld · Evaluated forecasts: %lld"}}, "fr": {"stringUnit": {"state": "translated", "value": "Exemples d’apprentissage : %lld · Prévisions évaluées : %lld"}}}},
+    "Forecast mean absolute error": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Forecast mean absolute error"}}, "fr": {"stringUnit": {"state": "translated", "value": "Erreur absolue moyenne de la prévision"}}}},
+    "Persistence mean absolute error": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Persistence mean absolute error"}}, "fr": {"stringUnit": {"state": "translated", "value": "Erreur absolue moyenne de la référence constante"}}}},
+    "Forecast withheld: insufficient evidence or no measured improvement": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Forecast withheld: insufficient evidence or no measured improvement"}}, "fr": {"stringUnit": {"state": "translated", "value": "Prévision indisponible : données insuffisantes ou absence d’amélioration mesurée"}}}},
+    "Experimental forecast passed its historical comparison": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Experimental forecast passed its historical comparison"}}, "fr": {"stringUnit": {"state": "translated", "value": "La prévision expérimentale passe sa comparaison historique"}}}},
+    "Each historical prediction trains only on outcomes already available then, with nonoverlapping intervals. At least eight training examples and eight evaluated forecasts are required. A forecast must reduce mean absolute error by at least 10% versus keeping captured Recovery unchanged. This engineering gate is not validation for future days or an injury-risk estimate.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Each historical prediction trains only on outcomes already available then, with nonoverlapping intervals. At least eight training examples and eight evaluated forecasts are required. A forecast must reduce mean absolute error by at least 10% versus keeping captured Recovery unchanged. This engineering gate is not validation for future days or an injury-risk estimate."}}, "fr": {"stringUnit": {"state": "translated", "value": "Chaque prévision historique utilise uniquement les résultats déjà disponibles à cette date, sur des intervalles sans chevauchement. Il faut au moins huit exemples d’apprentissage et huit prévisions évaluées. L’erreur absolue moyenne doit baisser d’au moins 10 % par rapport au maintien de la récupération capturée. Ce seuil technique ne valide ni les jours futurs ni un risque de blessure."}}}},
+    "Clear forecast snapshots?": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Clear forecast snapshots?"}}, "fr": {"stringUnit": {"state": "translated", "value": "Effacer les captures de prévision ?"}}}},
+    "This removes the local forecast research archive for every strap. It does not change daily scores.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "This removes the local forecast research archive for every strap. It does not change daily scores."}}, "fr": {"stringUnit": {"state": "translated", "value": "Cette action efface l’archive locale de prévision de tous les bracelets. Les scores quotidiens restent inchangés."}}}},
+    "Recent observations: %lld · Prior observations: %lld": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Recent observations: %lld · Prior observations: %lld"}}, "fr": {"stringUnit": {"state": "translated", "value": "Mesures récentes : %lld · Mesures antérieures : %lld"}}}},
+    "Recent median": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Recent median"}}, "fr": {"stringUnit": {"state": "translated", "value": "Médiane récente"}}}},
+    "Prior median": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Prior median"}}, "fr": {"stringUnit": {"state": "translated", "value": "Médiane antérieure"}}}},
+    "Shift comparison unavailable": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Shift comparison unavailable"}}, "fr": {"stringUnit": {"state": "translated", "value": "Comparaison d’évolution indisponible"}}}},
+    "Sustained descriptive shift observed": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Sustained descriptive shift observed"}}, "fr": {"stringUnit": {"state": "translated", "value": "Écart descriptif persistant observé"}}}},
+    "No sustained shift at this provisional threshold": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "No sustained shift at this provisional threshold"}}, "fr": {"stringUnit": {"state": "translated", "value": "Aucun écart persistant selon ce seuil provisoire"}}}},
+    "Personal reports, kept separate from calibration and sleep edits.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Personal reports, kept separate from calibration and sleep edits."}}, "fr": {"stringUnit": {"state": "translated", "value": "Mesures déclarées, séparées de la calibration et des modifications du sommeil."}}}},
+    "For walking, use Start and Finish in guided calibration, then Save as verification only. The counted walk will not enter the calibration fit. Its estimate and applied scale are frozen at capture.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "For walking, use Start and Finish in guided calibration, then Save as verification only. The counted walk will not enter the calibration fit. Its estimate and applied scale are frozen at capture."}}, "fr": {"stringUnit": {"state": "translated", "value": "Pour la marche, utilisez Démarrer et Terminer dans la calibration guidée, puis Enregistrer comme vérification uniquement. Cette marche ne servira pas au calcul du coefficient. Son estimation et le coefficient appliqué seront figés à l’enregistrement."}}}},
+    "Open guided walking": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Open guided walking"}}, "fr": {"stringUnit": {"state": "translated", "value": "Ouvrir la marche guidée"}}}},
+    "Personal reports are not laboratory truth. Sleep records compare session boundaries, not sleep stages. Original scoring settings are unknown; capture versions and walking scales stay in separate groups.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Personal reports are not laboratory truth. Sleep records compare session boundaries, not sleep stages. Original scoring settings are unknown; capture versions and walking scales stay in separate groups."}}, "fr": {"stringUnit": {"state": "translated", "value": "Les mesures déclarées ne sont pas des références de laboratoire. Le sommeil est comparé selon ses heures de début et de fin, sans vérifier ses phases. Les réglages du calcul d’origine sont inconnus ; les versions de capture et les coefficients de marche restent séparés."}}}},
+    "Frozen scale: %@ ticks per step": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Frozen scale: %@ ticks per step"}}, "fr": {"stringUnit": {"state": "translated", "value": "Coefficient figé : %@ incréments par pas"}}}},
+    "Captured app version: %@": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Captured app version: %@"}}, "fr": {"stringUnit": {"state": "translated", "value": "Version de l’application lors de la capture : %@"}}}},
+    "Independent observations: %lld": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Independent observations: %lld"}}, "fr": {"stringUnit": {"state": "translated", "value": "Mesures indépendantes du calibrage : %lld"}}}},
+    "Mean absolute error": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Mean absolute error"}}, "fr": {"stringUnit": {"state": "translated", "value": "Erreur absolue moyenne"}}}},
+    "Signed bias": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Signed bias"}}, "fr": {"stringUnit": {"state": "translated", "value": "Biais signé"}}}},
+    "Latest 10 mean absolute error": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Latest 10 mean absolute error"}}, "fr": {"stringUnit": {"state": "translated", "value": "Erreur absolue moyenne des 10 dernières mesures"}}}},
+    "Previous 10 mean absolute error": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Previous 10 mean absolute error"}}, "fr": {"stringUnit": {"state": "translated", "value": "Erreur absolue moyenne des 10 mesures précédentes"}}}},
+    "Positive bias means the estimate exceeds the report. Error is in steps for walks and minutes for sleep boundaries. Comparing groups or periods does not establish improvement caused by an algorithm change.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Positive bias means the estimate exceeds the report. Error is in steps for walks and minutes for sleep boundaries. Comparing groups or periods does not establish improvement caused by an algorithm change."}}, "fr": {"stringUnit": {"state": "translated", "value": "Un biais positif signifie que l’estimation dépasse la mesure déclarée. L’erreur est exprimée en pas pour la marche et en minutes pour le sommeil. Comparer les groupes ou les périodes ne prouve pas qu’un changement d’algorithme cause une amélioration."}}}},
+    "Report the latest unedited night": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Report the latest unedited night"}}, "fr": {"stringUnit": {"state": "translated", "value": "Renseigner la dernière nuit non modifiée"}}}},
+    "Reported sleep start": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Reported sleep start"}}, "fr": {"stringUnit": {"state": "translated", "value": "Début du sommeil déclaré"}}}},
+    "Reported sleep end": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Reported sleep end"}}, "fr": {"stringUnit": {"state": "translated", "value": "Fin du sommeil déclarée"}}}},
+    "I independently noted these times; these are not copied from the app estimate": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "I independently noted these times; these are not copied from the app estimate"}}, "fr": {"stringUnit": {"state": "translated", "value": "J’ai noté ces horaires indépendamment, sans recopier l’estimation de l’application"}}}},
+    "Save sleep boundary reports": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Save sleep boundary reports"}}, "fr": {"stringUnit": {"state": "translated", "value": "Enregistrer les horaires déclarés"}}}},
+    "This saves a separate observation. Detected sleep times and scores are not edited.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "This saves a separate observation. Detected sleep times and scores are not edited."}}, "fr": {"stringUnit": {"state": "translated", "value": "Une mesure distincte est enregistrée. Les horaires détectés et les scores ne sont pas modifiés."}}}},
+    "No attributable, completed, unedited night is available for a new sleep report.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "No attributable, completed, unedited night is available for a new sleep report."}}, "fr": {"stringUnit": {"state": "translated", "value": "Aucune nuit terminée, non modifiée et attribuable à ce bracelet n’est disponible."}}}},
+    "Saved observations": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Saved observations"}}, "fr": {"stringUnit": {"state": "translated", "value": "Mesures enregistrées"}}}},
+    "Clear all local reference records": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Clear all local reference records"}}, "fr": {"stringUnit": {"state": "translated", "value": "Effacer toutes les mesures de vérification locales"}}}},
+    "Clear all reference records?": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Clear all reference records?"}}, "fr": {"stringUnit": {"state": "translated", "value": "Effacer toutes les mesures de vérification ?"}}}},
+    "This removes reference observations for every strap on this installation. Calibration settings and detected sleep remain saved.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "This removes reference observations for every strap on this installation. Calibration settings and detected sleep remain saved."}}, "fr": {"stringUnit": {"state": "translated", "value": "Les mesures de vérification de tous les bracelets de cette installation seront effacées. La calibration et le sommeil détecté resteront enregistrés."}}}},
+    "Counted walking steps": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Counted walking steps"}}, "fr": {"stringUnit": {"state": "translated", "value": "Pas comptés pendant la marche"}}}},
+    "Sleep start agreement (minutes)": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Sleep start agreement (minutes)"}}, "fr": {"stringUnit": {"state": "translated", "value": "Écart de début du sommeil (minutes)"}}}},
+    "Sleep end agreement (minutes)": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Sleep end agreement (minutes)"}}, "fr": {"stringUnit": {"state": "translated", "value": "Écart de fin du sommeil (minutes)"}}}},
+    "Check the reported dates and times. Each boundary must be within six hours of the stored session.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Check the reported dates and times. Each boundary must be within six hours of the stored session."}}, "fr": {"stringUnit": {"state": "translated", "value": "Vérifiez les dates et horaires déclarés. Chaque horaire doit être à moins de six heures de la session enregistrée."}}}},
+    "Evening snapshots must be valid, unique and captured after 20:00. Existing daily snapshots cannot be overwritten.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Evening snapshots must be valid, unique and captured after 20:00. Existing daily snapshots cannot be overwritten."}}, "fr": {"stringUnit": {"state": "translated", "value": "Les captures du soir doivent être valides, uniques et réalisées après 20 h. Une capture quotidienne existante ne peut pas être remplacée."}}}},
+    "Too many local days. No partial analysis is shown.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Too many local days. No partial analysis is shown."}}, "fr": {"stringUnit": {"state": "translated", "value": "Trop de journées locales. Aucune analyse partielle n’est affichée."}}}},
+    "Too many journal questions. The complete comparison family must fit before analysis.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Too many journal questions. The complete comparison family must fit before analysis."}}, "fr": {"stringUnit": {"state": "translated", "value": "Trop de questions du journal. L’ensemble complet des comparaisons doit tenir dans les limites avant l’analyse."}}}},
+    "Reference records are invalid or duplicated. Review or clear the local records.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Reference records are invalid or duplicated. Review or clear the local records."}}, "fr": {"stringUnit": {"state": "translated", "value": "Les mesures de vérification sont invalides ou en double. Vérifiez-les ou effacez les données locales."}}}},
+    "Save as verification only": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Save as verification only"}}, "fr": {"stringUnit": {"state": "translated", "value": "Enregistrer comme vérification uniquement"}}}},
+    "Verification walks are stored separately and never added to the calibration fit.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Verification walks are stored separately and never added to the calibration fit."}}, "fr": {"stringUnit": {"state": "translated", "value": "Les marches de vérification sont enregistrées séparément et ne servent jamais au calcul du coefficient."}}}},
+    "This walk is already a verification observation and cannot also fit the calibration.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "This walk is already a verification observation and cannot also fit the calibration."}}, "fr": {"stringUnit": {"state": "translated", "value": "Cette marche est déjà une mesure de vérification et ne peut pas aussi servir à la calibration."}}}},
+    "Verification saved separately. Review it under My verification measurements.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Verification saved separately. Review it under My verification measurements."}}, "fr": {"stringUnit": {"state": "translated", "value": "Vérification enregistrée séparément. Consultez-la dans Mes mesures de vérification."}}}},
+    "Open local improvements": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Open local improvements"}}, "fr": {"stringUnit": {"state": "translated", "value": "Ouvrir les améliorations locales"}}}},
+    "Calibrate with Start and Finish": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Calibrate with Start and Finish"}}, "fr": {"stringUnit": {"state": "translated", "value": "Calibrer avec Démarrer et Terminer"}}}},
+    "Guided capture or manual trials. The scale changes only when you apply it.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Guided capture or manual trials. The scale changes only when you apply it."}}, "fr": {"stringUnit": {"state": "translated", "value": "Capture guidée ou essais manuels. Le coefficient change uniquement après application."}}}},
+    "Guided walking calibration": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Guided walking calibration"}}, "fr": {"stringUnit": {"state": "translated", "value": "Calibration guidée de la marche"}}}},
+    "Start and finish in the app. Raw records are inspected after synchronization.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Start and finish in the app. Raw records are inspected after synchronization."}}, "fr": {"stringUnit": {"state": "translated", "value": "Démarrez et terminez dans l’application. Les données brutes sont vérifiées après synchronisation."}}}},
+    "Saved trials belong to another selected strap. Select that strap again or clear this local calibration.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Saved trials belong to another selected strap. Select that strap again or clear this local calibration."}}, "fr": {"stringUnit": {"state": "translated", "value": "Les essais enregistrés concernent un autre bracelet. Sélectionnez-le à nouveau ou effacez cette calibration locale."}}}},
+    "Clear saved walking calibration": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Clear saved walking calibration"}}, "fr": {"stringUnit": {"state": "translated", "value": "Effacer la calibration enregistrée"}}}},
+    "Clear this local calibration?": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Clear this local calibration?"}}, "fr": {"stringUnit": {"state": "translated", "value": "Effacer cette calibration locale ?"}}}},
+    "Clear trials": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Clear trials"}}, "fr": {"stringUnit": {"state": "translated", "value": "Effacer les essais"}}}},
+    "Saved walking trials and the pending window will be removed. Your applied step scale remains saved.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Saved walking trials and the pending window will be removed. Your applied step scale remains saved."}}, "fr": {"stringUnit": {"state": "translated", "value": "Les essais et la marche en cours seront supprimés. Le coefficient déjà appliqué restera enregistré."}}}},
+    "Two buttons, one counted walk": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Two buttons, one counted walk"}}, "fr": {"stringUnit": {"state": "translated", "value": "Deux boutons pour une marche comptée"}}}},
+    "Stand still for a few seconds, tap Start walk, then walk while counting your steps. Stand still again for a few seconds before tapping Finish walk.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Stand still for a few seconds, tap Start walk, then walk while counting your steps. Stand still again for a few seconds before tapping Finish walk."}}, "fr": {"stringUnit": {"state": "translated", "value": "Restez immobile quelques secondes, touchez Démarrer la marche, puis marchez en comptant vos pas. Restez à nouveau immobile quelques secondes avant de toucher Terminer la marche."}}}},
+    "Use at least 100 counted steps and a window of one to 60 minutes. The time limits and stationary checks are workflow rules, not accuracy guarantees.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Use at least 100 counted steps and a window of one to 60 minutes. The time limits and stationary checks are workflow rules, not accuracy guarantees."}}, "fr": {"stringUnit": {"state": "translated", "value": "Comptez au moins 100 pas sur une durée de 1 à 60 minutes. Les limites de durée et les contrôles d’immobilité ne garantissent pas la précision."}}}},
+    "The app records the time window, not a new sensor stream. Let the selected bracelet synchronize normally, then inspect its stored records. Missing or ambiguous records refuse the trial.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "The app records the time window, not a new sensor stream. Let the selected bracelet synchronize normally, then inspect its stored records. Missing or ambiguous records refuse the trial."}}, "fr": {"stringUnit": {"state": "translated", "value": "L’application enregistre les heures de début et de fin. Synchronisez normalement le bracelet sélectionné, puis vérifiez ses données enregistrées. Un essai incomplet ou ambigu est refusé."}}}},
+    "Complete 3–8 separate walks with different lengths. Only Apply scale changes the existing step setting. Local progress is saved so you can leave this screen to synchronize.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Complete 3–8 separate walks with different lengths. Only Apply scale changes the existing step setting. Local progress is saved so you can leave this screen to synchronize."}}, "fr": {"stringUnit": {"state": "translated", "value": "Effectuez 3 à 8 marches distinctes de longueurs différentes. Seul Appliquer le coefficient modifie le réglage des pas. Votre progression est conservée lorsque vous quittez cet écran pour synchroniser."}}}},
+    "Walk started": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Walk started"}}, "fr": {"stringUnit": {"state": "translated", "value": "Début de la marche"}}}},
+    "Walk finished": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Walk finished"}}, "fr": {"stringUnit": {"state": "translated", "value": "Fin de la marche"}}}},
+    "Elapsed: %lld seconds": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Elapsed: %lld seconds"}}, "fr": {"stringUnit": {"state": "translated", "value": "Durée : %lld secondes"}}}},
+    "Finish walk": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Finish walk"}}, "fr": {"stringUnit": {"state": "translated", "value": "Terminer la marche"}}}},
+    "Discard this walk": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Discard this walk"}}, "fr": {"stringUnit": {"state": "translated", "value": "Abandonner cette marche"}}}},
+    "Start walk": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Start walk"}}, "fr": {"stringUnit": {"state": "translated", "value": "Démarrer la marche"}}}},
+    "Reading local records…": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Reading local records…"}}, "fr": {"stringUnit": {"state": "translated", "value": "Lecture des données locales…"}}}},
+    "Inspect after synchronization": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Inspect after synchronization"}}, "fr": {"stringUnit": {"state": "translated", "value": "Vérifier après synchronisation"}}}},
+    "If the capture is incomplete, finish normal bracelet synchronization and inspect again. The app cannot certify that every strap record has arrived.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "If the capture is incomplete, finish normal bracelet synchronization and inspect again. The app cannot certify that every strap record has arrived."}}, "fr": {"stringUnit": {"state": "translated", "value": "Si la capture est incomplète, terminez la synchronisation habituelle du bracelet, puis vérifiez à nouveau. L’application ne peut pas certifier la réception de tous ses enregistrements."}}}},
+    "Inspect walking records": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Inspect walking records"}}, "fr": {"stringUnit": {"state": "translated", "value": "Vérifier les données de marche"}}}},
+    "Retained unscaled ticks: %lld": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Retained unscaled ticks: %lld"}}, "fr": {"stringUnit": {"state": "translated", "value": "Incréments retenus avant calibration : %lld"}}}},
+    "Observed samples: %lld": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Observed samples: %lld"}}, "fr": {"stringUnit": {"state": "translated", "value": "Échantillons observés : %lld"}}}},
+    "I counted only this walk with the same strap and kept still at both boundaries.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "I counted only this walk with the same strap and kept still at both boundaries."}}, "fr": {"stringUnit": {"state": "translated", "value": "J’ai compté uniquement cette marche avec le même bracelet et je suis resté immobile au début et à la fin."}}}},
+    "Save this trial": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Save this trial"}}, "fr": {"stringUnit": {"state": "translated", "value": "Enregistrer cet essai"}}}},
+    "Saved guided trials": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Saved guided trials"}}, "fr": {"stringUnit": {"state": "translated", "value": "Essais guidés enregistrés"}}}},
+    "%lld steps · %lld retained ticks": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "%lld steps · %lld retained ticks"}}, "fr": {"stringUnit": {"state": "translated", "value": "%lld pas · %lld incréments retenus"}}}},
+    "No guided trial saved yet.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "No guided trial saved yet."}}, "fr": {"stringUnit": {"state": "translated", "value": "Aucun essai guidé enregistré."}}}},
+    "At least three valid, distinct trials with a scale spread within 20% are required.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "At least three valid, distinct trials with a scale spread within 20% are required."}}, "fr": {"stringUnit": {"state": "translated", "value": "Au moins trois essais valides et distincts sont nécessaires, avec un écart relatif des coefficients de 20 % maximum."}}}},
+    "Repeatability is not sensor accuracy. The scale applies only to increments retained by NOOP's existing pipeline; discarded ticks cannot be restored.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Repeatability is not sensor accuracy. The scale applies only to increments retained by NOOP's existing pipeline; discarded ticks cannot be restored."}}, "fr": {"stringUnit": {"state": "translated", "value": "La répétabilité ne mesure pas la précision du capteur. Le coefficient s’applique uniquement aux incréments retenus par NOOP ; les incréments rejetés ne peuvent pas être restaurés."}}}},
+    "Saved walking progress could not be read. Clear it before starting again.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Saved walking progress could not be read. Clear it before starting again."}}, "fr": {"stringUnit": {"state": "translated", "value": "Impossible de lire la progression enregistrée. Effacez-la avant de recommencer."}}}},
+    "Saved walking progress is invalid. Clear it before starting again.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Saved walking progress is invalid. Clear it before starting again."}}, "fr": {"stringUnit": {"state": "translated", "value": "La progression enregistrée est invalide. Effacez-la avant de recommencer."}}}},
+    "Saved walking progress is too large.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Saved walking progress is too large."}}, "fr": {"stringUnit": {"state": "translated", "value": "La progression enregistrée est trop volumineuse."}}}},
+    "Guided calibration needs the selected, registered WHOOP 5.0 live source.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Guided calibration needs the selected, registered WHOOP 5.0 live source."}}, "fr": {"stringUnit": {"state": "translated", "value": "La calibration guidée nécessite le WHOOP 5.0 sélectionné et enregistré comme bracelet connecté."}}}},
+    "This walking interval is invalid or longer than one hour. Start a new trial.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "This walking interval is invalid or longer than one hour. Start a new trial."}}, "fr": {"stringUnit": {"state": "translated", "value": "Cette durée de marche est invalide ou dépasse une heure. Commencez un nouvel essai."}}}},
+    "This capture exceeds the read limit. No partial trial was added.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "This capture exceeds the read limit. No partial trial was added."}}, "fr": {"stringUnit": {"state": "translated", "value": "Cette capture dépasse la limite de lecture. Aucun essai partiel n’a été ajouté."}}}},
+    "Walking records changed during inspection. Finish synchronization and try again.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Walking records changed during inspection. Finish synchronization and try again."}}, "fr": {"stringUnit": {"state": "translated", "value": "Les données de marche ont changé pendant la vérification. Terminez la synchronisation, puis réessayez."}}}},
+    "Walking labels are unavailable for this capture. No guided trial can be verified.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Walking labels are unavailable for this capture. No guided trial can be verified."}}, "fr": {"stringUnit": {"state": "translated", "value": "Les catégories de mouvement sont absentes de cette capture. Aucun essai guidé ne peut être validé."}}}},
+    "The device clock cannot define a valid walking interval.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "The device clock cannot define a valid walking interval."}}, "fr": {"stringUnit": {"state": "translated", "value": "L’horloge de l’appareil ne permet pas de définir une durée de marche valide."}}}},
+    "The clock changed or the walk is outside the one-to-60-minute window. Discard it and start again.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "The clock changed or the walk is outside the one-to-60-minute window. Discard it and start again."}}, "fr": {"stringUnit": {"state": "translated", "value": "L’horloge a changé ou la marche ne dure pas entre 1 et 60 minutes. Abandonnez cet essai et recommencez."}}}},
+    "Enter the whole number of steps you counted for this walk.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Enter the whole number of steps you counted for this walk."}}, "fr": {"stringUnit": {"state": "translated", "value": "Saisissez le nombre entier de pas comptés pendant cette marche."}}}},
+    "This trial is outside the supported step-count or scale bounds. Check the count before saving.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "This trial is outside the supported step-count or scale bounds. Check the count before saving."}}, "fr": {"stringUnit": {"state": "translated", "value": "Le nombre de pas ou le coefficient dépasse les limites prises en charge. Vérifiez le comptage avant d’enregistrer."}}}},
+    "This repeats a saved measurement or exceeds eight trials. Use a separate walk with a different length.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "This repeats a saved measurement or exceeds eight trials. Use a separate walk with a different length."}}, "fr": {"stringUnit": {"state": "translated", "value": "Cet essai répète une mesure ou dépasse la limite de huit essais. Effectuez une nouvelle marche de longueur différente."}}}},
+    "Walking records are incomplete. Finish synchronization and inspect again; repeat the walk if gaps remain.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Walking records are incomplete. Finish synchronization and inspect again; repeat the walk if gaps remain."}}, "fr": {"stringUnit": {"state": "translated", "value": "Les données de marche sont incomplètes. Terminez la synchronisation et vérifiez à nouveau ; répétez la marche si des données manquent toujours."}}}},
+    "The counter decreased. A reset and a wrap cannot be distinguished; repeat the trial.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "The counter decreased. A reset and a wrap cannot be distinguished; repeat the trial."}}, "fr": {"stringUnit": {"state": "translated", "value": "Le compteur a diminué. Impossible de distinguer une remise à zéro d’un bouclage ; répétez l’essai."}}}},
+    "Stationary boundaries were not observed. Repeat the walk and keep still before Start and before Finish.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Stationary boundaries were not observed. Repeat the walk and keep still before Start and before Finish."}}, "fr": {"stringUnit": {"state": "translated", "value": "L’immobilité au début et à la fin n’a pas été observée. Répétez la marche en restant immobile avant chaque bouton."}}}},
+    "The existing step pipeline would discard movement in this interval. No scale can repair that trial.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "The existing step pipeline would discard movement in this interval. No scale can repair that trial."}}, "fr": {"stringUnit": {"state": "translated", "value": "Le calcul actuel des pas rejetterait une partie des mouvements de cet intervalle. Aucun coefficient ne peut corriger cet essai."}}}},
+    "No retained movement was observed in this interval.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "No retained movement was observed in this interval."}}, "fr": {"stringUnit": {"state": "translated", "value": "Aucun mouvement retenu n’a été observé dans cet intervalle."}}}},
+    "Conflicting counter records prevent a reliable trial.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Conflicting counter records prevent a reliable trial."}}, "fr": {"stringUnit": {"state": "translated", "value": "Des valeurs contradictoires du compteur empêchent de valider cet essai."}}}},
+    "The walking interval or its stored counter values are invalid. Discard it and start again.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "The walking interval or its stored counter values are invalid. Discard it and start again."}}, "fr": {"stringUnit": {"state": "translated", "value": "La durée de marche ou les valeurs du compteur sont invalides. Abandonnez cet essai et recommencez."}}}},
+    "Sleep clock and night activation": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Sleep clock and night activation"}}, "fr": {"stringUnit": {"state": "translated", "value": "Horaires de sommeil et activation nocturne"}}}},
+    "Experimental local comparison. No saved score is replaced.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Experimental local comparison. No saved score is replaced."}}, "fr": {"stringUnit": {"state": "translated", "value": "Comparaison locale expérimentale. Aucun score enregistré n’est remplacé."}}}},
+    "Enable this research comparison": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Enable this research comparison"}}, "fr": {"stringUnit": {"state": "translated", "value": "Activer cette comparaison expérimentale"}}}},
+    "This comparison is an unvalidated design hypothesis. It measures a nocturnal cardiac activation proxy, not mental stress, sleep-stage accuracy or improved precision.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "This comparison is an unvalidated design hypothesis. It measures a nocturnal cardiac activation proxy, not mental stress, sleep-stage accuracy or improved precision."}}, "fr": {"stringUnit": {"state": "translated", "value": "Cette comparaison est une hypothèse non validée. Elle estime l’activation cardiaque nocturne ; elle ne mesure ni le stress mental ni la précision des phases de sommeil."}}}},
+    "Stored night": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Stored night"}}, "fr": {"stringUnit": {"state": "translated", "value": "Nuit enregistrée"}}}},
+    "Longest attributable stored session per wake date. Times and values may change after synchronization.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Longest attributable stored session per wake date. Times and values may change after synchronization."}}, "fr": {"stringUnit": {"state": "translated", "value": "La plus longue session attribuable à ce bracelet pour chaque date de réveil. Les horaires et les valeurs peuvent changer après synchronisation."}}}},
+    "Stored Rest and experimental candidate": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Stored Rest and experimental candidate"}}, "fr": {"stringUnit": {"state": "translated", "value": "Repos enregistré et estimation expérimentale"}}}},
+    "Stored Rest": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Stored Rest"}}, "fr": {"stringUnit": {"state": "translated", "value": "Repos enregistré"}}}},
+    "Experimental candidate": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Experimental candidate"}}, "fr": {"stringUnit": {"state": "translated", "value": "Estimation expérimentale"}}}},
+    "Stored Rest is shown only with matching source provenance. Missing components withhold the candidate; weights are never redistributed.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Stored Rest is shown only with matching source provenance. Missing components withhold the candidate; weights are never redistributed."}}, "fr": {"stringUnit": {"state": "translated", "value": "Le Repos enregistré s’affiche uniquement si sa source correspond. Une composante manquante empêche le calcul expérimental ; les poids ne sont jamais redistribués."}}}},
+    "Component availability": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Component availability"}}, "fr": {"stringUnit": {"state": "translated", "value": "Composantes disponibles"}}}},
+    "Duration relative to 8 hours · 40%": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Duration relative to 8 hours · 40%"}}, "fr": {"stringUnit": {"state": "translated", "value": "Durée par rapport à 8 heures · 40 %"}}}},
+    "Sleep efficiency · 25%": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Sleep efficiency · 25%"}}, "fr": {"stringUnit": {"state": "translated", "value": "Efficacité du sommeil · 25 %"}}}},
+    "Bedtime and wake-time regularity · 20%": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Bedtime and wake-time regularity · 20%"}}, "fr": {"stringUnit": {"state": "translated", "value": "Régularité du coucher et du réveil · 20 %"}}}},
+    "Nocturnal calmness proxy · 15%": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Nocturnal calmness proxy · 15%"}}, "fr": {"stringUnit": {"state": "translated", "value": "Indicateur de calme cardiaque nocturne · 15 %"}}}},
+    "Prior clock nights: %lld · Qualified baseline nights: %lld": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Prior clock nights: %lld · Qualified baseline nights: %lld"}}, "fr": {"stringUnit": {"state": "translated", "value": "Nuits précédentes pour les horaires : %lld · Nuits de référence qualifiées : %lld"}}}},
+    "Qualified signal windows: %lld · Sleep signal coverage: %lld%%": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Qualified signal windows: %lld · Sleep signal coverage: %lld%%"}}, "fr": {"stringUnit": {"state": "translated", "value": "Fenêtres de signal qualifiées : %lld · Couverture du sommeil : %lld %%"}}}},
+    "Clock view: %@. Historical travel timezones are unknown; all bed and wake times use this current zone's historical clock rules.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Clock view: %@. Historical travel timezones are unknown; all bed and wake times use this current zone's historical clock rules."}}, "fr": {"stringUnit": {"state": "translated", "value": "Fuseau affiché : %@. Les fuseaux des voyages passés sont inconnus ; tous les horaires utilisent les règles historiques du fuseau actuel."}}}},
+    "Frozen v1: 40% duration, 25% efficiency, 20% bed/wake regularity and 15% nocturnal calmness. The eight-hour reference and these weights are provisional choices. They are not WHOOP's undisclosed formula.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Frozen v1: 40% duration, 25% efficiency, 20% bed/wake regularity and 15% nocturnal calmness. The eight-hour reference and these weights are provisional choices. They are not WHOOP's undisclosed formula."}}, "fr": {"stringUnit": {"state": "translated", "value": "Version 1 figée : durée 40 %, efficacité 25 %, régularité 20 % et calme nocturne 15 %. La référence de huit heures et ces poids sont provisoires. Ils ne reproduisent pas la formule non publiée de WHOOP."}}}},
+    "Night-only HR and cleaned RR passed source, motion and coverage gates. The activation formula remains unvalidated.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Night-only HR and cleaned RR passed source, motion and coverage gates. The activation formula remains unvalidated."}}, "fr": {"stringUnit": {"state": "translated", "value": "La fréquence cardiaque nocturne et les RR nettoyés passent les contrôles de source, de mouvement et de couverture. La formule d’activation reste non validée."}}}},
+    "At least three qualified prior nights from the same source and RR channel are required.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "At least three qualified prior nights from the same source and RR channel are required."}}, "fr": {"stringUnit": {"state": "translated", "value": "Il faut au moins trois nuits antérieures qualifiées, issues de la même source et du même canal RR."}}}},
+    "Night activation currently requires a confirmed WHOOP 5.0 or MG source.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Night activation currently requires a confirmed WHOOP 5.0 or MG source."}}, "fr": {"stringUnit": {"state": "translated", "value": "L’activation nocturne nécessite actuellement une source WHOOP 5.0 ou MG confirmée."}}}},
+    "A single attributable WHOOP 5 RR channel is unavailable for this night.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "A single attributable WHOOP 5 RR channel is unavailable for this night."}}, "fr": {"stringUnit": {"state": "translated", "value": "Aucun canal RR WHOOP 5 unique et attribuable n’est disponible pour cette nuit."}}}},
+    "Complete known stages and non-sparse staging are required to attribute signals to sleep.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Complete known stages and non-sparse staging are required to attribute signals to sleep."}}, "fr": {"stringUnit": {"state": "translated", "value": "Des phases connues, complètes et suffisamment renseignées sont nécessaires pour attribuer les signaux au sommeil."}}}},
+    "This night reached the read limit. No partial activation value is shown.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "This night reached the read limit. No partial activation value is shown."}}, "fr": {"stringUnit": {"state": "translated", "value": "Cette nuit atteint la limite de lecture. Aucune valeur d’activation partielle n’est affichée."}}}},
+    "Conflicting RR records prevent an attributable night activation value.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Conflicting RR records prevent an attributable night activation value."}}, "fr": {"stringUnit": {"state": "translated", "value": "Des enregistrements RR contradictoires empêchent d’attribuer une valeur d’activation nocturne."}}}},
+    "Night activation is unavailable: too little qualified sleeping HR, RR or motion. Awake stress is never substituted.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Night activation is unavailable: too little qualified sleeping HR, RR or motion. Awake stress is never substituted."}}, "fr": {"stringUnit": {"state": "translated", "value": "Activation nocturne indisponible : données de fréquence cardiaque, de RR ou de mouvement insuffisantes pendant le sommeil. Le stress éveillé ne les remplace jamais."}}}},
+    "The local calendar window is unavailable.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "The local calendar window is unavailable."}}, "fr": {"stringUnit": {"state": "translated", "value": "La période du calendrier local est indisponible."}}}},
+    "Too many computed sessions. No partial comparison is shown.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Too many computed sessions. No partial comparison is shown."}}, "fr": {"stringUnit": {"state": "translated", "value": "Trop de sessions calculées. Aucune comparaison partielle n’est affichée."}}}},
+    "No stored NOOP night with matching input-source provenance is available for this strap.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "No stored NOOP night with matching input-source provenance is available for this strap."}}, "fr": {"stringUnit": {"state": "translated", "value": "Aucune nuit NOOP enregistrée avec une source correspondante n’est disponible pour ce bracelet."}}}},
+    "Local data changed during the comparison. Refresh to read a consistent set.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Local data changed during the comparison. Refresh to read a consistent set."}}, "fr": {"stringUnit": {"state": "translated", "value": "Les données locales ont changé pendant la comparaison. Actualisez pour relire un ensemble cohérent."}}}},
+    "The selected night could not be analyzed.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "The selected night could not be analyzed."}}, "fr": {"stringUnit": {"state": "translated", "value": "La nuit sélectionnée n’a pas pu être analysée."}}}},
+    "Exercise GPS study": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Exercise GPS study"}}, "fr": {"stringUnit": {"state": "translated", "value": "Étude GPS des activités"}}}},
+    "Exercise GPS research": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Exercise GPS research"}}, "fr": {"stringUnit": {"state": "translated", "value": "Analyse GPS expérimentale"}}}},
+    "Local evidence · experimental": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Local evidence · experimental"}}, "fr": {"stringUnit": {"state": "translated", "value": "Données locales · expérimental"}}}},
+    "Enable exercise GPS study": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Enable exercise GPS study"}}, "fr": {"stringUnit": {"state": "translated", "value": "Activer l’étude GPS des activités"}}}},
+    "Generic GPS sessions do not establish VO₂max. Review recorded distance, HR overlap and unadjusted metres per heartbeat. No scores are changed.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Generic GPS sessions do not establish VO₂max. Review recorded distance, HR overlap and unadjusted metres per heartbeat. No scores are changed."}}, "fr": {"stringUnit": {"state": "translated", "value": "Une séance GPS ordinaire ne permet pas de déterminer la VO₂max. Consultez la distance, la couverture cardiaque et les mètres par battement sans correction. Aucun score n’est modifié."}}}},
+    "VO₂max is oxygen uptake; vVO₂max is running speed at that uptake. Neither is the oxygen cost of a particular pace.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "VO₂max is oxygen uptake; vVO₂max is running speed at that uptake. Neither is the oxygen cost of a particular pace."}}, "fr": {"stringUnit": {"state": "translated", "value": "La VO₂max est un débit d’oxygène ; la vVO₂max est la vitesse de course correspondante. Aucune des deux ne mesure le coût en oxygène d’une allure donnée."}}}},
+    "No stored GPS workouts found. Legacy polylines may lack timing and accuracy; those sessions cannot support an estimate.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "No stored GPS workouts found. Legacy polylines may lack timing and accuracy; those sessions cannot support an estimate."}}, "fr": {"stringUnit": {"state": "translated", "value": "Aucune activité GPS enregistrée. Les anciens tracés peuvent manquer d’horodatage et de précision ; ils ne permettent pas d’établir une estimation."}}}},
+    "Up to 30 stored GPS sessions from the last year. Source ownership and protocol confirmations apply only to the session currently being reviewed.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Up to 30 stored GPS sessions from the last year. Source ownership and protocol confirmations apply only to the session currently being reviewed."}}, "fr": {"stringUnit": {"state": "translated", "value": "Jusqu’à 30 séances GPS de l’année écoulée. Les confirmations de source et de protocole concernent uniquement la séance examinée."}}}},
+    "Review this session": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Review this session"}}, "fr": {"stringUnit": {"state": "translated", "value": "Examiner cette séance"}}}},
+    "Workout source: %@": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Workout source: %@"}}, "fr": {"stringUnit": {"state": "translated", "value": "Source de la séance : %@"}}}},
+    "Only your selected strap is read after you confirm it recorded this session.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Only your selected strap is read after you confirm it recorded this session."}}, "fr": {"stringUnit": {"state": "translated", "value": "Seul le bracelet sélectionné est lu, après votre confirmation qu’il a enregistré cette séance."}}}},
+    "I confirm this strap recorded this session": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "I confirm this strap recorded this session"}}, "fr": {"stringUnit": {"state": "translated", "value": "Je confirme que ce bracelet a enregistré cette séance"}}}},
+    "This confirmation selects one stored HR source. Current strap selection alone does not prove historical ownership.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "This confirmation selects one stored HR source. Current strap selection alone does not prove historical ownership."}}, "fr": {"stringUnit": {"state": "translated", "value": "Cette confirmation sélectionne une seule source cardiaque enregistrée. Le bracelet sélectionné aujourd’hui ne prouve pas à lui seul l’origine d’une ancienne séance."}}}},
+    "GPS distance (m)": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "GPS distance (m)"}}, "fr": {"stringUnit": {"state": "translated", "value": "Distance GPS (m)"}}}},
+    "Elapsed speed (m/s)": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Elapsed speed (m/s)"}}, "fr": {"stringUnit": {"state": "translated", "value": "Vitesse sur la durée totale (m/s)"}}}},
+    "Time-weighted HR (bpm)": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Time-weighted HR (bpm)"}}, "fr": {"stringUnit": {"state": "translated", "value": "Fréquence cardiaque pondérée par le temps (bpm)"}}}},
+    "HR overlap (s)": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "HR overlap (s)"}}, "fr": {"stringUnit": {"state": "translated", "value": "Durée cardiaque couverte (s)"}}}},
+    "Unadjusted metres per heartbeat": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Unadjusted metres per heartbeat"}}, "fr": {"stringUnit": {"state": "translated", "value": "Mètres par battement sans correction"}}}},
+    "VO₂max withheld for generic sessions": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "VO₂max withheld for generic sessions"}}, "fr": {"stringUnit": {"state": "translated", "value": "VO₂max non estimée pour les séances ordinaires"}}}},
+    "Eligibility checks: %@": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Eligibility checks: %@"}}, "fr": {"stringUnit": {"state": "translated", "value": "Contrôles : %@"}}}},
+    "Terrain, wind, temperature, fatigue and HR measurement errors affect these observations. No oxygen cost or vVO₂max is inferred.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Terrain, wind, temperature, fatigue and HR measurement errors affect these observations. No oxygen cost or vVO₂max is inferred."}}, "fr": {"stringUnit": {"state": "translated", "value": "Le terrain, le vent, la température, la fatigue et les erreurs de mesure cardiaque influencent ces observations. Aucun coût en oxygène ni aucune vVO₂max n’en est déduit."}}}},
+    "Kline 1987 · one-mile walk study": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Kline 1987 · one-mile walk study"}}, "fr": {"stringUnit": {"state": "translated", "value": "Kline 1987 · étude de marche sur un mile"}}}},
+    "Olher 2019 · vVO₂max study": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Olher 2019 · vVO₂max study"}}, "fr": {"stringUnit": {"state": "translated", "value": "Olher 2019 · étude de vVO₂max"}}}},
+    "Retrospective one-mile walk estimate": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Retrospective one-mile walk estimate"}}, "fr": {"stringUnit": {"state": "translated", "value": "Estimation rétrospective de marche sur un mile"}}}},
+    "Only for an already completed Kline-style test: a flat, independently measured mile walked throughout, with two fastest trials within 30 seconds. Select the faster trial. GPS distance alone does not verify the protocol. No exercise test is requested here.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Only for an already completed Kline-style test: a flat, independently measured mile walked throughout, with two fastest trials within 30 seconds. Select the faster trial. GPS distance alone does not verify the protocol. No exercise test is requested here."}}, "fr": {"stringUnit": {"state": "translated", "value": "Uniquement pour un test de type Kline déjà réalisé : un mile plat mesuré indépendamment, parcouru entièrement en marchant, avec deux essais les plus rapides à 30 secondes d’écart maximum. Choisissez le plus rapide. Le GPS seul ne vérifie pas ce protocole. Aucun test physique n’est demandé ici."}}}},
+    "Age at test (30–69 years)": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Age at test (30–69 years)"}}, "fr": {"stringUnit": {"state": "translated", "value": "Âge lors du test (30 à 69 ans)"}}}},
+    "Body weight at test (kg)": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Body weight at test (kg)"}}, "fr": {"stringUnit": {"state": "translated", "value": "Poids lors du test (kg)"}}}},
+    "Study sex coefficient": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Study sex coefficient"}}, "fr": {"stringUnit": {"state": "translated", "value": "Coefficient de sexe de l’étude"}}}},
+    "Select study coefficient": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Select study coefficient"}}, "fr": {"stringUnit": {"state": "translated", "value": "Choisir le coefficient de l’étude"}}}},
+    "Female (0)": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Female (0)"}}, "fr": {"stringUnit": {"state": "translated", "value": "Féminin (0)"}}}},
+    "Male (1)": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Male (1)"}}, "fr": {"stringUnit": {"state": "translated", "value": "Masculin (1)"}}}},
+    "Other fastest trial duration (seconds)": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Other fastest trial duration (seconds)"}}, "fr": {"stringUnit": {"state": "translated", "value": "Durée de l’autre essai le plus rapide (secondes)"}}}},
+    "I confirm the measured flat mile, walking-only protocol and repeated trials": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "I confirm the measured flat mile, walking-only protocol and repeated trials"}}, "fr": {"stringUnit": {"state": "translated", "value": "Je confirme le mile plat mesuré, la marche sans course et les essais répétés"}}}},
+    "Experimental VO₂max (L/min)": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Experimental VO₂max (L/min)"}}, "fr": {"stringUnit": {"state": "translated", "value": "VO₂max expérimentale (L/min)"}}}},
+    "Converted VO₂max (mL/kg/min)": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Converted VO₂max (mL/kg/min)"}}, "fr": {"stringUnit": {"state": "translated", "value": "VO₂max convertie (mL/kg/min)"}}}},
+    "Population prediction, not measured oxygen uptake. Published cross-validation error: 0.355 L/min (standard error, not an individual confidence interval). Final recorded HR supplies the fourth-quarter observation; no extrapolation to HRmax.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Population prediction, not measured oxygen uptake. Published cross-validation error: 0.355 L/min (standard error, not an individual confidence interval). Final recorded HR supplies the fourth-quarter observation; no extrapolation to HRmax."}}, "fr": {"stringUnit": {"state": "translated", "value": "Prédiction de population, sans mesure d’oxygène. Erreur de validation croisée publiée : 0,355 L/min (erreur type, pas un intervalle de confiance individuel). La dernière fréquence cardiaque enregistrée représente la mesure du quatrième quart ; aucune extrapolation à la fréquence maximale."}}}},
+    "Estimate withheld: confirm the protocol, source and study inputs. Recorded GPS must be within 3% of a mile with passing timing, accuracy, stops and HR checks, including HR within five seconds of the finish.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Estimate withheld: confirm the protocol, source and study inputs. Recorded GPS must be within 3% of a mile with passing timing, accuracy, stops and HR checks, including HR within five seconds of the finish."}}, "fr": {"stringUnit": {"state": "translated", "value": "Estimation indisponible : confirmez le protocole, la source et les informations du test. La distance GPS doit être à 3 % maximum d’un mile, avec des contrôles valides de durée, précision, arrêts et fréquence cardiaque, dont une mesure dans les cinq dernières secondes."}}}},
+    "exercise.gps.window-invalid": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Invalid time window"}}, "fr": {"stringUnit": {"state": "translated", "value": "Période invalide"}}}},
+    "exercise.gps.sport-unsupported": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Unsupported sport"}}, "fr": {"stringUnit": {"state": "translated", "value": "Sport non pris en charge"}}}},
+    "exercise.gps.gps-missing": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Missing or excessive GPS fixes"}}, "fr": {"stringUnit": {"state": "translated", "value": "Points GPS absents ou trop nombreux"}}}},
+    "exercise.gps.gps-invalid": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Invalid GPS coordinates"}}, "fr": {"stringUnit": {"state": "translated", "value": "Coordonnées GPS invalides"}}}},
+    "exercise.gps.distance-short": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Distance below 1 km"}}, "fr": {"stringUnit": {"state": "translated", "value": "Distance inférieure à 1 km"}}}},
+    "exercise.gps.gps-timing-missing": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "GPS times missing or invalid"}}, "fr": {"stringUnit": {"state": "translated", "value": "Horodatage GPS absent ou invalide"}}}},
+    "exercise.gps.gps-accuracy-missing": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "GPS accuracy missing"}}, "fr": {"stringUnit": {"state": "translated", "value": "Précision GPS absente"}}}},
+    "exercise.gps.gps-accuracy": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "GPS accuracy outside limits"}}, "fr": {"stringUnit": {"state": "translated", "value": "Précision GPS hors limites"}}}},
+    "exercise.gps.gps-gap": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "GPS gaps over 15 seconds"}}, "fr": {"stringUnit": {"state": "translated", "value": "Interruption GPS de plus de 15 secondes"}}}},
+    "exercise.gps.gps-speed": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Implausible GPS speed"}}, "fr": {"stringUnit": {"state": "translated", "value": "Vitesse GPS non plausible"}}}},
+    "exercise.gps.gps-coverage": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Insufficient GPS coverage"}}, "fr": {"stringUnit": {"state": "translated", "value": "Couverture GPS insuffisante"}}}},
+    "exercise.gps.stops": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Too much stopped time"}}, "fr": {"stringUnit": {"state": "translated", "value": "Durée d’arrêt trop importante"}}}},
+    "exercise.gps.distance-mismatch": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Stored and route distances disagree"}}, "fr": {"stringUnit": {"state": "translated", "value": "Écart entre les distances enregistrée et calculée"}}}},
+    "exercise.gps.hr-owner-unknown": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "HR source unconfirmed"}}, "fr": {"stringUnit": {"state": "translated", "value": "Source cardiaque non confirmée"}}}},
+    "exercise.gps.hr-owner-mismatch": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Mixed HR sources"}}, "fr": {"stringUnit": {"state": "translated", "value": "Sources cardiaques mélangées"}}}},
+    "exercise.gps.hr-invalid": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Missing or invalid HR"}}, "fr": {"stringUnit": {"state": "translated", "value": "Données cardiaques absentes ou invalides"}}}},
+    "exercise.gps.hr-gap": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "HR gaps over 10 seconds"}}, "fr": {"stringUnit": {"state": "translated", "value": "Interruption cardiaque de plus de 10 secondes"}}}},
+    "exercise.gps.hr-coverage": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Insufficient HR coverage"}}, "fr": {"stringUnit": {"state": "translated", "value": "Couverture cardiaque insuffisante"}}}},
+    "exercise.gps.slope-unknown": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Slope unknown"}}, "fr": {"stringUnit": {"state": "translated", "value": "Pente inconnue"}}}},
+    "exercise.gps.protocol-unverified": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Protocol unverified"}}, "fr": {"stringUnit": {"state": "translated", "value": "Protocole non vérifié"}}}},
+    "Local improvements": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Local improvements"}}, "fr": {"stringUnit": {"state": "translated", "value": "Améliorations locales"}}}},
+    "Goals, calibration and transparent trends from your own data.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Goals, calibration and transparent trends from your own data."}}, "fr": {"stringUnit": {"state": "translated", "value": "Objectifs, calibration et tendances expliquées à partir de vos données."}}}},
+    "Lifting load history": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Lifting load history"}}, "fr": {"stringUnit": {"state": "translated", "value": "Historique de charge ressentie"}}}},
+    "Alarm delivery evidence": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Alarm delivery evidence"}}, "fr": {"stringUnit": {"state": "translated", "value": "Bilan de transmission de l’alarme"}}}},
+    "Logged perceived load, kept separate from heart-rate Effort.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Logged perceived load, kept separate from heart-rate Effort."}}, "fr": {"stringUnit": {"state": "translated", "value": "Charge ressentie enregistrée, présentée séparément de l’Effort cardiaque."}}}},
+    "Session RPE × minutes describes how hard a logged session felt. It does not measure muscular strain from the bracelet or convert kilograms into Effort points.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Session RPE × minutes describes how hard a logged session felt. It does not measure muscular strain from the bracelet or convert kilograms into Effort points."}}, "fr": {"stringUnit": {"state": "translated", "value": "Le ressenti de séance (RPE) multiplié par les minutes décrit la difficulté perçue. Ce calcul ne mesure pas la charge musculaire du bracelet et ne convertit pas les kilogrammes en points d’Effort."}}}},
+    "Last 7 calendar days": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Last 7 calendar days"}}, "fr": {"stringUnit": {"state": "translated", "value": "7 derniers jours calendaires"}}}},
+    "Last 28 calendar days": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Last 28 calendar days"}}, "fr": {"stringUnit": {"state": "translated", "value": "28 derniers jours calendaires"}}}},
+    "Today is provisional. Missing or invalid ratings are excluded from the load total, not assumed to be zero. These overlapping windows are descriptive totals, not an injury-risk ratio.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Today is provisional. Missing or invalid ratings are excluded from the load total, not assumed to be zero. These overlapping windows are descriptive totals, not an injury-risk ratio."}}, "fr": {"stringUnit": {"state": "translated", "value": "Les données du jour sont provisoires. Les évaluations absentes ou invalides sont exclues du total. Ces fenêtres qui se chevauchent décrivent des totaux ; elles ne prédisent pas un risque de blessure."}}}},
+    "Conflicting session records were excluded.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Conflicting session records were excluded."}}, "fr": {"stringUnit": {"state": "translated", "value": "Les séances aux données contradictoires ont été exclues."}}}},
+    "Rated sessions: %lld · Unrated or invalid: %lld": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Rated sessions: %lld · Unrated or invalid: %lld"}}, "fr": {"stringUnit": {"state": "translated", "value": "Séances évaluées : %lld · Sans évaluation valide : %lld"}}}},
+    "Too many sessions to summarize. No partial total is shown.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Too many sessions to summarize. No partial total is shown."}}, "fr": {"stringUnit": {"state": "translated", "value": "Trop de séances à résumer. Aucun total partiel n’est affiché."}}}},
+    "Stored lifting sessions could not be read. No partial total is shown.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Stored lifting sessions could not be read. No partial total is shown."}}, "fr": {"stringUnit": {"state": "translated", "value": "Impossible de lire les séances enregistrées. Aucun total partiel n’est affiché."}}}},
+    "Stored evidence only. No Bluetooth command is sent by this screen.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Stored evidence only. No Bluetooth command is sent by this screen."}}, "fr": {"stringUnit": {"state": "translated", "value": "Uniquement des informations enregistrées. Cet écran n’envoie aucune commande Bluetooth."}}}},
+    "A matching stored readback is not a guarantee that the bracelet will vibrate. WHOOP 5.0 alarms remain experimental. Keep your phone Clock alarm as a backup.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "A matching stored readback is not a guarantee that the bracelet will vibrate. WHOOP 5.0 alarms remain experimental. Keep your phone Clock alarm as a backup."}}, "fr": {"stringUnit": {"state": "translated", "value": "Une réponse enregistrée concordante ne garantit pas une vibration. Les alarmes WHOOP 5.0 restent expérimentales. Gardez une alarme de secours dans l’Horloge du téléphone."}}}},
+    "Open alarm settings": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Open alarm settings"}}, "fr": {"stringUnit": {"state": "translated", "value": "Ouvrir les réglages d’alarme"}}}},
+    "Strap alarm is switched off": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Strap alarm is switched off"}}, "fr": {"stringUnit": {"state": "translated", "value": "L’alarme du bracelet est désactivée"}}}},
+    "WHOOP 5.0 experimental arming is disabled": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "WHOOP 5.0 experimental arming is disabled"}}, "fr": {"stringUnit": {"state": "translated", "value": "L’armement expérimental WHOOP 5.0 est désactivé"}}}},
+    "No future alarm is scheduled": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "No future alarm is scheduled"}}, "fr": {"stringUnit": {"state": "translated", "value": "Aucune alarme future n’est programmée"}}}},
+    "Last request was queued, without a ready command channel": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Last request was queued, without a ready command channel"}}, "fr": {"stringUnit": {"state": "translated", "value": "La dernière demande était en attente, sans canal de commande disponible"}}}},
+    "Last attributable readback matches the requested time": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Last attributable readback matches the requested time"}}, "fr": {"stringUnit": {"state": "translated", "value": "La dernière réponse attribuable correspond à l’heure demandée"}}}},
+    "Last attributable readback reports a different time": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Last attributable readback reports a different time"}}, "fr": {"stringUnit": {"state": "translated", "value": "La dernière réponse attribuable indique une heure différente"}}}},
+    "Stored readback predates the current request": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Stored readback predates the current request"}}, "fr": {"stringUnit": {"state": "translated", "value": "La réponse enregistrée précède la demande actuelle"}}}},
+    "Stored evidence belongs to a different strap": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Stored evidence belongs to a different strap"}}, "fr": {"stringUnit": {"state": "translated", "value": "Les informations enregistrées concernent un autre bracelet"}}}},
+    "Stored evidence belongs to a different alarm request": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Stored evidence belongs to a different alarm request"}}, "fr": {"stringUnit": {"state": "translated", "value": "Les informations enregistrées concernent une autre demande d’alarme"}}}},
+    "Stored timestamps cannot establish delivery order": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Stored timestamps cannot establish delivery order"}}, "fr": {"stringUnit": {"state": "translated", "value": "Les horodatages enregistrés ne permettent pas d’établir l’ordre de transmission"}}}},
+    "No complete attributable readback is available": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "No complete attributable readback is available"}}, "fr": {"stringUnit": {"state": "translated", "value": "Aucune réponse complète et attribuable n’est disponible"}}}},
+    "Weekly plan": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Weekly plan"}}, "fr": {"stringUnit": {"state": "translated", "value": "Plan hebdomadaire"}}}},
+    "Your goals, using only recorded data.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Your goals, using only recorded data."}}, "fr": {"stringUnit": {"state": "translated", "value": "Vos objectifs, à partir des données enregistrées."}}}},
+    "Monday–Sunday · local dates": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Monday–Sunday · local dates"}}, "fr": {"stringUnit": {"state": "translated", "value": "Lundi–dimanche · dates locales"}}}},
+    "Today is provisional. Imported or newly synced records can update this week.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Today is provisional. Imported or newly synced records can update this week."}}, "fr": {"stringUnit": {"state": "translated", "value": "Les données du jour sont provisoires. Les imports et nouvelles synchronisations peuvent actualiser cette semaine."}}}},
+    "Choose your goals": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Choose your goals"}}, "fr": {"stringUnit": {"state": "translated", "value": "Choisir vos objectifs"}}}},
+    "Set a nights or workout-days goal above zero to track it. These are your own targets, not recommendations.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Set a nights or workout-days goal above zero to track it. These are your own targets, not recommendations."}}, "fr": {"stringUnit": {"state": "translated", "value": "Choisissez un nombre de nuits ou de jours d’entraînement supérieur à zéro pour le suivre. Ce sont vos objectifs personnels, pas des recommandations."}}}},
+    "Sleep duration: %lld min": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Sleep duration: %lld min"}}, "fr": {"stringUnit": {"state": "translated", "value": "Durée de sommeil : %lld min"}}}},
+    "Sleep nights goal: %lld": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Sleep nights goal: %lld"}}, "fr": {"stringUnit": {"state": "translated", "value": "Objectif de nuits : %lld"}}}},
+    "Workout days goal: %lld": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Workout days goal: %lld"}}, "fr": {"stringUnit": {"state": "translated", "value": "Objectif de jours d’entraînement : %lld"}}}},
+    "Goals stay on this device and are not included in backups.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Goals stay on this device and are not included in backups."}}, "fr": {"stringUnit": {"state": "translated", "value": "Les objectifs restent sur cet appareil et ne sont pas inclus dans les sauvegardes."}}}},
+    "Recorded progress": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Recorded progress"}}, "fr": {"stringUnit": {"state": "translated", "value": "Progression enregistrée"}}}},
+    "Sleep nights at your duration: %lld / %lld": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Sleep nights at your duration: %lld / %lld"}}, "fr": {"stringUnit": {"state": "translated", "value": "Nuits à votre durée de sommeil : %lld / %lld"}}}},
+    "Nights with a sleep record: %lld": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Nights with a sleep record: %lld"}}, "fr": {"stringUnit": {"state": "translated", "value": "Nuits avec un sommeil enregistré : %lld"}}}},
+    "Sleep goal is off": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Sleep goal is off"}}, "fr": {"stringUnit": {"state": "translated", "value": "Objectif de sommeil désactivé"}}}},
+    "Days with a recorded workout: %lld / %lld": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Days with a recorded workout: %lld / %lld"}}, "fr": {"stringUnit": {"state": "translated", "value": "Jours avec une séance enregistrée : %lld / %lld"}}}},
+    "Loading recorded workouts…": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Loading recorded workouts…"}}, "fr": {"stringUnit": {"state": "translated", "value": "Chargement des séances enregistrées…"}}}},
+    "Workout goal is off": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Workout goal is off"}}, "fr": {"stringUnit": {"state": "translated", "value": "Objectif d’entraînement désactivé"}}}},
+    "This week's records": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "This week's records"}}, "fr": {"stringUnit": {"state": "translated", "value": "Données de cette semaine"}}}},
+    "Today · provisional": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Today · provisional"}}, "fr": {"stringUnit": {"state": "translated", "value": "Aujourd’hui · provisoire"}}}},
+    "Upcoming": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Upcoming"}}, "fr": {"stringUnit": {"state": "translated", "value": "À venir"}}}},
+    "Recorded sleep: %lld min": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Recorded sleep: %lld min"}}, "fr": {"stringUnit": {"state": "translated", "value": "Sommeil enregistré : %lld min"}}}},
+    "No sleep record": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "No sleep record"}}, "fr": {"stringUnit": {"state": "translated", "value": "Aucun sommeil enregistré"}}}},
+    "Completed workout recorded": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Completed workout recorded"}}, "fr": {"stringUnit": {"state": "translated", "value": "Séance terminée enregistrée"}}}},
+    "No completed workout recorded": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "No completed workout recorded"}}, "fr": {"stringUnit": {"state": "translated", "value": "Aucune séance terminée enregistrée"}}}},
+    "Sleep uses the daily record's date. Completed workouts count on their local start date. Missing data never means no activity.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Sleep uses the daily record's date. Completed workouts count on their local start date. Missing data never means no activity."}}, "fr": {"stringUnit": {"state": "translated", "value": "Le sommeil utilise la date du relevé quotidien. Les séances terminées sont comptées à leur date de début locale. Une donnée manquante ne signifie jamais une absence d’activité."}}}},
+    "Walking step calibration": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Walking step calibration"}}, "fr": {"stringUnit": {"state": "translated", "value": "Étalonnage des pas en marchant"}}}},
+    "A manual scale preview for the WHOOP 5/MG motion counter.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "A manual scale preview for the WHOOP 5/MG motion counter."}}, "fr": {"stringUnit": {"state": "translated", "value": "Un aperçu du réglage manuel pour le compteur de mouvement du WHOOP 5/MG."}}}},
+    "Count a walk, then repeat": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Count a walk, then repeat"}}, "fr": {"stringUnit": {"state": "translated", "value": "Comptez les pas d'une marche, puis recommencez"}}}},
+    "Complete 3–8 separate walks with the same strap and placement. Count 100–10,000 actual steps per walk. Use different walk lengths so each observation is distinct.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Complete 3–8 separate walks with the same strap and placement. Count 100–10,000 actual steps per walk. Use different walk lengths so each observation is distinct."}}, "fr": {"stringUnit": {"state": "translated", "value": "Effectuez 3 à 8 marches distinctes avec le même bracelet, porté au même endroit. Comptez 100 à 10 000 pas réels par marche. Variez les distances pour obtenir des observations différentes."}}}},
+    "For each walk, enter the complete unscaled tick increase from your own local raw-counter observation. The @57 motion counter is not a validated step count. NOOP's displayed daily steps may already be scaled and must not be used here.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "For each walk, enter the complete unscaled tick increase from your own local raw-counter observation. The @57 motion counter is not a validated step count. NOOP's displayed daily steps may already be scaled and must not be used here."}}, "fr": {"stringUnit": {"state": "translated", "value": "Pour chaque marche, saisissez l'augmentation complète des unités brutes du compteur, observée localement et sans coefficient. Le compteur de mouvement @57 n'est pas un nombre de pas validé. Les pas quotidiens affichés par NOOP peuvent déjà être corrigés et ne doivent pas être utilisés ici."}}}},
+    "This screen does not capture a walk or verify its source. If you cannot obtain an unscaled tick increase, keep your current scale. Do not use observations with missing records, counter resets or ambiguous wraps.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "This screen does not capture a walk or verify its source. If you cannot obtain an unscaled tick increase, keep your current scale. Do not use observations with missing records, counter resets or ambiguous wraps."}}, "fr": {"stringUnit": {"state": "translated", "value": "Cet écran n'enregistre pas de marche et ne vérifie pas la source des données. Si vous ne pouvez pas obtenir une augmentation brute du compteur, conservez votre réglage actuel. N'utilisez pas d'observations avec des données manquantes, une remise à zéro ou un débordement ambigu du compteur."}}}},
+    "A repeatable scale does not validate the counter or filter non-walking wrist motion. Nothing changes until you tap Apply scale.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "A repeatable scale does not validate the counter or filter non-walking wrist motion. Nothing changes until you tap Apply scale."}}, "fr": {"stringUnit": {"state": "translated", "value": "Un coefficient reproductible ne valide pas le compteur et ne filtre pas les mouvements du poignet sans marche. Rien ne change avant de toucher Appliquer le coefficient."}}}},
+    "The scale divides ticks retained by NOOP's existing step pipeline. It cannot restore discarded ticks or fill missing walks.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "The scale divides ticks retained by NOOP's existing step pipeline. It cannot restore discarded ticks or fill missing walks."}}, "fr": {"stringUnit": {"state": "translated", "value": "Le coefficient divise les unités retenues par le calcul des pas actuel de NOOP. Il ne peut pas restaurer les unités écartées ni compléter des marches manquantes."}}}},
+    "Add a walking trial": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Add a walking trial"}}, "fr": {"stringUnit": {"state": "translated", "value": "Ajouter un essai de marche"}}}},
+    "Steps you counted": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Steps you counted"}}, "fr": {"stringUnit": {"state": "translated", "value": "Pas que vous avez comptés"}}}},
+    "Counted steps": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Counted steps"}}, "fr": {"stringUnit": {"state": "translated", "value": "Pas comptés"}}}},
+    "Unscaled tick increase": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Unscaled tick increase"}}, "fr": {"stringUnit": {"state": "translated", "value": "Augmentation brute du compteur"}}}},
+    "Raw tick increase": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Raw tick increase"}}, "fr": {"stringUnit": {"state": "translated", "value": "Augmentation des unités brutes"}}}},
+    "I counted a separate walk with this strap and used complete, unscaled ticks without gaps, resets or uncertain wraps.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "I counted a separate walk with this strap and used complete, unscaled ticks without gaps, resets or uncertain wraps."}}, "fr": {"stringUnit": {"state": "translated", "value": "J'ai compté les pas d'une marche distincte avec ce bracelet et utilisé des unités brutes complètes, sans interruption, remise à zéro ni débordement incertain."}}}},
+    "Whole numbers only. Tick increase must be positive and at most 300,000. Each trial must imply 0.5–30 ticks per counted step.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Whole numbers only. Tick increase must be positive and at most 300,000. Each trial must imply 0.5–30 ticks per counted step."}}, "fr": {"stringUnit": {"state": "translated", "value": "Nombres entiers uniquement. L'augmentation du compteur doit être positive et ne pas dépasser 300 000. Chaque essai doit correspondre à 0,5 à 30 unités par pas compté."}}}},
+    "Add trial": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Add trial"}}, "fr": {"stringUnit": {"state": "translated", "value": "Ajouter l'essai"}}}},
+    "Walking trials": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Walking trials"}}, "fr": {"stringUnit": {"state": "translated", "value": "Essais de marche"}}}},
+    "Trial %lld": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Trial %lld"}}, "fr": {"stringUnit": {"state": "translated", "value": "Essai %lld"}}}},
+    "Remove trial %lld": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Remove trial %lld"}}, "fr": {"stringUnit": {"state": "translated", "value": "Supprimer l'essai %lld"}}}},
+    "%lld counted steps · %lld raw ticks": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "%lld counted steps · %lld raw ticks"}}, "fr": {"stringUnit": {"state": "translated", "value": "%lld pas comptés · %lld unités brutes"}}}},
+    "%@ ticks per step": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "%@ ticks per step"}}, "fr": {"stringUnit": {"state": "translated", "value": "%@ unités par pas"}}}},
+    "Trials stay only in this screen. Closing it discards them; an applied scale remains saved on this device.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Trials stay only in this screen. Closing it discards them; an applied scale remains saved on this device."}}, "fr": {"stringUnit": {"state": "translated", "value": "Les essais restent uniquement dans cet écran et sont effacés à sa fermeture. Un coefficient appliqué reste enregistré sur cet appareil."}}}},
+    "Review before applying": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Review before applying"}}, "fr": {"stringUnit": {"state": "translated", "value": "Vérifier avant d'appliquer"}}}},
+    "Current scale: %@ ticks per step": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Current scale: %@ ticks per step"}}, "fr": {"stringUnit": {"state": "translated", "value": "Coefficient actuel : %@ unités par pas"}}}},
+    "Trial spread: %@": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Trial spread: %@"}}, "fr": {"stringUnit": {"state": "translated", "value": "Dispersion des essais : %@"}}}},
+    "Proposed scale: %@ ticks per step": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Proposed scale: %@ ticks per step"}}, "fr": {"stringUnit": {"state": "translated", "value": "Coefficient proposé : %@ unités par pas"}}}},
+    "The proposal is the median of all trial scales. Display is rounded; the full calculated value is saved.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "The proposal is the median of all trial scales. Display is rounded; the full calculated value is saved."}}, "fr": {"stringUnit": {"state": "translated", "value": "La proposition est la médiane des coefficients de tous les essais. L'affichage est arrondi ; la valeur calculée complète est enregistrée."}}}},
+    "Spread is the range of trial scales divided by their median. The 20% limit is a workflow rule for repeatability, not a confidence score or an accuracy guarantee.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Spread is the range of trial scales divided by their median. The 20% limit is a workflow rule for repeatability, not a confidence score or an accuracy guarantee."}}, "fr": {"stringUnit": {"state": "translated", "value": "La dispersion est l'écart entre les coefficients extrêmes divisé par leur médiane. La limite de 20 % sert à vérifier la reproductibilité ; ce n'est ni un score de confiance ni une garantie de précision."}}}},
+    "Apply scale": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Apply scale"}}, "fr": {"stringUnit": {"state": "translated", "value": "Appliquer le coefficient"}}}},
+    "Updating local estimates…": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Updating local estimates…"}}, "fr": {"stringUnit": {"state": "translated", "value": "Mise à jour des estimations locales…"}}}},
+    "Scale saved. Local estimates will use it when recalculated.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Scale saved. Local estimates will use it when recalculated."}}, "fr": {"stringUnit": {"state": "translated", "value": "Coefficient enregistré. Les estimations locales l'utiliseront lors de leur prochain calcul."}}}},
+    "Confirm the source and completeness of this separate walking trial.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Confirm the source and completeness of this separate walking trial."}}, "fr": {"stringUnit": {"state": "translated", "value": "Confirmez la source et l'intégralité des données de cet essai de marche distinct."}}}},
+    "This trial needs a valid identifier. Remove it and add the walk again.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "This trial needs a valid identifier. Remove it and add the walk again."}}, "fr": {"stringUnit": {"state": "translated", "value": "Cet essai nécessite un identifiant valide. Supprimez-le, puis ajoutez de nouveau la marche."}}}},
+    "Enter a whole number of counted steps from 100 to 10,000.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Enter a whole number of counted steps from 100 to 10,000."}}, "fr": {"stringUnit": {"state": "translated", "value": "Saisissez un nombre entier de pas comptés entre 100 et 10 000."}}}},
+    "Enter a whole unscaled tick increase from 1 to 300,000.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Enter a whole unscaled tick increase from 1 to 300,000."}}, "fr": {"stringUnit": {"state": "translated", "value": "Saisissez une augmentation brute entière du compteur entre 1 et 300 000."}}}},
+    "This trial falls outside 0.5–30 ticks per counted step. Check the unscaled source and the step count.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "This trial falls outside 0.5–30 ticks per counted step. Check the unscaled source and the step count."}}, "fr": {"stringUnit": {"state": "translated", "value": "Cet essai sort de la plage de 0,5 à 30 unités par pas compté. Vérifiez la source brute et le nombre de pas."}}}},
+    "This repeats an existing observation. Use a separate walk with a different length.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "This repeats an existing observation. Use a separate walk with a different length."}}, "fr": {"stringUnit": {"state": "translated", "value": "Cette observation existe déjà. Utilisez une marche distincte d'une autre longueur."}}}},
+    "Add at least three independent walking trials to preview a scale.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Add at least three independent walking trials to preview a scale."}}, "fr": {"stringUnit": {"state": "translated", "value": "Ajoutez au moins trois essais de marche indépendants pour afficher un coefficient proposé."}}}},
+    "Use no more than eight walking trials in one calibration.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Use no more than eight walking trials in one calibration."}}, "fr": {"stringUnit": {"state": "translated", "value": "N'utilisez pas plus de huit essais de marche pour un étalonnage."}}}},
+    "Trial spread exceeds 20%. Check the observations and repeat the walks before applying a scale.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Trial spread exceeds 20%. Check the observations and repeat the walks before applying a scale."}}, "fr": {"stringUnit": {"state": "translated", "value": "La dispersion des essais dépasse 20 %. Vérifiez les observations et répétez les marches avant d'appliquer un coefficient."}}}},
+    "Long-term trends": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Long-term trends"}}, "fr": {"stringUnit": {"state": "translated", "value": "Tendances à long terme"}}}},
+    "Sleep duration": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Sleep duration"}}, "fr": {"stringUnit": {"state": "translated", "value": "Durée du sommeil"}}}},
+    "Steps / motion estimate": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Steps / motion estimate"}}, "fr": {"stringUnit": {"state": "translated", "value": "Pas / estimation du mouvement"}}}},
+    "ms": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "ms"}}, "fr": {"stringUnit": {"state": "translated", "value": "ms"}}}},
+    "h": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "h"}}, "fr": {"stringUnit": {"state": "translated", "value": "h"}}}},
+    "steps / ticks": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "steps / ticks"}}, "fr": {"stringUnit": {"state": "translated", "value": "pas / impulsions"}}}},
+    "Your last 180 completed days": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Your last 180 completed days"}}, "fr": {"stringUnit": {"state": "translated", "value": "Vos 180 derniers jours complets"}}}},
+    "The last 30 completed calendar days are compared with the previous 150 days. Today and future days are excluded.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "The last 30 completed calendar days are compared with the previous 150 days. Today and future days are excluded."}}, "fr": {"stringUnit": {"state": "translated", "value": "Les 30 derniers jours calendaires complets sont comparés aux 150 jours précédents. Le jour en cours et les jours futurs sont exclus."}}}},
+    "Descriptive averages of your recorded data. These are not an age estimate, diagnosis or prediction.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Descriptive averages of your recorded data. These are not an age estimate, diagnosis or prediction."}}, "fr": {"stringUnit": {"state": "translated", "value": "Moyennes descriptives de vos données enregistrées. Elles ne constituent ni une estimation de votre âge, ni un diagnostic, ni une prédiction."}}}},
+    "Data sources and limits": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Data sources and limits"}}, "fr": {"stringUnit": {"state": "translated", "value": "Sources des données et limites"}}}},
+    "Steps may include strap motion ticks or imported step counts. WHOOP 5.0 motion ticks are not a validated step count; a scale of 1 does not establish calibration. Changes in source or scale can affect this comparison.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Steps may include strap motion ticks or imported step counts. WHOOP 5.0 motion ticks are not a validated step count; a scale of 1 does not establish calibration. Changes in source or scale can affect this comparison."}}, "fr": {"stringUnit": {"state": "translated", "value": "Les pas peuvent inclure des impulsions de mouvement du bracelet ou des nombres de pas importés. Les impulsions du WHOOP 5.0 ne sont pas un nombre de pas validé ; un coefficient de 1 ne prouve pas un étalonnage. Un changement de source ou de coefficient peut modifier cette comparaison."}}}},
+    "Missing and invalid readings are excluded, never replaced with zero. Identical same-day readings count once; conflicting valid readings exclude that day. Coverage is measured days divided by calendar days, not statistical confidence.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Missing and invalid readings are excluded, never replaced with zero. Identical same-day readings count once; conflicting valid readings exclude that day. Coverage is measured days divided by calendar days, not statistical confidence."}}, "fr": {"stringUnit": {"state": "translated", "value": "Les mesures absentes ou invalides sont exclues, jamais remplacées par zéro. Les mesures identiques d’un même jour comptent une fois ; les mesures valides contradictoires excluent ce jour. La couverture correspond aux jours mesurés divisés par les jours calendaires, et non à une confiance statistique."}}}},
+    "Previous 150 days": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Previous 150 days"}}, "fr": {"stringUnit": {"state": "translated", "value": "150 jours précédents"}}}},
+    "Full 180-day context": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Full 180-day context"}}, "fr": {"stringUnit": {"state": "translated", "value": "Contexte sur 180 jours"}}}},
+    "Change in daily mean": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Change in daily mean"}}, "fr": {"stringUnit": {"state": "translated", "value": "Évolution de la moyenne quotidienne"}}}},
+    "%lld conflicting days excluded": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "%lld conflicting days excluded"}}, "fr": {"stringUnit": {"state": "translated", "value": "%lld jours contradictoires exclus"}}}},
+    "%lld of %lld days measured": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "%lld of %lld days measured"}}, "fr": {"stringUnit": {"state": "translated", "value": "%lld jours mesurés sur %lld"}}}},
+    "Comparison needs at least 2 measured days in the last 30 days.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Comparison needs at least 2 measured days in the last 30 days."}}, "fr": {"stringUnit": {"state": "translated", "value": "La comparaison nécessite au moins 2 jours mesurés sur les 30 derniers jours."}}}},
+    "Comparison needs at least 2 measured days in the previous 150 days.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Comparison needs at least 2 measured days in the previous 150 days."}}, "fr": {"stringUnit": {"state": "translated", "value": "La comparaison nécessite au moins 2 jours mesurés sur les 150 jours précédents."}}}},
+    "Comparison needs at least 2 measured days in each period. Available averages are shown above.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Comparison needs at least 2 measured days in each period. Available averages are shown above."}}, "fr": {"stringUnit": {"state": "translated", "value": "La comparaison nécessite au moins 2 jours mesurés dans chaque période. Les moyennes disponibles sont affichées ci-dessus."}}}},
+    "Uses NOOP’s merged daily history: imported strap values, on-device calculations and activity-file steps, with the same precedence as the dashboard. Each daily value has no individual source label. Changes in source or calibration can affect these averages.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Uses NOOP’s merged daily history: imported strap values, on-device calculations and activity-file steps, with the same precedence as the dashboard. Each daily value has no individual source label. Changes in source or calibration can affect these averages."}}, "fr": {"stringUnit": {"state": "translated", "value": "Utilise l’historique quotidien fusionné de NOOP : valeurs importées du bracelet, calculs sur l’appareil et pas issus de fichiers d’activité, avec la même priorité que le tableau de bord. Chaque valeur quotidienne ne porte pas d’étiquette de source individuelle. Un changement de source ou d’étalonnage peut modifier ces moyennes."}}}},
+    "Night diagnostic": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Night diagnostic"}}, "fr": {"stringUnit": {"state": "translated", "value": "Diagnostic de nuit"}}}},
+    "Inspect signal gaps and export a replayable night from this device.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Inspect signal gaps and export a replayable night from this device."}}, "fr": {"stringUnit": {"state": "translated", "value": "Consultez les périodes sans mesure et exportez une nuit pour la rejouer depuis cet appareil."}}}},
+    "Wake date": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Wake date"}}, "fr": {"stringUnit": {"state": "translated", "value": "Date du réveil"}}}},
+    "Uses the time zone currently selected on this device. Days that change UTC offset cannot be represented by fixed-offset replay.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Uses the time zone currently selected on this device. Days that change UTC offset cannot be represented by fixed-offset replay."}}, "fr": {"stringUnit": {"state": "translated", "value": "Utilise le fuseau horaire actuel de cet appareil. Les journées où le décalage UTC change ne peuvent pas être rejouées avec un décalage fixe."}}}},
+    "Inspect this night": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Inspect this night"}}, "fr": {"stringUnit": {"state": "translated", "value": "Examiner cette nuit"}}}},
+    "Signal availability": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Signal availability"}}, "fr": {"stringUnit": {"state": "translated", "value": "Disponibilité des signaux"}}}},
+    "HR: %lld rows · Motion: %lld rows · R-R: %lld rows": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "HR: %lld rows · Motion: %lld rows · R-R: %lld rows"}}, "fr": {"stringUnit": {"state": "translated", "value": "FC : %lld lignes · Mouvement : %lld lignes · R-R : %lld lignes"}}}},
+    "Counts cover the replay read window, including the preceding night. Availability is not sleep-stage accuracy.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Counts cover the replay read window, including the preceding night. Availability is not sleep-stage accuracy."}}, "fr": {"stringUnit": {"state": "translated", "value": "Les nombres couvrent la fenêtre de relecture, y compris la nuit précédente. La disponibilité ne mesure pas la précision des stades de sommeil."}}}},
+    "Durations count 30-second cells containing at least one usable sample, rather than continuous measurement.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Durations count 30-second cells containing at least one usable sample, rather than continuous measurement."}}, "fr": {"stringUnit": {"state": "translated", "value": "Les durées comptent des intervalles de 30 secondes avec au moins une mesure exploitable, sans garantir une mesure continue."}}}},
+    "No computed sleep session ends on this date. Session coverage is unavailable; stored raw signals can still be exported.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "No computed sleep session ends on this date. Session coverage is unavailable; stored raw signals can still be exported."}}, "fr": {"stringUnit": {"state": "translated", "value": "Aucune session de sommeil calculée ne se termine à cette date. Sa couverture est indisponible ; les signaux bruts enregistrés peuvent être exportés."}}}},
+    "No HR or motion: %@ min · HR only: %@ min · Motion only: %@ min · Both: %@ min": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "No HR or motion: %@ min · HR only: %@ min · Motion only: %@ min · Both: %@ min"}}, "fr": {"stringUnit": {"state": "translated", "value": "Sans FC ni mouvement : %@ min · FC seule : %@ min · Mouvement seul : %@ min · Les deux : %@ min"}}}},
+    "Indeterminate: %@–%@": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Indeterminate: %@–%@"}}, "fr": {"stringUnit": {"state": "translated", "value": "Indéterminé : %@–%@"}}}},
+    "Additional gaps are listed in the diagnostic ZIP.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Additional gaps are listed in the diagnostic ZIP."}}, "fr": {"stringUnit": {"state": "translated", "value": "Les autres périodes sans mesure figurent dans le ZIP de diagnostic."}}}},
+    "This session is too long for the coverage diagnostic. Availability is unknown.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "This session is too long for the coverage diagnostic. Availability is unknown."}}, "fr": {"stringUnit": {"state": "translated", "value": "Cette session dépasse la durée prise en charge par le diagnostic. Sa disponibilité est indéterminée."}}}},
+    "Local diagnostic ZIP": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Local diagnostic ZIP"}}, "fr": {"stringUnit": {"state": "translated", "value": "ZIP de diagnostic local"}}}},
+    "Includes stored signals, current settings, replay baselines and computed results. Original scoring settings and final app baselines are not stored, so replay can differ from the displayed score.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Includes stored signals, current settings, replay baselines and computed results. Original scoring settings and final app baselines are not stored, so replay can differ from the displayed score."}}, "fr": {"stringUnit": {"state": "translated", "value": "Inclut les signaux enregistrés, les réglages actuels, les références de relecture et les résultats calculés. Les réglages d’origine et les références finales de l’application ne sont pas conservés ; le résultat rejoué peut différer du score affiché."}}}},
+    "The ZIP is unencrypted and contains sensitive health data and timestamps. Source identifiers are pseudonymized. Choose where to save or share it.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "The ZIP is unencrypted and contains sensitive health data and timestamps. Source identifiers are pseudonymized. Choose where to save or share it."}}, "fr": {"stringUnit": {"state": "translated", "value": "Le ZIP n’est pas chiffré et contient des données de santé sensibles et des horaires. Les identifiants des sources sont pseudonymisés. Choisissez où l’enregistrer ou le partager."}}}},
+    "Export diagnostic ZIP": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Export diagnostic ZIP"}}, "fr": {"stringUnit": {"state": "translated", "value": "Exporter le ZIP de diagnostic"}}}},
+    "No on-device store is available yet.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "No on-device store is available yet."}}, "fr": {"stringUnit": {"state": "translated", "value": "La base de données locale n’est pas encore disponible."}}}},
+    "This date cannot be exported.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "This date cannot be exported."}}, "fr": {"stringUnit": {"state": "translated", "value": "Cette date ne peut pas être exportée."}}}},
+    "This civil day changes UTC offset. Fixed-offset replay cannot represent it without losing or repeating an hour.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "This civil day changes UTC offset. Fixed-offset replay cannot represent it without losing or repeating an hour."}}, "fr": {"stringUnit": {"state": "translated", "value": "Le décalage UTC change au cours de cette journée. Une relecture à décalage fixe perdrait ou répéterait une heure."}}}},
+    "Choose a day that has already started.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Choose a day that has already started."}}, "fr": {"stringUnit": {"state": "translated", "value": "Choisissez une journée qui a déjà commencé."}}}},
+    "Check your age and maximum heart rate before exporting.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Check your age and maximum heart rate before exporting."}}, "fr": {"stringUnit": {"state": "translated", "value": "Vérifiez votre âge et votre fréquence cardiaque maximale avant l’export."}}}},
+    "This replay export currently requires a confirmed WHOOP 5.0 or MG source.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "This replay export currently requires a confirmed WHOOP 5.0 or MG source."}}, "fr": {"stringUnit": {"state": "translated", "value": "Cet export de relecture nécessite actuellement une source WHOOP 5.0 ou MG confirmée."}}}},
+    "Too many sleep sessions for one diagnostic. No truncated export was created.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Too many sleep sessions for one diagnostic. No truncated export was created."}}, "fr": {"stringUnit": {"state": "translated", "value": "Trop de sessions de sommeil pour un diagnostic. Aucun export tronqué n’a été créé."}}}},
+    "This night exceeds the diagnostic size limit. No truncated export was created.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "This night exceeds the diagnostic size limit. No truncated export was created."}}, "fr": {"stringUnit": {"state": "translated", "value": "Cette nuit dépasse la taille limite du diagnostic. Aucun export tronqué n’a été créé."}}}},
+    "No heart rate or motion samples are available for this night.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "No heart rate or motion samples are available for this night."}}, "fr": {"stringUnit": {"state": "translated", "value": "Aucune mesure de fréquence cardiaque ni de mouvement n’est disponible pour cette nuit."}}}},
+    "Some sensor values or R-R sources are not compatible with replay. The export was refused without altering them.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Some sensor values or R-R sources are not compatible with replay. The export was refused without altering them."}}, "fr": {"stringUnit": {"state": "translated", "value": "Certaines valeurs ou sources R-R sont incompatibles avec la relecture. L’export a été refusé sans les modifier."}}}},
+    "Stored baseline history is invalid. No diagnostic was created.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Stored baseline history is invalid. No diagnostic was created."}}, "fr": {"stringUnit": {"state": "translated", "value": "L’historique des références est invalide. Aucun diagnostic n’a été créé."}}}},
+    "The stored data changed while preparing the night. Wait for synchronization to finish and try again.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "The stored data changed while preparing the night. Wait for synchronization to finish and try again."}}, "fr": {"stringUnit": {"state": "translated", "value": "Les données ont changé pendant la préparation. Attendez la fin de la synchronisation puis réessayez."}}}},
     "Move, relative to tonight": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Move, relative to tonight"}}, "de": {"stringUnit": {"state": "translated", "value": "Bewegung, relativ zu dieser Nacht"}}, "es": {"stringUnit": {"state": "translated", "value": "Movimiento, en relación con esta noche"}}, "fr": {"stringUnit": {"state": "translated", "value": "Mouvement, par rapport à cette nuit"}}, "it": {"stringUnit": {"state": "translated", "value": "Movimento, rispetto a questa notte"}}, "pl": {"stringUnit": {"state": "translated", "value": "Ruch, w odniesieniu do tej nocy"}}, "pt-PT": {"stringUnit": {"state": "translated", "value": "Movimento, em relação a esta noite"}}, "ru": {"stringUnit": {"state": "translated", "value": "Движение, относительно этой ночи"}}, "zh-Hans": {"stringUnit": {"state": "translated", "value": "活动，相对于今晚"}}, "zh-Hant": {"stringUnit": {"state": "translated", "value": "活動，相對於今晚"}}}},
     "Route and GPS distance, without the heart-rate and calorie summary": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Route and GPS distance, without the heart-rate and calorie summary"}}, "de": {"stringUnit": {"state": "translated", "value": "Route und GPS-Distanz, ohne die Herzfrequenz- und Kalorienübersicht"}}, "es": {"stringUnit": {"state": "translated", "value": "Ruta y distancia GPS, sin el resumen de frecuencia cardiaca y calorías"}}, "fr": {"stringUnit": {"state": "translated", "value": "Itinéraire et distance GPS, sans le récapitulatif de fréquence cardiaque et de calories"}}, "it": {"stringUnit": {"state": "translated", "value": "Percorso e distanza GPS, senza il riepilogo di frequenza cardiaca e calorie"}}, "pl": {"stringUnit": {"state": "translated", "value": "Trasa i dystans GPS, bez podsumowania tętna i kalorii"}}, "pt-PT": {"stringUnit": {"state": "translated", "value": "Rota e distância GPS, sem o resumo de frequência cardíaca e calorias"}}, "ru": {"stringUnit": {"state": "translated", "value": "Маршрут и GPS-дистанция, без сводки пульса и калорий"}}, "zh-Hans": {"stringUnit": {"state": "translated", "value": "路线和 GPS 距离，不含心率和卡路里摘要"}}, "zh-Hant": {"stringUnit": {"state": "translated", "value": "路線和 GPS 距離，不含心率和卡路里摘要"}}}},
     "Export Workout Route": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Export Workout Route"}}, "de": {"stringUnit": {"state": "translated", "value": "Trainingsroute exportieren"}}, "es": {"stringUnit": {"state": "translated", "value": "Exportar ruta del entrenamiento"}}, "fr": {"stringUnit": {"state": "translated", "value": "Exporter l’itinéraire de la séance"}}, "it": {"stringUnit": {"state": "translated", "value": "Esporta il percorso dell’allenamento"}}, "pl": {"stringUnit": {"state": "translated", "value": "Eksportuj trasę treningu"}}, "pt-PT": {"stringUnit": {"state": "translated", "value": "Exportar rota do treino"}}, "ru": {"stringUnit": {"state": "translated", "value": "Экспортировать маршрут тренировки"}}, "zh-Hans": {"stringUnit": {"state": "translated", "value": "导出运动路线"}}, "zh-Hant": {"stringUnit": {"state": "translated", "value": "匯出運動路線"}}}},
@@ -3006,6 +3506,70 @@
     "No exercises yet. Add the first one below — you can type any name you like; NOOP remembers it for next time.": { "localizations": {
       "de": { "stringUnit": { "state": "translated", "value": "Noch keine Übungen. Füge unten die erste hinzu – du kannst jeden Namen eingeben, NOOP merkt ihn sich fürs nächste Mal." } }, "en": { "stringUnit": { "state": "translated", "value": "No exercises yet. Add the first one below — you can type any name you like; NOOP remembers it for next time." } }, "es": { "stringUnit": { "state": "translated", "value": "Aún no hay ejercicios. Añade el primero abajo: puedes escribir el nombre que quieras y NOOP lo recordará para la próxima vez." } }, "fr": { "stringUnit": { "state": "translated", "value": "Aucun exercice pour l'instant. Ajoute le premier ci-dessous : tu peux saisir le nom que tu veux, NOOP le retient pour la prochaine fois." } }, "it": { "stringUnit": { "state": "translated", "value": "Ancora nessun esercizio. Aggiungi il primo qui sotto: puoi scrivere il nome che preferisci e NOOP lo ricorda per la prossima volta." } }, "pl": { "stringUnit": { "state": "translated", "value": "Brak ćwiczeń. Dodaj pierwsze poniżej – możesz wpisać dowolną nazwę, a NOOP zapamięta ją na następny raz." } }, "pt-PT": { "stringUnit": { "state": "translated", "value": "Ainda sem exercícios. Adiciona o primeiro abaixo: podes escrever o nome que quiseres e o NOOP guarda-o para a próxima vez." } }, "ru": { "stringUnit": { "state": "translated", "value": "Упражнений пока нет. Добавь первое ниже — можешь ввести любое название, NOOP запомнит его на следующий раз." } }, "zh-Hans": { "stringUnit": { "state": "translated", "value": "还没有动作。在下面添加第一个——名称随你怎么写，NOOP 会记住它，下次直接用。" } }, "zh-Hant": { "stringUnit": { "state": "translated", "value": "還沒有動作。在下面新增第一個——名稱隨你怎麼寫，NOOP 會記住它，下次直接用。" } }
     } },
+    "Add activity": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add activity"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajouter une activité"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aktivität hinzufügen"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Añadir actividad"
+          }
+        },
+        "pt-PT": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Adicionar atividade"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aggiungi attività"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Добавить активность"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "添加活动"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "新增活動"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dodaj aktywność"
+          }
+        }
+      }
+    },
     "Add exercise": { "localizations": {
       "de": { "stringUnit": { "state": "translated", "value": "Übung hinzufügen" } }, "en": { "stringUnit": { "state": "translated", "value": "Add exercise" } }, "es": { "stringUnit": { "state": "translated", "value": "Añadir ejercicio" } }, "fr": { "stringUnit": { "state": "translated", "value": "Ajouter un exercice" } }, "it": { "stringUnit": { "state": "translated", "value": "Aggiungi esercizio" } }, "pl": { "stringUnit": { "state": "translated", "value": "Dodaj ćwiczenie" } }, "pt-PT": { "stringUnit": { "state": "translated", "value": "Adicionar exercício" } }, "ru": { "stringUnit": { "state": "translated", "value": "Добавить упражнение" } }, "zh-Hans": { "stringUnit": { "state": "translated", "value": "添加动作" } }, "zh-Hant": { "stringUnit": { "state": "translated", "value": "新增動作" } }
     } },
@@ -7433,7 +7997,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$@ · votre record, le %2$@."
+            "value": "%1$@ · vos données, sur %2$@."
           }
         },
         "it": {
@@ -12024,6 +12588,70 @@
           "stringUnit": {
             "state": "translated",
             "value": "%lld 天前"
+          }
+        }
+      }
+    },
+    "%lld days with data": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld days with data"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld jours avec des données"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld Tage mit Daten"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld días con datos"
+          }
+        },
+        "pt-PT": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld dias com dados"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld giorni con dati"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld дней с данными"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld 天有数据"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld 天有資料"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld dni z danymi"
           }
         }
       }
@@ -99434,7 +100062,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Des plages plus longues déverrouillent comme plus d'histoire construit."
+            "value": "Des périodes plus longues seront disponibles à mesure que ton historique s’étoffe."
           }
         },
         "it": {
@@ -105573,6 +106201,70 @@
           "stringUnit": {
             "state": "translated",
             "value": "Mój pulpit nawigacyjny"
+          }
+        }
+      }
+    },
+    "My Day": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "My Day"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ma journée"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mein Tag"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mi día"
+          }
+        },
+        "pt-PT": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O meu dia"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La mia giornata"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Мой день"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "我的一天"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "我的一天"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mój dzień"
           }
         }
       }
@@ -169850,6 +170542,70 @@
         }
       }
     },
+    "Today's activities": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Today's activities"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Activités du jour"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Heutige Aktivitäten"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Actividades de hoy"
+          }
+        },
+        "pt-PT": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Atividades de hoje"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Attività di oggi"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Активности за сегодня"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今日活动"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今日活動"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dzisiejsze aktywności"
+          }
+        }
+      }
+    },
     "Today's drinks": {
       "localizations": {
         "de": {
@@ -187155,6 +187911,70 @@
           "stringUnit": {
             "state": "translated",
             "value": "Twoja krzywa wypełnia się, gdy pasek wyładowuje swoją historię."
+          }
+        }
+      }
+    },
+    "Your daily outlook": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your daily outlook"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Votre résumé du jour"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deine Tagesübersicht"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tu resumen del día"
+          }
+        },
+        "pt-PT": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O teu resumo diário"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Il riepilogo della giornata"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Обзор дня"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "每日概览"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "每日概覽"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Podsumowanie dnia"
           }
         }
       }
@@ -213168,6 +213988,70 @@
           "stringUnit": {
             "state": "translated",
             "value": "慢吸 · 輕屏 · 慢呼"
+          }
+        }
+      }
+    },
+    "NROOP": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NROOP"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NROOP"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NROOP"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NROOP"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NROOP"
+          }
+        },
+        "pt-PT": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NROOP"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NROOP"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NROOP"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NROOP"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NROOP"
           }
         }
       }

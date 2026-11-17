@@ -135,7 +135,7 @@ public struct DeviceRegistryStore: Sendable {
         "hrSample", "rrInterval", "spo2Sample", "skinTempSample", "respSample", "gravitySample",
         "stepSample", "ppgHrSample", "event", "battery", "dailyMetric", "sleepSession",
         "journal", "workout", "appleDaily", "metricSeries", "dayOwnership",
-        "scoreInputProvenance",
+        "scoreInputProvenance", "scoreCalculationEvidence", "scoreCalculationHead",
         // Added: device-keyed tables introduced by later migrations that the list previously missed, so a
         // "delete all of this device's data" left raw captures (rawBatch), user-entered lab/blood markers
         // (labMarker), banked band sleep-state (sleepStateSample) and live coaching sessions
@@ -187,6 +187,13 @@ public struct DeviceRegistryStore: Sendable {
             // namespace. Forgetting a provider must remove those associations too.
             try db.execute(sql: "DELETE FROM scoreInputProvenance WHERE sourceId = ?",
                            arguments: [deviceId])
+            try db.execute(sql: """
+                DELETE FROM scoreCalculationHead WHERE EXISTS (
+                SELECT 1 FROM scoreCalculationEvidence e WHERE e.deviceId = scoreCalculationHead.deviceId
+                AND e.day = scoreCalculationHead.day AND e.key = scoreCalculationHead.key
+                AND e.fingerprint = scoreCalculationHead.fingerprint AND e.sourceId = ?)
+                """, arguments: [deviceId])
+            try db.execute(sql: "DELETE FROM scoreCalculationEvidence WHERE sourceId = ?", arguments: [deviceId])
         }
     }
 

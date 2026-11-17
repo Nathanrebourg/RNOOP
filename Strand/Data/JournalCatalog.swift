@@ -1,4 +1,5 @@
 import Foundation
+import StrandAnalytics
 
 /// The user's custom journal questions plus the starter behaviour catalog. Question strings are
 /// opaque exact-match labels to BehaviorInsights, so imported question strings (merged in at load
@@ -39,6 +40,9 @@ final class JournalCatalogStore: ObservableObject {
         "Did you feel sick or ill?",
         "Did you take magnesium?",
         "Did you read before bed?",
+        ContextualSleepNeed.naturalWakeQuestion,
+        ContextualSleepNeed.restedQuestion,
+        ContextualSleepNeed.disruptedQuestion,
     ]
 
     /// The default group for each starter question (canonical → group). Mirrors Android
@@ -54,6 +58,9 @@ final class JournalCatalogStore: ObservableObject {
         "Did you read before bed?": .lifestyle,
         "Did you feel sick or ill?": .health,
         "Did you feel stressed?": .behaviour,
+        ContextualSleepNeed.naturalWakeQuestion: .lifestyle,
+        ContextualSleepNeed.restedQuestion: .health,
+        ContextualSleepNeed.disruptedQuestion: .lifestyle,
     ]
 
     /// The v2 catalog: one item per journal question the user has customised (renamed, retyped,

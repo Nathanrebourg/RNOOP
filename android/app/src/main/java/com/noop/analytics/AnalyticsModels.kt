@@ -335,4 +335,6 @@ data class DayResult(
      * defaulted so every existing construction site is unchanged. Mirrors Swift `DayResult.mainNightBlocks`.
      */
     val mainNightBlocks: List<SleepStageTotals.NightBlock> = emptyList(),
+    /** Actual HR integration recipe, retained through data-class copy and cached day results. */
+    val effortRecipe: ScoreRecipe? = null,
 )

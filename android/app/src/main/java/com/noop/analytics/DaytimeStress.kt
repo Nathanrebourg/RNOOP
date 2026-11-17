@@ -277,7 +277,7 @@ object DaytimeStress {
         if (xs.isEmpty()) null else xs.sum() / xs.size
 
     /** Population standard deviation; 0 when there's no spread. (Matches StressMath.std.) */
-    private fun std(xs: List<Double>, m: Double?): Double {
+    internal fun std(xs: List<Double>, m: Double?): Double {
         if (m == null || xs.size <= 1) return 0.0
         val v = xs.sumOf { (it - m) * (it - m) } / xs.size
         return sqrt(v)
@@ -624,7 +624,7 @@ object DaytimeStress {
      * quartile when calm is LOW, e.g. HR; upper quartile when calm is HIGH, e.g. RMSSD).
      * Falls back to the plain mean below 4 values, and to null when empty.
      */
-    private fun calmReference(xs: List<Double>, calmIsLow: Boolean): Double? {
+    internal fun calmReference(xs: List<Double>, calmIsLow: Boolean): Double? {
         if (xs.isEmpty()) return null
         if (xs.size < 4) return mean(xs)
         val s = xs.sorted()

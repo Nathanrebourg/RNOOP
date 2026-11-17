@@ -25,6 +25,7 @@ public enum SleepWindowReclip {
 
     public static func reclip(stagesJSON: String?, sessionStart: Int, oldEnd: Int,
                               newStart: Int, newEnd: Int) -> String? {
+        guard newEnd > newStart else { return nil }
         guard let stagesJSON, let data = stagesJSON.data(using: .utf8),
               let obj = try? JSONSerialization.jsonObject(with: data) else { return nil }
         if let arr = obj as? [[String: Any]] {
@@ -50,6 +51,9 @@ public enum SleepWindowReclip {
             let clippedEnd = min(end, newEnd)               // clip the segment spanning the new wake
             out.append(["start": clippedStart, "end": clippedEnd, "stage": stage])
             maxEnd = max(maxEnd, clippedEnd)
+        }
+        if let minStart = out.compactMap({ ($0["start"] as? Int) }).min(), minStart > newStart {
+            out.insert(["start": newStart, "end": minStart, "stage": "wake"], at: 0)
         }
         if newEnd > maxEnd, maxEnd >= newStart {            // window grew → trailing time in bed = awake
             out.append(["start": maxEnd, "end": newEnd, "stage": "wake"])

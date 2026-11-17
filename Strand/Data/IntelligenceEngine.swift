@@ -933,7 +933,7 @@ final class IntelligenceEngine: ObservableObject {
         // except recovery is baseline-independent, so pass 2 only re-scores the cheap recovery
         // composite. The hr/rr/resp/gravity arrays go out of scope each iteration (memory stays bounded).
         var scoredNights: [(daily: DailyMetric, strain: Double?, cachedSleep: [CachedSleepSession],
-                            workouts: [ExerciseSession], nightlySkin: Double?,
+                            workouts: [ExerciseSession], nightlySkin: Double?, effortRecipe:ScoreRecipe?,
                             sessionMotion: [Int: [Double]],
                             sessionSleepState: [Int: [Int]],
                             hrvDiag: String?,
@@ -1025,6 +1025,9 @@ final class IntelligenceEngine: ObservableObject {
         // nightly per-window RMSSD (by stage) + the whole-night/deep-only/last-SWS summary, replayed below
         // tagged `.hrv`. When false (the default), no HRV trace is built and analyzeDay's path is unchanged.
         let hrvTraceActive = TestCentre.active(.hrv)
+        let effortCadenceActive = TestCentre.active(.workouts)
+        let recoveryLabActive = TestCentre.active(.recovery)
+        let labJournalId = Repository.journalDeviceId
         // HRV window (#141): read ONCE. When the user picked WHOOP-style, the nightly HRV is RMSSD over deep
         // sleep only; default whole-night otherwise. Captured into the detached loop, threaded to analyzeDay.
         let deepHrvWindow = UserDefaults.standard.string(forKey: UnitPrefs.hrvWindowKey) == HrvWindow.deep.rawValue
@@ -1124,9 +1127,10 @@ final class IntelligenceEngine: ObservableObject {
         }
         let inDayScanCache = dayScanCache
 
-        let (scanned, skippedDayLines, updatedDayScanCache):
-            ([DayScan], [String], [String: (key: String, scan: DayScan)]) = await Task.detached(priority: .utility) {
+        let (scanned, skippedDayLines, updatedDayScanCache, recoveryLabQualities):
+            ([DayScan], [String], [String: (key: String, scan: DayScan)], [String: QualityRecovery.Quality]) = await Task.detached(priority: .utility) {
             var out: [DayScan] = []
+            var labQualities: [String: QualityRecovery.Quality] = [:]
             // Days skipped below (too few HR samples) never get a DayScan, so this diagnostic can't ride
             // along on one; carried out alongside `out` and replayed through `diagnosticSink` on the main
             // actor below, same as `rhrLine`/the trace arrays. Mirrors the Kotlin `diag` sink.
@@ -1234,7 +1238,9 @@ final class IntelligenceEngine: ObservableObject {
                 // baselines1/toggles) already dropped the whole cache above on change. A miss falls straight
                 // through to the identical full path.
                 var dayCacheKey: String? = nil
-                if dayCacheEligible,
+                // The newest opt-in sleep/stress comparisons read history or completed windows and are never cached.
+                // Bypass only this day's reuse so activation/history updates cannot serve a stale report.
+                if dayCacheEligible, !((sleepTraceActive || hrvTraceActive || effortCadenceActive || recoveryLabActive) && dayStart == nowLocalMidnight),
                    let ownerFamily = DeviceFamily.forRegistryDevice(
                         model: regDevices.first(where: { $0.id == owner })?.model,
                         brand: regDevices.first(where: { $0.id == owner })?.brand) {
@@ -1270,7 +1276,8 @@ final class IntelligenceEngine: ObservableObject {
                             // flip at midnight and invalidate yesterday, charging EVERY user an extra
                             // day's re-score to protect lines they never see. Gating it keeps the default
                             // path exactly as it was.
-                            hrvWindowDetail: hrvTraceActive && dayStart == nowLocalMidnight)
+                            hrvWindowDetail: hrvTraceActive && dayStart == nowLocalMidnight,
+                            effortCadenceTrace: effortCadenceActive)
                         dayCacheKey = key
                         if dayScanCacheLocal[day] == nil {
                             // No entry at all: a first pass, a night new to the window, or a cache just
@@ -1458,9 +1465,20 @@ final class IntelligenceEngine: ObservableObject {
                 // Sleep & Rest test mode (E5): a per-day collector for the gate trace + Rest sub-score line,
                 // built ONLY when the mode is active. nil otherwise = analyzeDay's byte-identical default path.
                 var sleepTrace: [String] = []
+                if sleepTraceActive && dayStart == nowLocalMidnight {
+                    sleepTrace.append(await SleepBaselineExperiment.run(store: store, owner: owner, day: day,
+                        dayStart: dayStart, readStart: from, offset: tzOffset, hr: hr, rr: rr, resp: resp,
+                        gravity: grav, wristOff: wristOff, bandSleepState: bandSleepState,
+                        useSleepStagerV2: useSleepStagerV2))
+                }
                 let traceSink: ((String) -> Void)? = sleepTraceActive ? { sleepTrace.append($0) } : nil
                 // HRV mode (#141): a per-day collector for the nightly per-window RMSSD + summary; nil = default.
                 var hrvTrace: [String] = []
+                if hrvTraceActive && dayStart == nowLocalMidnight {
+                    hrvTrace.append(contentsOf: StressCadenceComparison.analyze(hr: dayHr, gravity: dayGrav,
+                        dayStart: dayMid, now: now, offset: tzOffset,
+                        readCapped: dayHr.count >= 200_000 || dayGrav.count >= 200_000).lines(day: day))
+                }
                 let hrvTraceSink: ((String) -> Void)? = hrvTraceActive ? { hrvTrace.append($0) } : nil
                 // #804 Fix A: when this day's owner is a device that sends NO usable gravity vector — so the
                 // motion detector can't stage the night and it scored blank — AND it has persisted its OWN
@@ -1553,8 +1571,21 @@ final class IntelligenceEngine: ObservableObject {
                                                      // ring buffer isn't flooded; every night keeps the summary.
                                                      hrvWindowDetail: dayStart == nowLocalMidnight,
                                                      deepHrvWindow: deepHrvWindow,
-                                                     effortMethod: effortMethodGlobal)
+                                                     effortMethod: effortMethodGlobal,
+                                                     effortCadenceSink: effortCadenceActive
+                                                        ? { strainDiagLines.append($0) } : nil,
+                                                     recipeSource: owner,recipeWindowStart:dayMid,recipeWindowEnd:dayEnd+1)
                 dayScoreSeconds += Date().timeIntervalSince(tScore0)
+                if dayStart == nowLocalMidnight && (effortCadenceActive || recoveryLabActive || sleepTraceActive) {
+                    let capture = await AlgorithmLabCapture.run(store: store, owner: owner, computedId: computedId,
+                        journalId: labJournalId, day: day, dayStart: dayMid, now: now, offset: tzOffset,
+                        profile: up, manualMax: maxHR, result: res, dayHR: dayHr, dayGravity: dayGrav,
+                        nightHR: hr, rr: rr, deepWindow: deepHrvWindow, workouts: effortCadenceActive,
+                        recovery: recoveryLabActive, sleep: sleepTraceActive, detectedOnly: providedSleep.isEmpty,
+                        readCapped: hr.count >= StreamReadCap.hr || rr.count >= StreamReadCap.rr || grav.count >= StreamReadCap.gravity)
+                    strainDiagLines.append(contentsOf: capture.lines)
+                    if let q = capture.recoveryQuality { labQualities[day] = q }
+                }
                 // #195: whole-night HRV cleaning-pipeline summary for the always-on strap log, so a "reads ~2x
                 // too high" report is triageable without the HRV test mode: RMSSD vs SDNN (rmssd >> sdnn =
                 // beat-to-beat jitter surviving the ectopic filter, not real HRV), meanNN as an HR sanity-check,
@@ -1892,7 +1923,7 @@ final class IntelligenceEngine: ObservableObject {
                 rrTruncated: rrWindow.truncatedReads,
                 hrOwnerFlips: hrWindow.ownerFlips, rrOwnerFlips: rrWindow.ownerFlips,
                 hrReuseOff: hrWindow.reuseOffReads, rrReuseOff: rrWindow.reuseOffReads))
-            return (out, skippedDayLines, dayScanCacheLocal)
+            return (out, skippedDayLines, dayScanCacheLocal, labQualities)
         }.value
         // #1005: write the loop's updated reuse cache back to the (main-actor) stored property. The pass ran
         // to completion above (`.value` awaited), so there is no concurrent access.
@@ -1972,7 +2003,7 @@ final class IntelligenceEngine: ObservableObject {
             // mode is active, so the default path emits zero `.steps` lines here.
             for line in scan.stepsTrace { diagnosticSink?(line, .steps) }
             scoredNights.append((daily: res.daily, strain: res.strain, cachedSleep: res.cachedSleep,
-                                 workouts: res.workouts, nightlySkin: res.nightlySkinTempC,
+                                 workouts: res.workouts, nightlySkin: res.nightlySkinTempC,effortRecipe:res.effortRecipe,
                                  sessionMotion: res.sessionMotionByStart,
                                  sessionSleepState: res.sessionSleepStateByStart,
                                  hrvDiag: scan.hrvDiag,
@@ -2110,6 +2141,10 @@ final class IntelligenceEngine: ObservableObject {
         // Rest composite (0–100) per computed night, persisted as the `sleep_performance` metric
         // series so the dashboard's Rest score reflects the new composite, not raw efficiency.
         var restPoints: [MetricPoint] = []
+        var calculationEvidence:[ScoreCalculationEvidence]=[]
+        let recipeContext=ScoreEvidenceBridge.settings(age:up.age,sex:up.sex,maxHR:maxHR,deep:deepHrvWindow,
+            v2:useSleepStagerV2Global,motion:useMotionAwareWakeGlobal,cycle:dayCycleMode.rawValue,
+            hrvEpoch:hrvEpoch,recoveryEpoch:recoveryEpoch,respEpoch:respEpoch)
         // User-corrected sleep windows override the detected sleep when scoring a day's sleep aggregates,
         // so Rest + recovery honor the edit , not just the Sleep tab's session view. An edited block
         // substitutes its detected twin (matched by the stable detected startTs) before totals recompute.
@@ -2229,6 +2264,10 @@ final class IntelligenceEngine: ObservableObject {
             // term moved Charge and which was nil and forced the renorm, tagged `.recovery`. The trace's
             // score is RecoveryScorer.recovery verbatim, so the `recovery` written above is unchanged.
             if recoveryTraceActive {
+                if let q = recoveryLabQualities[daily.day] {
+                    let comparison = AlgorithmLab.recoveryComparison(daily: daily, baselines: baselines2, quality: q, evidenceStillMatches: dayEditedRows.isEmpty)
+                    diagnosticSink?(AlgorithmLab.recoveryLine(comparison, q: q, day: daily.day), .recovery)
+                }
                 for line in recoveryTraceLines(daily, baselines2) { diagnosticSink?(line, .recovery) }
             }
             let source = DaySource.classify(day: daily.day, importedWhoopDays: importedWhoopDays,
@@ -2286,7 +2325,10 @@ final class IntelligenceEngine: ObservableObject {
             // build site; split it back into one diagnosticSink call per line so each is its own log line.
             if let hrvDiagLine = night.hrvDiag {
                 for line in hrvDiagLine.split(separator: "\n", omittingEmptySubsequences: true) {
-                    diagnosticSink?(String(line), nil)
+                    AlgorithmLab.replayDiagnostic(String(line), regularSink: { diagnosticSink?($0, nil) },
+                        workoutSink: effortCadenceActive ? { self.diagnosticSink?($0, .workouts) } : nil,
+                        recoverySink: recoveryTraceActive ? { self.diagnosticSink?($0, .recovery) } : nil,
+                        sleepSink: sleepTraceActive ? { self.diagnosticSink?($0, .sleep) } : nil)
                 }
             }
             // ── CAPTURE-B: universal dayOwner self-diagnostic (#814/#799) ────────────────────────────────
@@ -2344,6 +2386,15 @@ final class IntelligenceEngine: ObservableObject {
             if let cov = primarySessionRHRCoverageByDay[daily.day] {
                 restPoints.append(MetricPoint(day: daily.day, key: "rhr_primary_session_valid_samples", value: Double(cov.validSamples)))
                 restPoints.append(MetricPoint(day: daily.day, key: "rhr_primary_session_duration_s", value: cov.durationSec))
+            }
+            if let owner=resolvedScoreOwnerByDay[daily.day] {
+                let cycleEstablished=physiologicalSteps.firstWakeDay.map{daily.day >= $0} ?? false
+                let effortRecipe=cycleEstablished ? physiologicalSteps.recipesByWakeDay[daily.day]:night.effortRecipe
+                let candidates:[(ScoreRecipe?,Double?)]=[
+                    (appliedLegacySnapshots[daily.day] == nil ? ScoreRecipe.recovery(daily:daily,baselines:baselines2,source:owner):nil,daily.recovery),
+                    (ScoreRecipe.rest(daily:daily,source:owner),AnalyticsEngine.Rest.composite(daily:daily)),
+                    (effortRecipe,daily.strain)]
+                calculationEvidence += candidates.compactMap {ScoreEvidenceBridge.row($0.0,day:daily.day,source:owner,value:$0.1,context:recipeContext,now:now)}
             }
             cachedSleep.append(contentsOf: night.cachedSleep)
             // Keep the analytics detector as an enrichment input for real imported/manual workouts, but do
@@ -2554,6 +2605,16 @@ final class IntelligenceEngine: ObservableObject {
             }
             markerSources = sourceIds
         }
+        calculationEvidence=calculationEvidence.filter { evidence in
+            guard !(evidence.key=="recovery" && appliedLegacySnapshots[evidence.day] != nil),
+                  provenanceByCell["\(evidence.day)\u{1F}\(evidence.key)"]?.sourceId==evidence.sourceId else{return false}
+            switch evidence.key {
+            case "recovery":return persistedDailies.last{$0.day==evidence.day}?.recovery==evidence.value
+            case "strain":return persistedDailies.last{$0.day==evidence.day}?.strain==evidence.value
+            case "sleep_performance":return restPoints.last{$0.day==evidence.day && $0.key==evidence.key}?.value==evidence.value
+            default:return false
+            }
+        }
         do {
             // Repair only the days actually recomputed. A full-history repair must not erase
             // older cached scores/provenance whose raw inputs are no longer retained.
@@ -2576,7 +2637,8 @@ final class IntelligenceEngine: ObservableObject {
                     replaceMetricKeys: markerKeys,
                     additionalMetricPoints: preserveUnscoredHistory
                         ? markerPointsByDay[from, default: []] : markerPoints,
-                    replaceMetricSourceIds: markerSources)
+                    replaceMetricSourceIds: markerSources,
+                    calculationEvidence:calculationEvidence.filter{$0.day>=from && $0.day<=to})
             }
         } catch {
             diagnosticSink?("re-score: daily persistence failed; history repair remains pending", nil)

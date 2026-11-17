@@ -448,6 +448,28 @@ data class ScoreInputProvenanceRow(
     val sourceId: String,
 )
 
+/** Observed calculation revision; declaration order is the cross-platform SQLite contract. */
+@Entity(tableName = "scoreCalculationEvidence", primaryKeys = ["deviceId", "day", "key", "fingerprint"])
+data class ScoreCalculationEvidenceEntity(
+    val deviceId: String,
+    val day: String,
+    val key: String,
+    val fingerprint: String,
+    val capturedAt: Long,
+    val sourceId: String,
+    val methodId: String,
+    val value: Double,
+    val payload: String,
+)
+
+@Entity(tableName = "scoreCalculationHead", primaryKeys = ["deviceId", "day", "key"])
+data class ScoreCalculationHeadEntity(
+    val deviceId: String,
+    val day: String,
+    val key: String,
+    val fingerprint: String,
+)
+
 /** Estimator identity persisted beside a `vo2max_est` point in [ScoreInputProvenanceRow.sourceId].
  *  Existing points have no such row and therefore remain explicitly unknown; never infer their method
  *  from the user's current profile because a waist measurement may have changed since they were scored. */

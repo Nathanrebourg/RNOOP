@@ -1,0 +1,9 @@
+candidate-withheld|1.000000|1.000000|0.833333|nil|nil|3|0|night-stress-provenance-unavailable
+compared|1.000000|1.000000|0.833333|0.500000|89.166667|3|3|qualified-nocturnal-activation-proxy
+candidate-withheld|1.000000|1.000000|0.833333|nil|nil|3|2|insufficient-prior-night-baseline
+candidate-withheld|1.000000|1.000000|0.833333|nil|nil|3|0|insufficient-prior-night-baseline
+qualified|5|60.000000|40.000000|1.000000|96
+unconfirmed-whoop5-source|-1|nil|nil|0.000000|0
+read-capped|-1|nil|nil|0.000000|0
+insufficient-night-signal|5|nil|nil|0.000000|0
+rr-source-unavailable-or-mixed|-1|nil|nil|0.000000|0

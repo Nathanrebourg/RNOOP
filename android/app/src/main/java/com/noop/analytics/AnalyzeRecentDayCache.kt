@@ -20,6 +20,7 @@ package com.noop.analytics
  * contract (see the tests, kept in lockstep with the Swift oracle).
  */
 object AnalyzeRecentDayCache {
+    private const val effortTraceSuffix = "|effortCadence=1"
     /**
      * WHICH part of a day's cache key moved, for the miss reason on the reuse line (#2073).
      *
@@ -40,6 +41,7 @@ object AnalyzeRecentDayCache {
         if (a.size < 3 || b.size < 3) return "shape"
         if (a[0] != b[0]) return "owner"
         if (a[1] != b[1]) return "hr"
+        if (a[2].endsWith(effortTraceSuffix) != b[2].endsWith(effortTraceSuffix)) return "effortTrace"
         val ra = a[2].substringAfter("rrAlias5=", "")
         val rb = b[2].substringAfter("rrAlias5=", "")
         return if (ra != rb) "rrAlias5" else "streams"
@@ -85,8 +87,11 @@ object AnalyzeRecentDayCache {
         // reused night is indistinguishable from a freshly-scored one. Costs one day's re-score per
         // midnight rollover, and only when a trace mode is on.
         hrvWindowDetail: Boolean,
+        // Trace activation changes the cached diagnostic payload, not the score.
+        effortCadenceTrace: Boolean = false,
     ): String {
         val anchor = skinAnchorRaw?.toRawBits()?.toString() ?: "nil"
-        return "$owner|$hrCount:$hrMaxTs:$anchor:${if (hrvWindowDetail) "d" else "s"}|$streams"
+        return "$owner|$hrCount:$hrMaxTs:$anchor:${if (hrvWindowDetail) "d" else "s"}|$streams" +
+            if (effortCadenceTrace) effortTraceSuffix else ""
     }
 }

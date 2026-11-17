@@ -29,6 +29,7 @@ struct LiquidTodayView: View {
     // only publishes connect/discovery state, never HR. Injected at the app roots beside .environmentObject(model).
     @EnvironmentObject var ble: BLEManager
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     /// Low Power Mode — and the in-app "Reduce motion in NOOP" toggle — pose the sky still too, the
     /// behaviour the comment on the sky branch below has always described. Neither has a SwiftUI
     /// environment key, hence the shared monitor.
@@ -77,6 +78,9 @@ struct LiquidTodayView: View {
     /// strap whose history never offloads, where heart rate exists ONLY for the windows it was connected.
     @State private var hrSegments: [String] = []
     @State private var workouts: [WorkoutRow] = [] // newest-first
+    @State private var dailySleep: CachedSleepSession?
+    /// Consecutive local days with recorded data, resolved at refresh rather than on each redraw.
+    @State private var dataStreak = 0
     /// #today-hosted-cards: the shared SleepModel that backs every SleepModel-derived hosted sleep card
     /// (Stages vs typical today; more to follow). Built ONCE in `load()` from the SAME inputs the Sleep tab
     /// uses (`SleepModel.build`), and only when a sleep-origin card is actually hosted — so a Today with no
@@ -369,6 +373,7 @@ struct LiquidTodayView: View {
                         case .hero:
                             heroCard
                             if chargeLegacyRRGap { ChargeLegacyRRGapNote() }
+                            if Self.usesPerformanceDashboard { premiumMyDay }
                         case .liveSession: if liveSessionsBeta { liveSessionStartRow }
                         case .synthesis: synthesisSection
                         case .keyMetrics: keyMetricsSection
@@ -397,6 +402,12 @@ struct LiquidTodayView: View {
                     // Self-gates on the toggle AND on the detector finding an unsaved, un-dismissed window,
                     // so it renders nothing by default.
                     AutoWorkoutCard()
+                    if Self.usesPerformanceDashboard {
+                        Button("Customize Today") { customizationDestination = .today }
+                            .font(StrandFont.subhead)
+                            .foregroundStyle(StrandPalette.textSecondary)
+                            .frame(maxWidth: .infinity, minHeight: NoopButtonMetrics.minHitTarget)
+                    }
                     dataSourcesSection
                     Color.clear.frame(height: 90) // floating tab-bar clearance
                 }
@@ -435,6 +446,10 @@ struct LiquidTodayView: View {
                 }
                 // Day-cycle scene (#698): the sky only paints when the toggle is ON AND no custom image is
                 // active; off = the plain surfaceBase canvas above (parity with Android + classic TodayView).
+                else if Self.usesPerformanceDashboard {
+                    LinearGradient(colors: [NoopVisualStyle.dashboardTop, NoopVisualStyle.dashboardBottom],
+                                   startPoint: .top, endPoint: .bottom)
+                }
                 else if showDayCycleBackground {
                     // Reduce-motion (and low-power) users get the same sky posed still — no twinkle/breath.
                     // Also static until the first data load settles, so launch isn't fighting a live sky too.
@@ -564,7 +579,99 @@ struct LiquidTodayView: View {
 
     // MARK: - Scene (sky title + controls + hero)
 
-    private var scene: some View {
+    @ViewBuilder private var scene: some View {
+        if Self.usesPerformanceDashboard {
+            premiumScene
+        } else {
+            originalScene
+        }
+    }
+
+    /// The phone header keeps day navigation, profile, device status and the existing quick actions.
+    private var premiumScene: some View {
+        VStack(spacing: NoopMetrics.space5) {
+            HStack(spacing: NoopMetrics.space1) {
+                Button { showSettings = true } label: {
+                    ProfileAvatarView(imageData: profile.avatarImageData, size: NoopMetrics.compactControlSize)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Profile and settings")
+
+                Button { showSettings = true } label: {
+                    HStack(spacing: NoopMetrics.space1) {
+                        Image(systemName: "flame.fill")
+                            .foregroundStyle(Color.orange)
+                        Text("\(dataStreak)")
+                            .font(StrandFont.number(13, weight: .semibold))
+                            .foregroundStyle(StrandPalette.textPrimary)
+                    }
+                    .padding(.horizontal, NoopMetrics.space2)
+                    .frame(minHeight: NoopButtonMetrics.minHitTarget)
+                    .background(Capsule().fill(NoopVisualStyle.surface.opacity(0.65)))
+                }
+                .accessibilityLabel(Text("\(dataStreak) days with data"))
+
+                Spacer(minLength: 0)
+
+                HStack(spacing: 0) {
+                    Button {
+                        selectedDayOffset = min(earliestDayOffset, selectedDayOffset + 1)
+                    } label: {
+                        Image(systemName: "chevron.left")
+                            .font(StrandFont.caption.weight(.semibold))
+                            .frame(width: NoopMetrics.space8, height: NoopButtonMetrics.minHitTarget)
+                    }
+                    .disabled(selectedDayOffset >= earliestDayOffset)
+                    .accessibilityLabel("Previous day")
+
+                    Button { showDayPicker = true } label: {
+                        Text(dayTitle)
+                            .font(StrandFont.overline)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.75)
+                            .padding(.horizontal, NoopMetrics.space2)
+                            .padding(.vertical, NoopMetrics.space2)
+                            .background(Capsule().fill(NoopVisualStyle.borderHighlight.opacity(0.6)))
+                    }
+                    .accessibilityLabel("\(dayTitle). Tap to pick a day, swipe to change day.")
+                    .popover(isPresented: $showDayPicker) {
+                        DatePicker("", selection: dayPickerBinding, in: ...Repository.logicalDay(Date()),
+                                   displayedComponents: [.date])
+                            .datePickerStyle(.graphical)
+                            .labelsHidden()
+                            .padding(NoopMetrics.space3)
+                            .frame(minWidth: 320, minHeight: 360)
+                            .liquidPopoverAdaptation()
+                    }
+
+                    Button {
+                        selectedDayOffset = max(0, selectedDayOffset - 1)
+                    } label: {
+                        Image(systemName: "chevron.right")
+                            .font(StrandFont.caption.weight(.semibold))
+                            .frame(width: NoopMetrics.space8, height: NoopButtonMetrics.minHitTarget)
+                    }
+                    .disabled(selectedDayOffset == 0)
+                    .accessibilityLabel("Next day")
+                }
+                .foregroundStyle(StrandPalette.textPrimary)
+                .background(Capsule().fill(NoopVisualStyle.surface.opacity(0.8)))
+
+                Spacer(minLength: 0)
+                LiquidBatteryButton()
+            }
+            .buttonStyle(.plain)
+
+            Text(verbatim: "NROOP")
+                .font(.system(size: 20, weight: .light, design: .rounded))
+                .tracking(1.1)
+                .foregroundStyle(StrandPalette.textPrimary)
+                .frame(maxWidth: .infinity)
+                .accessibilityLabel(Text(verbatim: "NROOP"))
+        }
+    }
+
+    private var originalScene: some View {
         VStack(alignment: .leading, spacing: 0) {
             ZStack(alignment: .topTrailing) {
                 Button { showDayPicker = true } label: {
@@ -654,9 +761,11 @@ struct LiquidTodayView: View {
             // #today-layout: the hero + Start-session row moved OUT of the scene into the reorderable
             // section block below. The wordmark's bottom pad (10) + the section VStack's 12 spacing keeps
             // the default hero-under-wordmark gap at the original 22.
-            LiquidWordmark()
-                .padding(.top, 30)
-                .padding(.bottom, 10)
+            if !Self.usesPerformanceDashboard {
+                LiquidWordmark()
+                    .padding(.top, 30)
+                    .padding(.bottom, 10)
+            }
         }
     }
 
@@ -695,7 +804,267 @@ struct LiquidTodayView: View {
         .accessibilityLabel("Start a live session. Beta. Silent strap coaching against today's Charge.")
     }
 
-    private var heroCard: some View {
+    private static var usesPerformanceDashboard: Bool {
+        #if os(iOS)
+        true
+        #else
+        false
+        #endif
+    }
+
+    @ViewBuilder private var heroCard: some View {
+        if Self.usesPerformanceDashboard {
+            premiumHeroCard
+        } else {
+            originalHeroCard
+        }
+    }
+
+    private var premiumHeroCard: some View {
+        let layout = dynamicTypeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(spacing: NoopMetrics.space5))
+            : AnyLayout(HStackLayout(alignment: .top, spacing: NoopMetrics.space1))
+        return VStack(spacing: NoopMetrics.space4) {
+            layout {
+                HeroScoreCell(label: String(localized: "Sleep"), score: restScore, tint: NoopVisualStyle.dashboardSleep,
+                              animated: dataLoaded, onGuide: { guideSection = .rest }, suffix: "%",
+                              detailRoute: .metric(HeroRingMetric.rest))
+                // A carried Charge remains the previous night's real value and is labelled below.
+                HeroScoreCell(label: String(localized: "Recovery"), score: chargeDisplay.pct,
+                              tint: chargeDisplay.pct.map { StrandPalette.recoveryColor($0) } ?? StrandPalette.chargeColor,
+                              animated: dataLoaded, onGuide: { guideSection = .charge }, suffix: "%",
+                              detailRoute: .metric(HeroRingMetric.charge))
+                // Preserve the chosen effort scale and its precision.
+                HeroScoreCell(label: String(localized: "Strain"),
+                              score: effortStrain(displayDay).map { UnitFormatter.effortValue($0, scale: effortScale) },
+                              tint: NoopVisualStyle.dashboardEffort, animated: dataLoaded,
+                              onGuide: { guideSection = .effort },
+                              maxValue: effortScale == .whoop ? 21 : 100,
+                              decimals: effortScale == .whoop ? 1 : 0,
+                              targetRange: premiumEffortTarget,
+                              detailRoute: .metric(HeroRingMetric.effort))
+            }
+            .padding(.vertical, NoopMetrics.space4)
+            .padding(.horizontal, NoopMetrics.space3)
+            if case .carried(_, let caption) = chargeDisplay {
+                Text(caption)
+                    .font(StrandFont.footnote)
+                    .foregroundStyle(StrandPalette.textSecondary)
+            }
+            premiumMonitors
+            if let sourceLabel = heroSourceLabel {
+                HStack {
+                    Spacer()
+                    SourceBadge("\(sourceLabel)", tint: StrandPalette.textSecondary)
+                        .accessibilityLabel(Text("Source: \(sourceLabel)"))
+                }
+            }
+        }
+    }
+
+    /// NOOP's recovery-derived suggestion, never WHOOP's proprietary target.
+    private var premiumEffortTarget: ClosedRange<Double>? {
+        guard let band = CoupledView.optimalStrainRange(recovery: displayDay?.recovery) else { return nil }
+        let factor = effortScale == .whoop ? 1.0 : 100.0 / 21.0
+        return (Double(band.lowerBound) * factor)...(Double(band.upperBound) * factor)
+    }
+
+    /// The values are read from the selected day, not inferred from missing measurements.
+    private var premiumMonitors: some View {
+        let day = displayDay
+        let hasSkinTemperature = day?.skinTempDevC != nil || day?.skinTempC != nil
+        let available = [day?.avgHrv != nil, day?.restingHr != nil, day?.respRateBpm != nil,
+                         day?.spo2Pct != nil, hasSkinTemperature].filter { $0 }.count
+        let healthValue = day == nil ? Self.noValueDash : "\(available)/5"
+        let todayStress = selectedDayOffset == 0 ? stress : nil
+        let stressValue = todayStress.map { String(format: "%.1f", locale: AppLanguage.activeLocale, $0) }
+            ?? Self.noValueDash
+        let layout = dynamicTypeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(spacing: NoopMetrics.space3))
+            : AnyLayout(HStackLayout(spacing: NoopMetrics.space3))
+        return layout {
+            premiumMonitor("Health Monitor", symbol: "checkmark", value: healthValue,
+                           caption: "Metrics", route: .health)
+            premiumMonitor("Stress monitor", symbol: "waveform.path.ecg", value: stressValue,
+                           caption: "Daily 0–3 proxy", route: .stress)
+        }
+    }
+
+    private func premiumMonitor(_ title: LocalizedStringKey, symbol: String, value: String,
+                                caption: LocalizedStringKey, route: TabRoute) -> some View {
+        NavigationLink(value: route) {
+            VStack(alignment: .leading, spacing: NoopMetrics.space3) {
+                HStack(alignment: .top, spacing: NoopMetrics.space1) {
+                    Text(title)
+                        .font(StrandFont.overline)
+                        .foregroundStyle(StrandPalette.textSecondary)
+                        .lineLimit(2)
+                    Spacer(minLength: NoopMetrics.space1)
+                    Image(systemName: "chevron.right")
+                        .font(StrandFont.caption.weight(.semibold))
+                        .foregroundStyle(StrandPalette.textTertiary)
+                        .accessibilityHidden(true)
+                }
+                HStack(alignment: .center, spacing: NoopMetrics.space2) {
+                    Image(systemName: symbol)
+                        .font(StrandFont.headline)
+                        .foregroundStyle(NoopVisualStyle.brandMint)
+                        .frame(width: NoopMetrics.compactControlSize, height: NoopMetrics.compactControlSize)
+                        .background(Circle().fill(NoopVisualStyle.brandMint.opacity(0.12)))
+                        .accessibilityHidden(true)
+                    VStack(alignment: .leading, spacing: NoopMetrics.spaceHalf) {
+                        Text(value)
+                            .font(StrandFont.title2)
+                            .foregroundStyle(StrandPalette.textPrimary)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.7)
+                        Text(caption)
+                            .font(StrandFont.footnote)
+                            .foregroundStyle(StrandPalette.textSecondary)
+                            .lineLimit(2)
+                    }
+                }
+            }
+            .padding(NoopMetrics.space3)
+            .frame(maxWidth: .infinity, minHeight: NoopMetrics.keyMetricTileHeight, alignment: .topLeading)
+            .background(NoopPanelSurface(cornerRadius: NoopMetrics.cardRadius, surfaceOpacity: cardOpacity))
+            .contentShape(RoundedRectangle(cornerRadius: NoopMetrics.cardRadius, style: .continuous))
+        }
+        .buttonStyle(LiquidPressStyle())
+    }
+
+    /// A compact day overview. Every activity row is backed by an actual stored session.
+    private var premiumMyDay: some View {
+        VStack(alignment: .leading, spacing: NoopMetrics.space4) {
+            HStack {
+                Text("My Day").font(StrandFont.title2).foregroundStyle(StrandPalette.textPrimary)
+                Spacer()
+                Button { router.requestQuickActions() } label: {
+                    Image(systemName: "plus")
+                        .font(.system(size: 20, weight: .medium))
+                        .foregroundStyle(NoopVisualStyle.canvas)
+                        .frame(width: 44, height: 44)
+                        .background(RoundedRectangle(cornerRadius: 13).fill(NoopVisualStyle.primaryText))
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Quick actions")
+            }
+
+            NavigationLink(value: TabRoute.coupled) {
+                HStack(spacing: NoopMetrics.space2) {
+                    Image(systemName: "sun.max")
+                    Text("Your daily outlook").font(StrandFont.subhead.weight(.semibold))
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                }
+                .foregroundStyle(StrandPalette.textPrimary)
+                .padding(NoopMetrics.space3)
+                .frame(maxWidth: .infinity, minHeight: 52)
+                .background(RoundedRectangle(cornerRadius: 15, style: .continuous)
+                    .fill(LinearGradient(colors: [NoopVisualStyle.surfaceTop, NoopVisualStyle.dashboardTop],
+                                         startPoint: .leading, endPoint: .trailing)))
+            }
+            .buttonStyle(LiquidPressStyle())
+
+            VStack(alignment: .leading, spacing: NoopMetrics.space2) {
+                HStack {
+                    Text("Today's activities").font(StrandFont.overline).tracking(1.0)
+                        .foregroundStyle(StrandPalette.textPrimary)
+                    Spacer()
+                    NavigationLink(value: TabRoute.workouts) {
+                        Image(systemName: "arrow.up.left.and.arrow.down.right")
+                            .foregroundStyle(StrandPalette.textSecondary)
+                    }
+                    .accessibilityLabel("Workouts")
+                }
+                if dailySleep != nil || displayDay?.totalSleepMin != nil {
+                    NavigationLink(value: TabRoute.sleep) {
+                        premiumActivityRow(icon: "moon.fill", value: premiumSleepDuration,
+                                           title: String(localized: "Sleep"), tint: NoopVisualStyle.dashboardSleep,
+                                           start: dailySleep?.effectiveStartTs, end: dailySleep?.endTs)
+                    }.buttonStyle(LiquidPressStyle())
+                }
+                ForEach(Array(workouts.prefix(4).enumerated()), id: \.offset) { _, workout in
+                    NavigationLink { WorkoutDetailView(row: workout) } label: {
+                        premiumActivityRow(icon: premiumSportIcon(workout.sport), value: effortText(workout.strain),
+                                           title: WorkoutSource.displaySport(workout.sport),
+                                           tint: NoopVisualStyle.dashboardEffort,
+                                           start: workout.startTs, end: workout.endTs)
+                    }.buttonStyle(LiquidPressStyle())
+                }
+                if dailySleep == nil && displayDay?.totalSleepMin == nil && workouts.isEmpty {
+                    Text("No workouts yet").font(StrandFont.subhead).foregroundStyle(StrandPalette.textSecondary)
+                        .frame(maxWidth: .infinity, alignment: .leading).padding(.vertical, NoopMetrics.space2)
+                }
+                HStack(spacing: NoopMetrics.space2) {
+                    NavigationLink(value: TabRoute.workouts) {
+                        premiumActivityAction("Add activity", symbol: "plus")
+                    }
+                    WorkoutStartControl(compact: true)
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(NoopMetrics.space3)
+            .background(NoopPanelSurface(cornerRadius: NoopMetrics.cardRadius, surfaceOpacity: cardOpacity))
+        }
+        .padding(.top, NoopMetrics.space4)
+    }
+
+    private var premiumSleepDuration: String {
+        guard let minutes = displayDay?.totalSleepMin, minutes.isFinite, minutes >= 0 else { return Self.noValueDash }
+        let total = Int(minutes.rounded())
+        return String(format: "%d:%02d", total / 60, total % 60)
+    }
+
+    private func premiumActivityRow(icon: String, value: String, title: String, tint: Color,
+                                    start: Int?, end: Int?) -> some View {
+        HStack(spacing: NoopMetrics.space3) {
+            HStack(spacing: NoopMetrics.space2) {
+                Image(systemName: icon).accessibilityHidden(true)
+                Text(value).font(StrandFont.number(16, weight: .bold)).lineLimit(1).minimumScaleFactor(0.7)
+            }
+            .foregroundStyle(.white)
+            .frame(width: 92, height: 45)
+            .background(RoundedRectangle(cornerRadius: 10).fill(tint))
+            Text(title.uppercased()).font(StrandFont.overline).foregroundStyle(StrandPalette.textPrimary)
+                .lineLimit(1).minimumScaleFactor(0.7)
+            Spacer(minLength: 0)
+            VStack(alignment: .trailing, spacing: 2) {
+                if let start { Text(premiumTime(start)) }
+                if let end { Text(premiumTime(end)) }
+            }.font(StrandFont.caption).foregroundStyle(StrandPalette.textSecondary)
+        }
+        .padding(NoopMetrics.space2)
+        .background(RoundedRectangle(cornerRadius: 14).fill(NoopVisualStyle.borderHighlight.opacity(0.5)))
+    }
+
+    private func premiumTime(_ timestamp: Int) -> String {
+        Date(timeIntervalSince1970: TimeInterval(timestamp))
+            .formatted(.dateTime.hour().minute().locale(AppLanguage.activeLocale))
+    }
+
+    private func premiumSportIcon(_ sport: String) -> String {
+        let name = sport.lowercased()
+        if name.contains("walk") || name.contains("hik") { return "figure.walk" }
+        if name.contains("run") { return "figure.run" }
+        if name.contains("cycl") || name.contains("bik") { return "figure.outdoor.cycle" }
+        if name.contains("strength") || name.contains("weight") || name.contains("bodybuild") {
+            return "dumbbell"
+        }
+        return "figure.mixed.cardio"
+    }
+
+    private func premiumActivityAction(_ title: LocalizedStringKey, symbol: String) -> some View {
+        HStack(spacing: NoopMetrics.space1) {
+            Image(systemName: symbol)
+            Text(title).font(StrandFont.overline).lineLimit(1).minimumScaleFactor(0.7)
+        }
+        .foregroundStyle(StrandPalette.textPrimary)
+        .frame(maxWidth: .infinity, minHeight: NoopButtonMetrics.minHitTarget)
+        .background(RoundedRectangle(cornerRadius: 10).fill(NoopVisualStyle.borderHighlight.opacity(0.6)))
+    }
+
+    private var originalHeroCard: some View {
         HStack(alignment: .top, spacing: 4) {
             // #543 carry: an unscored today shows the last scored night's REAL Charge (labelled as prior by
             // the state pill) rather than an empty vessel, matching the classic Today, the widget/watch/Live
@@ -1757,6 +2126,13 @@ struct LiquidTodayView: View {
         // history doesn't stutter the UI. Snapshot the inputs (value types) into the detached task.
         let storedStress = await stressA
         let daysSnapshot = repo.days
+        let dataDays = daysSnapshot.filter {
+            $0.avgHrv != nil || $0.restingHr != nil || $0.totalSleepMin != nil || $0.strain != nil
+                || $0.respRateBpm != nil || $0.spo2Pct != nil || $0.skinTempC != nil || $0.steps != nil
+        }
+        dataStreak = StreakCalculator.streaks(dayKeys: dataDays.map(\.day),
+                                               qualified: Array(repeating: true, count: dataDays.count),
+                                               today: Repository.localDayKey(Date())).current
 
         // #430 parity: the day-keyed series the DETAILED Key-Metrics tiles graph — a trailing CALENDAR
         // window ending on the selected day (not the last-N stored rows, which on an old import showed
@@ -1838,6 +2214,9 @@ struct LiquidTodayView: View {
         hrValues = hrBuckets.map { $0.bpm }
         hrSegments = hrGapSegments(bucketTs: hrBuckets.map { $0.ts }, bucketSeconds: 300)
         workouts = (await wkA).filter { $0.startTs >= from && $0.startTs < to }
+        dailySleep = repo.sleeps.last {
+            Repository.localDayKey(Date(timeIntervalSince1970: TimeInterval($0.endTs))) == selectedDayKey
+        }
 
         let (chargeSource, effortSource, restSource) = await (chargeSourceA, effortSourceA, restSourceA)
         let sourceResolutions = [
@@ -2240,6 +2619,9 @@ private struct HeroScoreCell: View {
     // Decimal places for the displayed number. 0 keeps the whole-number scores; the WHOOP 0–21 Effort
     // scale passes 1 to match the app-wide one-decimal `effortDisplay` convention (#45).
     var decimals: Int = 0
+    /// Sleep and recovery are percentages; effort uses the selected numeric scale instead.
+    var suffix: String = ""
+    var targetRange: ClosedRange<Double>? = nil
     /// Where the GAUGE taps through to, or nil to keep the ring inert (#1995).
     ///
     /// Same `TabRoute.metric(key)` the Recovery Vitals rows use, so a ring and the Key-Metrics tile for
@@ -2253,15 +2635,7 @@ private struct HeroScoreCell: View {
     /// as three stacked elements rather than a branch.
     @ViewBuilder
     private var gaugeView: some View {
-        let gauge = LiquidScoreGauge(
-            score: score,
-            tint: tint,
-            diameter: Self.vesselDiameter,
-            animated: animated,
-            maxValue: maxValue,
-            decimals: decimals,
-            tapPassesThrough: detailRoute != nil
-        )
+        let gauge = scoreGauge
         if let detailRoute {
             NavigationLink(value: detailRoute) { gauge }
                 .buttonStyle(LiquidPressStyle())
@@ -2275,12 +2649,25 @@ private struct HeroScoreCell: View {
         }
     }
 
+    @ViewBuilder
+    private var scoreGauge: some View {
+        #if os(iOS)
+        PerformanceScoreRing(score: score, maximum: maxValue, decimals: decimals, tint: tint,
+                             suffix: suffix, targetRange: targetRange)
+        #else
+        LiquidScoreGauge(score: score, tint: tint, diameter: Self.vesselDiameter,
+                         animated: animated, maxValue: maxValue, decimals: decimals,
+                         tapPassesThrough: detailRoute != nil)
+        #endif
+    }
+
     /// The score as VoiceOver should say it, matching the label row's own phrasing.
     private var spokenScore: String {
         guard let score else { return String(localized: "no data yet") }
-        return decimals > 0
+        let value = decimals > 0
             ? String(format: "%.\(decimals)f", locale: AppLanguage.activeLocale, score)
             : String(Int(score.rounded()))
+        return value + suffix
     }
 
     var body: some View {

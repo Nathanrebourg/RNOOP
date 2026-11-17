@@ -250,6 +250,7 @@ final class AICoachEngine: ObservableObject {
     }
 
     private let repo: Repository
+    private let persistsConversation: Bool
     private let session: URLSession
 
     private static let providerKey = "ai.provider"
@@ -366,7 +367,8 @@ final class AICoachEngine: ObservableObject {
     them to enable "Let the coach use my data" for guidance tailored to their real numbers.
     """
 
-    init(repo: Repository, session: URLSession = .shared) {
+    init(repo: Repository, session: URLSession = .shared, persistsConversation: Bool = true) {
+        self.persistsConversation = persistsConversation
         self.repo = repo
         self.session = session
 
@@ -658,6 +660,7 @@ final class AICoachEngine: ObservableObject {
     /// which is synchronous and runs for every screen the app builds, not just Coach. Best-effort: a
     /// store failure just leaves the transcript empty, matching pre-K2 behaviour — never crashes.
     func loadPersistedMessagesIfNeeded() async {
+        guard persistsConversation else { return }
         guard !didLoadPersistedMessages else { return }
         didLoadPersistedMessages = true
         guard messages.isEmpty, let store = await repo.storeHandle() else { return }
@@ -686,6 +689,7 @@ final class AICoachEngine: ObservableObject {
     /// mutations don't hammer the store. Fire-and-forget; a store failure never blocks the UI — the
     /// in-memory transcript (what the user sees) is unaffected either way.
     private func persistMessages() {
+        guard persistsConversation else { return }
         let snapshot = messages
         let providerId = provider.rawValue
         Task {
@@ -706,6 +710,7 @@ final class AICoachEngine: ObservableObject {
         conversationDay = nil
         droppedSummary = nil      // K13: reset the summary cache on clear
         droppedSummaryKey = []
+        guard persistsConversation else { return }
         Task { try? await repo.storeHandle()?.clearCoachMessages() }
     }
 
@@ -724,6 +729,7 @@ final class AICoachEngine: ObservableObject {
     /// one-time load check cannot clear that chat. Keep the stored rows until a new turn or brief
     /// replaces them, as the existing restored-chat path does.
     func retireStaleConversationIfNeeded() {
+        guard persistsConversation else { return }
         guard Self.isStaleConversation(lastEpochDay: conversationDay,
                                        todayEpochDay: Self.localEpochDay()) else { return }
         messages = []
@@ -751,6 +757,12 @@ final class AICoachEngine: ObservableObject {
     /// system prompt + context + running history, parse the reply, append it. Never throws/crashes;
     /// failures land in `errorText`.
     func send(_ userText: String) async {
+        await send(userText, screenContext: nil)
+    }
+
+    /// The optional dated envelope is used only by the explicit iPhone screen conversation.
+    func send(_ userText: String, screenContext: PerformanceContext?) async {
+        guard !sending else { return }
         let trimmed = userText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { errorText = AICoachError.emptyQuestion.errorDescription; return }
         // The master switch, checked at the EGRESS rather than only on the routes in. Every way into Coach
@@ -784,11 +796,21 @@ final class AICoachEngine: ObservableObject {
         // full running history so follow-ups stay coherent; the context only needs to ride the
         // earliest user message.
         // Include the user's data ONLY with explicit consent; otherwise send a note instead of numbers.
-        let context = dataConsent ? await buildFullContext() : noConsentNote
+        let allowed = persistsConversation ? dataConsent : UserDefaults.standard.bool(forKey: Self.consentKey)
+        let context: String
+        if let screenContext {
+            context = await buildScreenContext(screenContext, dataConsent: allowed)
+        } else {
+            context = allowed ? await buildFullContext() : noConsentNote
+        }
         // K13: if the conversation overflows the sliding window, summarize the dropped middle so
         // the model retains context continuity. Best-effort; failure degrades to the old gap.
-        await summarizeDroppedMiddleIfNeeded(key: key)
-        var wire = wireMessages(context: context)
+        // Revoking consent must also exclude biometric text already present in this screen's history.
+        // The general coach keeps its existing history policy; the new scoped path is stricter.
+        if screenContext == nil || allowed { await summarizeDroppedMiddleIfNeeded(key: key) }
+        var wire = screenContext == nil
+            ? wireMessages(context: context)
+            : screenWireMessages(context: context, currentQuestion: trimmed, dataConsent: allowed)
 
         // K11: If a chart image is pending and the provider is Gemini, attach it to the last
         // user turn as inline_data. Non-Gemini providers can't accept images, so the image is
@@ -966,6 +988,33 @@ final class AICoachEngine: ObservableObject {
             if !block.isEmpty { ctx += "\n\n" + block }
         }
         return ctx
+    }
+
+    /// Consent-off contextual requests contain the new question only, never cached assistant text.
+    func screenWireMessages(context: String, currentQuestion: String, dataConsent: Bool)
+        -> [(role: ChatMessage.Role, content: String)] {
+        guard dataConsent else { return [(.user, context + "\n\n---\n\n" + currentQuestion)] }
+        return wireMessages(context: context)
+    }
+
+    /// A strictly dated, summary-only envelope. Never mixes the current day's auxiliary context into a past screen.
+    func buildScreenContext(_ context: PerformanceContext, dataConsent: Bool) async -> String {
+        guard dataConsent else { return context.coachEnvelope(measurements: "", dataConsent: false) }
+        let snapshot = await PerformanceSnapshotModel.capture(repo: repo, context: context)
+        var lines: [String] = []
+        if let row = snapshot.daily { lines.append("Selected day: " + dayLine(row)) }
+        else { lines.append("No daily row is available for the selected day. Do not carry another night into this date.") }
+        let keys = context.metric.map { [$0] } ?? ["sleep_performance", "sleep_total_min", "recovery", "strain", "hrv", "rhr", "resp_rate", "steps"]
+        for key in keys {
+            let readings = (snapshot.series[key] ?? []).filter { context.contains($0.day) && $0.value.isFinite }
+            let selected = snapshot.value(key).map { String(format: "%.2f", $0) } ?? "unavailable"
+            let mean = PerformanceContext.mean(readings.map { $0.value }).map { String(format: "%.2f", $0) } ?? "unavailable"
+            lines.append("\(key): selected day \(selected); window mean \(mean) from \(readings.count) measured days. Values are in the metric's stored units; strain is 0-100, sleep durations are minutes.")
+        }
+        for workout in snapshot.workouts.prefix(12) where Repository.localDayKey(Date(timeIntervalSince1970: TimeInterval(workout.endTs))) <= context.day {
+            lines.append("Recorded activity: \(workout.sport), duration \(workout.durationS.map { String(Int($0)) } ?? "unavailable") seconds; HR \(workout.avgHr.map(String.init) ?? "unavailable") bpm.")
+        }
+        return context.coachEnvelope(measurements: lines.joined(separator: "\n"), dataConsent: true)
     }
 
     /// One derived stress line for the coach context: the Baevsky Stress Index over TODAY's R-R, read

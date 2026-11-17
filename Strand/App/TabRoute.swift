@@ -17,6 +17,8 @@ import SwiftUI
 /// One first-hop destination reachable from a tab root. `Hashable` so it can ride a `NavigationPath`.
 enum TabRoute: Hashable {
     /// The whole-day, full-resolution HR timeline (Liquid Today's live-HR card tap, #979).
+    case performance(PerformanceContext)
+    case performanceWorkout(start: Int, source: String)
     case fullDayChart
     /// One metric's detail page by `MetricCatalog` key — the same tap-through Today's cards and
     /// Trends' small-multiples share. Each card opens ITS metric (2026-07-02: not the shared
@@ -43,7 +45,21 @@ extension View {
     /// Today detail pane and TrendsView's own macOS wrap).
     func tabRouteDestinations() -> some View {
         navigationDestination(for: TabRoute.self) { route in
+            Group {
             switch route {
+            case .performance(let context):
+                #if os(iOS)
+                if context.domain == .trend { PerformanceTrendView(context: context) }
+                else { PerformanceExperienceView(context: context) }
+                #else
+                HealthView()
+                #endif
+            case .performanceWorkout(let start, let source):
+                #if os(iOS)
+                PerformanceWorkoutRouteView(start: start, source: source)
+                #else
+                WorkoutsView()
+                #endif
             case .fullDayChart: FullDayChartView()
             case .metric(let key):
                 // Every caller passes a catalog key, so the fallback is theoretical; Health is the
@@ -72,6 +88,7 @@ extension View {
             case .hydration: HydrationView()
             case .coupled: CoupledView()
             }
+            }.modifier(PerformanceRouteContextPolicy(route: route))
         }
     }
 }
@@ -108,4 +125,18 @@ enum HeroRingMetric {
 
     /// Charge, Effort, Rest, in the order the hero row renders them.
     static let all = [charge, effort, rest]
+}
+
+/// Legacy tools have no dated screen contract; their launcher opens the general coach instead.
+private struct PerformanceRouteContextPolicy: ViewModifier {
+    let route: TabRoute
+    @EnvironmentObject private var router: NavRouter
+    func body(content: Content) -> some View {
+        content.onAppear {
+            switch route {
+            case .performance, .performanceWorkout: break
+            default: router.performanceContext = nil
+            }
+        }
+    }
 }

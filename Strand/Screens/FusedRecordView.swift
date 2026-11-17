@@ -44,6 +44,24 @@ public struct FusedRow: Identifiable, Equatable {
     }
 }
 
+/// A score resolved by the existing app calculation, kept separate from cross-device fusion.
+public struct FusedScore: Identifiable, Equatable {
+    public let key: String
+    public let label: String
+    public let value: Double
+    public let source: String
+    public let calculated: Bool?
+    public var id: String { key }
+
+    public init(key: String, label: String, value: Double, source: String, calculated: Bool? = nil) {
+        self.key = key
+        self.label = label
+        self.value = value
+        self.source = source
+        self.calculated = calculated
+    }
+}
+
 /// The whole fused day-record this screen renders. Built by the Wave 3 Repository adapter; passed in
 /// via init so the view stays pure and previewable.
 public struct FusedRecord: Equatable {
@@ -55,11 +73,16 @@ public struct FusedRecord: Equatable {
     /// How many distinct sources contributed across the whole record. Drives the single-source
     /// degradation: when ≤ 1 the screen shows a plain record with no provenance noise.
     public let contributingSourceCount: Int
+    public let scores: [FusedScore]
+    public let hadReadErrors: Bool
 
-    public init(rows: [FusedRow], dayOwner: FusionSource?, contributingSourceCount: Int) {
+    public init(rows: [FusedRow], dayOwner: FusionSource?, contributingSourceCount: Int,
+                scores: [FusedScore] = [], hadReadErrors: Bool = false) {
         self.rows = rows
         self.dayOwner = dayOwner
         self.contributingSourceCount = contributingSourceCount
+        self.scores = scores
+        self.hadReadErrors = hadReadErrors
     }
 }
 
@@ -70,9 +93,21 @@ struct FusedRecordView: View {
     /// The day label shown in the header subtitle ("Today", or a formatted date). Defaulted so the
     /// preview/caller can omit it.
     var dayLabel: String = String(localized: "Today")
+    var onPreviousDay: (() -> Void)? = nil
+    var onNextDay: (() -> Void)? = nil
+    var canGoForward = false
+    var onRetry: (() -> Void)? = nil
 
     /// The metric currently open in the conflict-compare sheet (nil = closed).
     @State private var comparing: FusedRow?
+    @AppStorage(UnitPrefs.systemKey) private var unitSystemRaw = UnitSystem.metric.rawValue
+    @AppStorage(UnitPrefs.temperatureKey) private var temperatureRaw = ""
+    @AppStorage(UnitPrefs.effortScaleKey) private var effortScaleRaw = EffortScale.hundred.rawValue
+
+    private var temperature: TemperatureUnit {
+        UnitPrefs.resolveTemperature(system: UnitSystem(rawValue: unitSystemRaw) ?? .metric, override: temperatureRaw)
+    }
+    private var effortScale: EffortScale { UnitPrefs.resolveEffortScale(effortScaleRaw) }
 
     /// True only when more than one source contributed anywhere — gates all provenance chrome so a
     /// single-WHOOP user sees a plain record, not a manufactured multi-source experience.
@@ -84,15 +119,32 @@ struct FusedRecordView: View {
             subtitle: subtitle
         ) {
             VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+                if let onPreviousDay, let onNextDay {
+                    HStack {
+                        Button(action: onPreviousDay) { Image(systemName: "chevron.left").frame(minWidth: 44, minHeight: 44) }
+                            .accessibilityLabel("Previous day")
+                        Spacer()
+                        Text(dayLabel).font(StrandFont.subhead)
+                        Spacer()
+                        Button(action: onNextDay) { Image(systemName: "chevron.right").frame(minWidth: 44, minHeight: 44) }
+                            .disabled(!canGoForward).accessibilityLabel("Next day")
+                    }
+                }
                 if isMultiSource { dayBadgeRow }
 
-                if record.rows.isEmpty {
+                if record.hadReadErrors {
+                    DataPendingNote(title: "Some measurements could not be read",
+                                    message: "Try again to reload the available measurements.",
+                                    symbol: "exclamationmark.circle")
+                    if let onRetry { Button("Try again", action: onRetry) }
+                }
+                if record.rows.isEmpty && record.scores.isEmpty && !record.hadReadErrors {
                     DataPendingNote(
                         title: "Nothing to fuse yet",
                         message: "Import a WHOOP export, Apple Health or a second band and your best-sourced record builds here, on this device.",
                         symbol: "square.stack.3d.up"
                     )
-                } else {
+                } else if !record.rows.isEmpty {
                     NoopCard(padding: 0) {
                         VStack(spacing: 0) {
                             ForEach(Array(record.rows.enumerated()), id: \.element.id) { index, row in
@@ -110,6 +162,38 @@ struct FusedRecordView: View {
                     }
                 }
 
+                if !record.scores.isEmpty {
+                    SectionHeader("Today's scores")
+                    NoopCard(padding: 0) {
+                        VStack(spacing: 0) {
+                            ForEach(Array(record.scores.enumerated()), id: \.element.id) { index, score in
+                                NavigationLink(value: TabRoute.metric(score.key)) {
+                                    HStack(spacing: NoopMetrics.space3) {
+                                        VStack(alignment: .leading, spacing: NoopMetrics.space1) {
+                                            Text(LocalizedStringKey(score.label)).font(StrandFont.headline)
+                                            if let calculated = score.calculated {
+                                                Text(calculated ? String(localized: "Calculated on this device") : String(localized: "Recorded measurement"))
+                                                    .font(StrandFont.footnote).foregroundStyle(StrandPalette.textSecondary)
+                                            }
+                                        }
+                                        Spacer()
+                                        Text(FusionFormat.value(score.value, metricKey: score.key, temperature: temperature,
+                                                                effortScale: effortScale)).font(StrandFont.title2)
+                                        Image(systemName: "chevron.right").font(StrandFont.footnote)
+                                    }
+                                    .foregroundStyle(StrandPalette.textPrimary)
+                                    .padding(.horizontal, NoopMetrics.cardPadding).padding(.vertical, NoopMetrics.space4)
+                                    .contentShape(Rectangle())
+                                }.buttonStyle(.plain)
+                                if index < record.scores.count - 1 { Divider().overlay(StrandPalette.hairline) }
+                            }
+                        }
+                    }
+                }
+
+                NavigationLink(value: TabRoute.metricExplorer) {
+                    Label("Explore all metrics", systemImage: "chart.xyaxis.line").font(StrandFont.subhead)
+                }
                 privacyNote
                 disclaimerNote
             }
@@ -151,15 +235,9 @@ struct FusedRecordView: View {
                 .font(StrandFont.footnote)
                 .foregroundStyle(StrandPalette.accent)
                 .accessibilityHidden(true)
-            if let owner = record.dayOwner {
-                Text("Today's scores owned by \(owner.displayName)")
-                    .font(StrandFont.footnote)
-                    .foregroundStyle(StrandPalette.textSecondary)
-            } else {
-                Text("Scores still calibrating, no single day-owner yet")
-                    .font(StrandFont.footnote)
-                    .foregroundStyle(StrandPalette.textTertiary)
-            }
+            Text("Measurements from \(record.contributingSourceCount) sources")
+                .font(StrandFont.footnote)
+                .foregroundStyle(StrandPalette.textSecondary)
             Spacer(minLength: 0)
         }
         .padding(.horizontal, 4)
@@ -240,7 +318,7 @@ private struct FusedMetricRowView: View {
                     SourceBadge("from \(point.winningSource.displayName)",
                                 tint: StrandPalette.accent)
                     if let reason = winnerReason {
-                        Text(reason)
+                        Text(LocalizedStringKey(reason))
                             .font(StrandFont.footnote)
                             .foregroundStyle(StrandPalette.textTertiary)
                     }
@@ -355,7 +433,7 @@ private struct ConflictCompareSheet: View {
                             .font(StrandFont.subhead)
                             .foregroundStyle(StrandPalette.accent)
                             .accessibilityHidden(true)
-                        Text("NOOP shows the \(winner.source.displayName) reading because it \(winner.reason) for this metric: a higher-trust source here, not a verdict that the others are wrong.")
+                        Text("NOOP shows the \(winner.source.displayName) reading because it \(String(localized: String.LocalizationValue(winner.reason))) for this metric: a higher-trust source here, not a verdict that the others are wrong.")
                             .font(StrandFont.subhead)
                             .foregroundStyle(StrandPalette.textSecondary)
                             .fixedSize(horizontal: false, vertical: true)
@@ -397,7 +475,7 @@ private struct ContributorRow: View {
                         StatePill("Using", tone: .accent, showsDot: true)
                     }
                 }
-                Text(contrib.reason)
+                Text(LocalizedStringKey(contrib.reason))
                     .font(StrandFont.footnote)
                     .foregroundStyle(StrandPalette.textTertiary)
             }
@@ -424,7 +502,19 @@ private struct ContributorRow: View {
 /// temp as "34.1 °C" / "93.4 °F" per the reader's preference; HR/HRV/steps as plain
 /// integers with the right unit.
 enum FusionFormat {
-    static func value(_ v: Double, metricKey: String, temperature: TemperatureUnit) -> String {
+    static func value(_ v: Double, metricKey: String, temperature: TemperatureUnit,
+                      effortScale: EffortScale = .hundred) -> String {
+        if metricKey == "resp_rate" {
+            return v.formatted(.number.precision(.fractionLength(1)).locale(AppLanguage.activeLocale)) + " /min"
+        }
+        if ["sleep_efficiency", "sleep_performance", "recovery"].contains(metricKey) {
+            return v.formatted(.number.precision(.fractionLength(0)).locale(AppLanguage.activeLocale)) + " %"
+        }
+        if metricKey == "strain" {
+            let shown = UnitFormatter.effortValue(v, scale: effortScale)
+                .formatted(.number.precision(.fractionLength(effortScale == .whoop ? 1 : 0)).locale(AppLanguage.activeLocale))
+            return shown + " / " + UnitFormatter.effortScaleMax(effortScale)
+        }
         switch MetricArbitrationPolicy.kind(forKey: metricKey) {
         case .restingHR, .heartRate:
             return "\(Int(v.rounded())) bpm"

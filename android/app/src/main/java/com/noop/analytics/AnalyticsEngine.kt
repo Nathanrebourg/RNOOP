@@ -460,6 +460,11 @@ object AnalyticsEngine {
         // Threaded rather than read from a global so this stays a pure function, and defaulted so every
         // existing caller and test is byte-identical.
         effortMethod: StrainScorer.Method = StrainScorer.Method.EDWARDS,
+        // Measurement-only, default-off comparison; never changes returned scores.
+        effortCadenceSink: ((String) -> Unit)? = null,
+        recipeSource: String? = null,
+        recipeWindowStart: Long? = null,
+        recipeWindowEnd: Long? = null,
     ): DayResult {
 
         // Precompute the day's UTC bounds ONCE (#996). isoDay is a FIXED-UTC formatter, so
@@ -693,7 +698,10 @@ object AnalyticsEngine {
             // stager's pre-sorted rrS, so sort our own copy of the day's raw rr once here for the re-window.
             val rrSorted = rr.sortedBy { it.ts }
             val allWin = ArrayList<SleepStager.HrvWindow>()
-            for (s in matched) {
+            for ((sessionIndex, s) in matched.withIndex()) {
+                // Shadow estimator only: never feeds daily HRV, recovery or baseline storage.
+                val quality = NightlyHRVQuality.analyze(s.start, s.end, rrSorted)
+                hrvTraceSink("day=$day session=${sessionIndex + 1} " + quality.trace(s.avgHRV))
                 val wins = SleepStager.sessionHrvWindows(s.start, s.end, rrSorted, s.stages)
                 if (hrvWindowDetail) {
                     for (w in wins) {
@@ -883,6 +891,17 @@ object AnalyticsEngine {
             diag = strainDiag,
             day = day,
         )
+        val effortRecipe = recipeSource?.let { source ->
+            ScoreRecipe.effort(dayHr ?: hr, effMaxHR, restForStrain, effortMethod, profile.sex, source)
+        }?.let { observed ->
+            if (recipeWindowStart != null && recipeWindowEnd != null)
+                observed.withEffortWindow(recipeWindowStart, recipeWindowEnd, "calendar") else observed
+        }?.takeIf { it.score == strain }
+        effortCadenceSink?.let { sink ->
+            val comparison = EffortCadenceComparison.analyze(dayHr ?: hr, maxHR = effMaxHR,
+                restingHR = restForStrain, method = effortMethod, sex = profile.sex)
+            sink(comparison.trace(strain) + " scope=day day=$day")
+        }
         // #2438 step 0 asks two things of a contributed log: whether the day was scored against the
         // user's own setting or against the age formula, and how far the day's own heart rate ran above
         // that. The `effort score` line above answers neither — it collapses override and Tanaka into one
@@ -1098,6 +1117,7 @@ object AnalyticsEngine {
             gravitySparse = gravitySparse,
             detectionFunnel = detectionFunnel,
             mainNightBlocks = mainGroup.map { SleepStageTotals.NightBlock(it.start, it.end) },
+            effortRecipe = effortRecipe,
         )
     }
 

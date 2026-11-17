@@ -19,6 +19,7 @@ internal object PhysiologicalStepCycleEngine {
         val boundaryOnsetByWakeDay: Map<String, Long>,
         val firstCycleWakeDay: String?,
         val recoveredOwnerMarkerRows: List<MetricSeriesRow>,
+        val recipesByWakeDay: Map<String, ScoreRecipe> = emptyMap(),
     )
 
     private data class CachedCycleSteps(
@@ -33,7 +34,7 @@ internal object PhysiologicalStepCycleEngine {
     private val cache = HashMap<String, CachedCycleSteps>()
 
     /** A cycle's Effort and calories, with the key of the inputs they were computed from. */
-    private data class CachedLoad(val key: String, val strain: Double?, val calories: Double?)
+    private data class CachedLoad(val key: String, val strain: Double?, val calories: Double?, val effortRecipe: ScoreRecipe?)
 
     /** Same lifetime and serialization as [cache]. */
     private val loadCache = HashMap<String, CachedLoad>()
@@ -203,6 +204,7 @@ internal object PhysiologicalStepCycleEngine {
 
         val stepsByWakeDay = HashMap<String, Int>()
         val strainByWakeDay = HashMap<String, Double>()
+        val recipesByWakeDay = HashMap<String, ScoreRecipe>()
         val caloriesByWakeDay = HashMap<String, Double>()
         val workoutCountByWakeDay = HashMap<String, Int>()
         val windows = PhysiologicalSteps.cycleWindows(boundaries, nowSeconds)
@@ -232,9 +234,12 @@ internal object PhysiologicalStepCycleEngine {
                     calories = if (cycleHr.isNotEmpty()) {
                         Calories.estimateDayCalories(cycleHr, profile, effectiveMaxHr, restingHr)
                     } else null,
+                    effortRecipe = DayCycleIntelligenceIntegration.effortRecipe(cycleHr, effectiveMaxHr,
+                        restingHr, effortMethod, profile.sex, fallbackOwner, window.onset, window.endExclusive),
                 ).also { loadCache[window.sleepId] = it }
             }
             load.strain?.let { strainByWakeDay[wakeDay] = it }
+            load.effortRecipe?.takeIf { it.score == load.strain }?.let { recipesByWakeDay[wakeDay] = it }
             load.calories?.let { caloriesByWakeDay[wakeDay] = it }
             // Count the persisted all-source workout union, not only analyzer-detected bouts. Repository
             // reads are inclusive, while ownership is [onset, nextOnset).
@@ -370,6 +375,7 @@ internal object PhysiologicalStepCycleEngine {
 
         return Result(
             cycleStepsByWakeDay = stepsByWakeDay,
+            recipesByWakeDay = recipesByWakeDay,
             cycleStrainByWakeDay = strainByWakeDay,
             cycleCaloriesByWakeDay = caloriesByWakeDay,
             cycleWorkoutCountByWakeDay = workoutCountByWakeDay,

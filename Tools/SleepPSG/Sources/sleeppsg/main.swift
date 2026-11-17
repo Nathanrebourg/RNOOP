@@ -9,6 +9,8 @@ import WhoopProtocol
 //
 // The dataset lives outside this repository and is always an argument. Nothing is written to it.
 
+if CommandLine.arguments.contains("--research-case") { ResearchBench.runCLI() }
+
 struct Args {
     var dataset: String?
     var section = "all"
@@ -225,10 +227,10 @@ if want("baseline") {
     ================================================================================
     3. SHIPPED SleepStagerV2 vs PSG TRUTH
     ================================================================================
-    Four-class agreement over every PSG-scored epoch. `SleepStagerV2` fits no parameters to data — every
-    coefficient is fixed a priori — so there is no train/test split to make here: the recipe sees each
-    subject exactly once and has never seen any of them. The leave-one-subject-out machinery in section 6
-    exists for the fitted comparison models, which do need it.
+    Four-class agreement over every PSG-scored epoch, using the fixed shipped recipe with no fitting
+    in this run. This cohort has informed previous recipe development (see README priors); these are
+    benchmark results, NOT a new untouched holdout. Leave-one-subject-out evaluation elsewhere in this
+    tool applies to fitted comparison models only and does not erase prior recipe selection.
 
     epochs scored     \(sh.conf.total)
     accuracy          \(f(sh.accuracy * 100, 6, 2)) %
@@ -240,6 +242,8 @@ if want("baseline") {
         let p = sh.conf.prf(st)
         print("      \(st.padding(toLength: 18, withPad: " ", startingAt: 0))\(f(p.precision, 8, 3)) \(f(p.recall, 8, 3)) \(f(p.f1, 8, 3))   \(p.support)")
     }
+    print("\nCONFUSION MATRIX — rows=PSG, columns=prediction; order: wake light deep rem")
+    for (i,row) in sh.conf.m.enumerated() { print("\(stageOrder[i]): \(row.map(String.init).joined(separator: " "))") }
     print("""
 
     STAGE FRACTIONS — reported as a first-class result, not an appendix.

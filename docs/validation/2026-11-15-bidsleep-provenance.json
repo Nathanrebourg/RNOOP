@@ -1,0 +1,21 @@
+{
+  "dataset": "bidsleep-dataset",
+  "version": "1.0.1",
+  "source": "https://physionet.org/content/bidsleep-dataset/1.0.1/",
+  "license": "Open Data Commons Attribution1.0",
+  "authors": "Song Tzu-An, Zhang Yubo, Zhou Ziyuan, Dutta Joyita",
+  "doi": "10.13026/rees-1092",
+  "reference": "Expert-reviewed Dreem2 EEG; not full PSG",
+  "sensor": "Apple Watch; no RR",
+  "participants": 47,
+  "trainingParticipants": 30,
+  "holdoutParticipants": 17,
+  "selectedNights": 47,
+  "exclusions": 0,
+  "officialMemberHashesVerified": 143,
+  "sourceManifestSHA256": "13333dff4d4640167435188bc6019c1782684b96d09838cb7e7b3ad005a51460",
+  "frozenExecutableSHA256": "52ab1853b6cc48feb0b0812103d5e541313c62f15e8d7058ef3adc19df8ab5b4",
+  "selectionSHA256": "34061af484aa3d1dea91ba718565e9bfeaefae5543dc5e267943ec7e4211a4c1",
+  "confidenceSHA256": "f240e5bfcc023b4fbd706c1b188c7b209a7a101ccec472a3299145c6607ec8fc",
+  "outcome": "Candidate awake-014 rejected for promotion: heldout macroF1 and accuracy lower; slight wake F1 gain accompanies REM F1 loss. No confidence threshold meets training error budget0.4; no post-holdout threshold selected."
+}

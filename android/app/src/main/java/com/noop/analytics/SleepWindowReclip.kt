@@ -28,6 +28,7 @@ import org.json.JSONObject
 object SleepWindowReclip {
 
     fun reclip(stagesJSON: String?, sessionStart: Long, oldEnd: Long, newStart: Long, newEnd: Long): String? {
+        if (newEnd <= newStart) return null
         stagesJSON ?: return null
         return try {
             when {
@@ -43,7 +44,7 @@ object SleepWindowReclip {
     }
 
     private fun reclipSegments(arr: JSONArray, newStart: Long, newEnd: Long): String? {
-        val out = JSONArray()
+        var out = JSONArray()
         var maxEnd = newStart
         for (i in 0 until arr.length()) {
             val seg = arr.optJSONObject(i) ?: continue
@@ -57,6 +58,13 @@ object SleepWindowReclip {
             val clippedEnd = minOf(end, newEnd)
             out.put(JSONObject().put("start", clippedStart).put("end", clippedEnd).put("stage", stage))
             if (clippedEnd > maxEnd) maxEnd = clippedEnd
+        }
+        val minStart = (0 until out.length()).minOfOrNull { out.getJSONObject(it).getLong("start") }
+        if (minStart != null && minStart > newStart) {
+            val withLeadingWake = JSONArray()
+            withLeadingWake.put(JSONObject().put("start", newStart).put("end", minStart).put("stage", "wake"))
+            for (i in 0 until out.length()) withLeadingWake.put(out.getJSONObject(i))
+            out = withLeadingWake
         }
         if (newEnd > maxEnd && maxEnd >= newStart) {             // window grew → trailing awake
             out.put(JSONObject().put("start", maxEnd).put("end", newEnd).put("stage", "wake"))

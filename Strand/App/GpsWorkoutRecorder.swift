@@ -173,15 +173,16 @@ final class TrackFilter {
     func accept(_ fix: RawFix) -> RouteMath.LatLng? {
         // CoreLocation reports a negative horizontalAccuracy when the fix is invalid; treat that as a
         // drop, same as an over-coarse reading. (Android sees 0 for "no accuracy"; we treat < 0 as bad.)
-        if fix.accuracyM < 0 || fix.accuracyM > maxAccuracyM { return nil }
+        if !fix.accuracyM.isFinite || fix.accuracyM < 0 || fix.accuracyM > maxAccuracyM { return nil }
         guard (-90...90).contains(fix.lat), (-180...180).contains(fix.lon) else { return nil }
         if let prev = last {
             let dt = Double(fix.tMs - prev.tMs) / 1000.0
-            if dt > 0 {
-                let d = RouteMath.haversineMeters(RouteMath.LatLng(prev.lat, prev.lon),
-                                                  RouteMath.LatLng(fix.lat, fix.lon))
-                if d / dt > maxSpeedMps { return nil }
-            }
+            // A duplicate or out-of-order timestamp cannot establish a speed; accepting it would
+            // bypass the jump gate and add a potentially enormous segment to distance and pace.
+            guard dt > 0 else { return nil }
+            let d = RouteMath.haversineMeters(RouteMath.LatLng(prev.lat, prev.lon),
+                                              RouteMath.LatLng(fix.lat, fix.lon))
+            if d / dt > maxSpeedMps { return nil }
         }
         last = fix
         return RouteMath.LatLng(fix.lat, fix.lon)

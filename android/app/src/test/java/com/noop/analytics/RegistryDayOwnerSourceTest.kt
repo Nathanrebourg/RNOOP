@@ -79,6 +79,8 @@ class RegistryDayOwnerSourceTest {
         override suspend fun deleteMetricSeriesFor(deviceId: String) {}
         override suspend fun deleteDayOwnershipFor(deviceId: String) {}
         override suspend fun deleteScoreInputProvenanceFor(deviceId: String) {}
+        override suspend fun deleteScoreCalculationHeadsFor(deviceId: String) {}
+        override suspend fun deleteScoreCalculationEvidenceFor(deviceId: String) {}
         override suspend fun deleteSleepStatesFor(deviceId: String) {}
         override suspend fun deleteLabMarkersFor(deviceId: String) {}
         override suspend fun deleteLiveSessionsFor(deviceId: String) {}

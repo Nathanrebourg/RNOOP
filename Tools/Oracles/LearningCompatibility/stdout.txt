@@ -1,0 +1,10 @@
+learning.recipe-context.v1|owner:7374726170|zone:4575726f70652f5061726973|recovery:7265636f766572792e6c6f6769737469632e7631|effort:6566666f72742e656477617264732d6872722d6c6f672e7631|ctx.age:3330|ctx.pipeline:73636f72696e672d7631|
+ordered|true
+source|true
+zone|true
+method|true
+settings|true
+cosmetic-rejected|true
+missing-pipeline|true
+unicode|true
+delimiter|true

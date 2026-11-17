@@ -453,7 +453,12 @@ struct RootView: View {
         case .xiaomi: XiaomiBandView()
         case .dataSources: DataSourcesView()
         case .backupSync: BackupSyncView()
-        case .fusedRecord: FusedRecordHost()
+        case .fusedRecord:
+            #if os(macOS)
+            NavigationStack { FusedRecordHost().tabRouteDestinations() }
+            #else
+            FusedRecordHost()
+            #endif
         case .devices: DevicesView()
         case .noopLimitations: NoopLimitationsView()
         case .notifications: NotificationSettingsView()

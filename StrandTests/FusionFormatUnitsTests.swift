@@ -40,4 +40,15 @@ final class FusionFormatUnitsTests: XCTestCase {
                            "\(key) changed with the temperature unit")
         }
     }
+
+    func testAddedMetricsShowTheirActualUnits() {
+        XCTAssertTrue(FusionFormat.value(95, metricKey: "sleep_efficiency", temperature: .celsius).contains("%"))
+        XCTAssertTrue(FusionFormat.value(14.2, metricKey: "resp_rate", temperature: .celsius).contains("/min"))
+        let effort = FusionFormat.value(50, metricKey: "strain", temperature: .celsius, effortScale: .whoop)
+        XCTAssertTrue(effort.contains("10"))
+        XCTAssertTrue(effort.contains("21"))
+        let defaultEffort = FusionFormat.value(50, metricKey: "strain", temperature: .celsius)
+        XCTAssertTrue(defaultEffort.contains("50"))
+        XCTAssertTrue(defaultEffort.contains("100"))
+    }
 }

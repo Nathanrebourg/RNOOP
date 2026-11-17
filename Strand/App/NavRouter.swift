@@ -50,6 +50,14 @@ final class NavRouter: ObservableObject {
     /// active shell (macOS sidebar / iOS tab) reacts and routes itself, then resets this to nil.
     @Published var requestedDestination: Destination?
 
+    /// The visible iPhone screen supplies an explicit date anchor for the contextual coach.
+    @Published var performanceContext: PerformanceContext?
+    @Published var requestedPerformanceCoach: PerformanceContext?
+
+    func openPerformanceCoach(_ context: PerformanceContext) {
+        requestedPerformanceCoach = context
+    }
+
     /// Set when a screen's top-bar "+" asks the shell to open the quick-action sheet (the sheet lives
     /// in the iOS shell). The shell presents it, then resets this to false.
     @Published var quickActionsRequested = false

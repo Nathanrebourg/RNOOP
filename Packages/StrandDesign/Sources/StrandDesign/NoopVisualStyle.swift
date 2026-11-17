@@ -8,18 +8,28 @@ import SwiftUI
 
 public enum NoopVisualStyle {
     // Neutral, low-chroma surfaces sampled from the supplied dark-mode reference.
-    public static let canvas = Color(light: "#F3F4F6", dark: "#1D1E23")
-    public static let surface = Color(light: "#FFFFFF", dark: "#2A2C34")
-    public static let surfaceTop = Color(light: "#FFFFFF", dark: "#30323B")
-    public static let surfaceBottom = Color(light: "#F4F5F7", dark: "#282A31")
-    public static let inset = Color(light: "#E8E9ED", dark: "#23252C")
+    public static let canvas = Color(light: "#F3F4F6", dark: "#10141A")
+    public static let surface = Color(light: "#FFFFFF", dark: "#252B33")
+    public static let surfaceTop = Color(light: "#FFFFFF", dark: "#303942")
+    public static let surfaceBottom = Color(light: "#F4F5F7", dark: "#20262D")
+    public static let inset = Color(light: "#E8E9ED", dark: "#171E25")
 
-    public static let border = Color(light: "#D8DAE0", dark: "#373A44")
-    public static let borderHighlight = Color(light: "#FFFFFF", dark: "#4B4E59")
-    public static let divider = Color(light: "#E4E5E9", dark: "#383A43")
+    // The dashboard backdrop and rings remain theme-aware, including the optional light appearance.
+    public static let dashboardTop = Color(light: "#DFE7EC", dark: "#303E49")
+    public static let dashboardBottom = Color(light: "#F3F4F6", dark: "#10141A")
+    public static let dashboardTrack = Color(light: "#C9D2D9", dark: "#39434B")
+    public static let dashboardTarget = Color(light: "#8C99A1", dark: "#737982")
+    public static let dashboardSleep = Color(light: "#4B748D", dark: "#91B7CD")
+    public static let dashboardEffort = Color(light: "#0873AB", dark: "#12A9ED")
+    public static let brandMint = Color(light: "#098C74", dark: "#1BE2B0")
+    public static let brandBlue = Color(light: "#397DAC", dark: "#69B8E4")
+
+    public static let border = Color(light: "#D8DAE0", dark: "#282E38")
+    public static let borderHighlight = Color(light: "#FFFFFF", dark: "#343C48")
+    public static let divider = Color(light: "#E4E5E9", dark: "#262D37")
 
     public static let primaryText = Color(light: "#17181C", dark: "#F7F7FA")
-    public static let secondaryText = Color(light: "#555861", dark: "#C3C4CA")
+    public static let secondaryText = Color(light: "#555861", dark: "#A8B0BE")
     public static let tertiaryText = Color(light: "#7D808A", dark: "#7D7F88")
 
     public static let mint = Color(light: "#149A78", dark: "#69DDB8")

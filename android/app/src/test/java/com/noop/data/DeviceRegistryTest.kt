@@ -115,6 +115,8 @@ class DeviceRegistryTest {
         override suspend fun deleteScoreInputProvenanceFor(deviceId: String) {
             deletedTables += "scoreInputProvenance" to deviceId
         }
+        override suspend fun deleteScoreCalculationHeadsFor(deviceId: String) { deletedTables += "scoreCalculationHead" to deviceId }
+        override suspend fun deleteScoreCalculationEvidenceFor(deviceId: String) { deletedTables += "scoreCalculationEvidence" to deviceId }
         override suspend fun deleteSleepStatesFor(deviceId: String) { deletedTables += "sleepStateSample" to deviceId }
         override suspend fun deleteLabMarkersFor(deviceId: String) { deletedTables += "labMarker" to deviceId }
         override suspend fun deleteLiveSessionsFor(deviceId: String) { deletedTables += "liveSession" to deviceId }
@@ -327,7 +329,7 @@ class DeviceRegistryTest {
             "stepSample", "ppgHrSample", "ppgWaveformSample", "ecgWaveformSample", "v18AuxSample",
             "event", "battery", "dailyMetric", "sleepSession",
             "journal", "workout", "appleDaily", "metricSeries", "dayOwnership",
-            "scoreInputProvenance",
+            "scoreInputProvenance", "scoreCalculationEvidence", "scoreCalculationHead",
             "sleepStateSample", "labMarker", "liveSession", "dismissedWorkout", "dismissedSleep",
             // v38-apple-step-hour: hourly Apple-Health steps. No Android importer writes this table, but a
             // `.noopbak` restored from iOS carries its rows — and THIS path is "Remove Apple Health

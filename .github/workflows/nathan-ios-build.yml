@@ -1,0 +1,47 @@
+# Manual iOS build for a personal fork. It does not publish a release or use Apple credentials.
+# Based on NOOP's fork-release.yml packaging; SideStore replaces the ad-hoc signature.
+name: NROOP Nathan - IPA iOS
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ios:
+    runs-on: macos-26
+    timeout-minutes: 40
+    steps:
+      - name: Checkout
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Generate project
+        run: xcodegen generate
+      - name: Build for iPhone
+        run: >-
+          xcodebuild -scheme NOOPiOS -configuration Release -destination 'generic/platform=iOS'
+          -derivedDataPath build/dd
+          CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY=""
+          build
+      - name: Prepare IPA for sideloading
+        shell: bash
+        run: |
+          set -euo pipefail
+          APP=$(find build/dd/Build/Products/Release-iphoneos -maxdepth 1 -name '*.app' -type d | head -1)
+          test -n "$APP" || { echo "iPhone app not found" >&2; exit 1; }
+          rm -rf "$APP/Watch"
+          test -d "$APP/PlugIns/NOOPWidgets.appex" || { echo "Widget extension missing" >&2; exit 1; }
+          Tools/prepare-ios-sideload-app.sh "$APP"
+          mkdir -p "$RUNNER_TEMP/noop-package/Payload"
+          cp -R "$APP" "$RUNNER_TEMP/noop-package/Payload/"
+          cd "$RUNNER_TEMP/noop-package"
+          zip -qry "$GITHUB_WORKSPACE/NROOP-Nathan-unsigned.ipa" Payload
+      - name: Upload IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: NROOP-Nathan-unsigned
+          path: NROOP-Nathan-unsigned.ipa
+          if-no-files-found: error
+          retention-days: 7

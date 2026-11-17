@@ -6,6 +6,11 @@ import SwiftUI
 // the uniform, instrument-grade look from the reference. Do not invent ad-hoc cards.
 
 public enum NoopMetrics {
+    public static let performanceRingDiameter: CGFloat = 96
+    public static let performanceRingStroke: CGFloat = 7
+    public static let performanceRingRotation: Double = -90
+    public static let performanceLabelTracking: CGFloat = 1.2
+    public static let premiumBrandSize: CGFloat = 36
     public static let cardRadius: CGFloat = NoopVisualStyle.cardRadius
     public static let cardPadding: CGFloat = NoopVisualStyle.cardPadding
     public static let gap: CGFloat = NoopVisualStyle.itemGap
@@ -767,5 +772,91 @@ private struct PulseDot: View {
         .onAppear { if pulsing && !poseStill { animate = true } }
         .animation(pulsing && !poseStill ? StrandMotion.breathe : nil, value: animate)
         .accessibilityHidden(true)
+    }
+}
+
+// MARK: - Performance dashboard score
+
+/// Flat, adaptive ring. A missing reading stays empty; zero remains a real reading.
+/// Values keep their original metric scale, including Effort's optional 0–21 display.
+public struct PerformanceScoreRing: View {
+    public let score: Double?
+    public let maximum: Double
+    public let decimals: Int
+    public let tint: Color
+    public let suffix: String
+    /// Optional suggested range, expressed on the same scale as the score, not a measurement.
+    public let targetRange: ClosedRange<Double>?
+    public let diameter: CGFloat
+    public let numberFont: Font
+
+    public init(score: Double?, maximum: Double = 100, decimals: Int = 0, tint: Color,
+                suffix: String = "", targetRange: ClosedRange<Double>? = nil,
+                diameter: CGFloat = NoopMetrics.performanceRingDiameter,
+                numberFont: Font = StrandFont.performanceScore) {
+        self.score = score
+        self.maximum = maximum
+        self.decimals = decimals
+        self.tint = tint
+        self.suffix = suffix
+        self.targetRange = targetRange
+        self.diameter = diameter
+        self.numberFont = numberFont
+    }
+
+    private var validScore: Double? {
+        guard let score, score.isFinite, maximum.isFinite, maximum > 0 else { return nil }
+        return score
+    }
+
+    public var body: some View {
+        ZStack {
+            Circle().strokeBorder(NoopVisualStyle.dashboardTrack,
+                                  lineWidth: NoopMetrics.performanceRingStroke)
+            if let range = validTargetRange {
+                Circle()
+                    .inset(by: NoopMetrics.performanceRingStroke / 2)
+                    .trim(from: range.lowerBound, to: range.upperBound)
+                    .stroke(NoopVisualStyle.dashboardTarget,
+                            style: StrokeStyle(lineWidth: NoopMetrics.performanceRingStroke, lineCap: .butt))
+                    .rotationEffect(.degrees(NoopMetrics.performanceRingRotation))
+            }
+            if let score = validScore {
+                Circle()
+                    .inset(by: NoopMetrics.performanceRingStroke / 2)
+                    .trim(from: 0, to: CGFloat(min(1, max(0, score / maximum))))
+                    .stroke(tint, style: StrokeStyle(lineWidth: NoopMetrics.performanceRingStroke,
+                                                    lineCap: .round))
+                    .rotationEffect(.degrees(NoopMetrics.performanceRingRotation))
+            }
+            if let range = validTargetRange {
+                Circle()
+                    .inset(by: NoopMetrics.performanceRingStroke / 2)
+                    .trim(from: max(0, range.lowerBound - 0.004), to: min(1, range.lowerBound + 0.004))
+                    .stroke(NoopVisualStyle.primaryText,
+                            style: StrokeStyle(lineWidth: NoopMetrics.performanceRingStroke, lineCap: .butt))
+                    .rotationEffect(.degrees(NoopMetrics.performanceRingRotation))
+            }
+            (Text(validScore.map { $0.formatted(.number.precision(.fractionLength(decimals))) } ?? "—")
+                .font(numberFont)
+             + Text(validScore == nil ? "" : suffix).font(StrandFont.headline))
+                .foregroundStyle(StrandPalette.textPrimary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
+                .padding(NoopMetrics.space3)
+        }
+        .aspectRatio(1, contentMode: .fit)
+        .frame(maxWidth: diameter)
+        .accessibilityElement(children: .ignore)
+        .accessibilityValue(validScore.map { $0.formatted(.number.precision(.fractionLength(decimals))) + suffix } ?? "—")
+    }
+
+    private var validTargetRange: ClosedRange<CGFloat>? {
+        guard let range = targetRange, maximum.isFinite, maximum > 0,
+              range.lowerBound.isFinite, range.upperBound.isFinite else { return nil }
+        let lower = max(0, min(1, range.lowerBound / maximum))
+        let upper = max(0, min(1, range.upperBound / maximum))
+        guard lower < upper else { return nil }
+        return CGFloat(lower)...CGFloat(upper)
     }
 }

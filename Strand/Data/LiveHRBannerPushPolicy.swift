@@ -20,6 +20,14 @@ import Foundation
 /// itself IS compiled in CI, by `app-build.yml`'s `NOOPiOS` leg.)
 enum LiveHRBannerPushPolicy {
 
+    // A foreground refresh or a recovery change must never make an old BPM look live again.
+    static func freshReading(_ bpm: Int?, measuredAt: Date?, now: Date,
+                             validFor: TimeInterval) -> Int? {
+        guard let measuredAt, validFor > 0 else { return nil }
+        let age = now.timeIntervalSince(measuredAt)
+        return age >= 0 && age < validFor ? bpm : nil
+    }
+
     /// The shortest time between two pushes, as before: well under ActivityKit's update budget.
     static let minimumSpacing: TimeInterval = 2
 

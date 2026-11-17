@@ -1,5 +1,36 @@
 import SwiftUI
 
+/// A scalable, original mark for the iPhone dashboard. The open arc echoes the score rings while
+/// staying legible at small sizes; no image asset or raster scaling is needed.
+public struct PremiumNoopMark: View {
+    public var size: CGFloat
+
+    public init(size: CGFloat = NoopMetrics.premiumBrandSize) {
+        self.size = size
+    }
+
+    public var body: some View {
+        ZStack {
+            Circle()
+                .fill(LinearGradient(colors: [NoopVisualStyle.surfaceTop, NoopVisualStyle.surfaceBottom],
+                                     startPoint: .topLeading, endPoint: .bottomTrailing))
+            Circle().strokeBorder(NoopVisualStyle.borderHighlight.opacity(0.65), lineWidth: max(0.5, size * 0.012))
+            Circle()
+                .trim(from: 0.07, to: 0.82)
+                .stroke(LinearGradient(colors: [NoopVisualStyle.brandBlue, NoopVisualStyle.brandMint],
+                                       startPoint: .topLeading, endPoint: .bottomTrailing),
+                        style: StrokeStyle(lineWidth: size * 0.085, lineCap: .round))
+                .rotationEffect(.degrees(-90))
+                .padding(size * 0.20)
+            Circle().fill(NoopVisualStyle.primaryText).frame(width: size * 0.095, height: size * 0.095)
+        }
+        .frame(width: size, height: size)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text("NOOP"))
+        .accessibilityAddTraits(.isImage)
+    }
+}
+
 // MARK: - BrandMark — the NOOP logo mark (Titanium & Gold)
 //
 // The app's identity glyph, rendered natively for use as a hero on onboarding,

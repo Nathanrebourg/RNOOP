@@ -3,6 +3,7 @@ package com.noop.analytics
 import com.noop.data.DailyMetric
 import com.noop.data.MetricSeriesRow
 import com.noop.data.ScoreInputProvenanceRow
+import com.noop.data.ScoreCalculationEvidenceEntity
 import com.noop.data.SleepSession
 import com.noop.data.WhoopRepository
 
@@ -33,6 +34,7 @@ internal object IntelligencePersistence {
         val metricRows: List<MetricSeriesRow>,
         val provenance: List<ScoreInputProvenanceRow>,
         val markerSourceIds: List<String>,
+        val calculationEvidence: List<ScoreCalculationEvidenceEntity> = emptyList(),
     )
 
     /** Keep the per-day repair loop outside the instrumented scoring coroutine's bytecode budget. */
@@ -53,7 +55,8 @@ internal object IntelligencePersistence {
             window.copy(from = day, to = day,
                 dailies = dailiesByDay.getValue(day),
                 metricRows = metricsByDay[day].orEmpty(),
-                provenance = provenanceByDay[day].orEmpty())
+                provenance = provenanceByDay[day].orEmpty(),
+                calculationEvidence = window.calculationEvidence.filter { it.day == day })
         }
     }
 
@@ -70,6 +73,7 @@ internal object IntelligencePersistence {
         ownerByDay: Map<String, String>,
         legacyClock: LegacyScoreClock,
         computed: MutableList<IntelligenceEngine.Computed>,
+        calculationEvidence: List<ScoreCalculationEvidenceEntity> = emptyList(),
     ): ComputedWindow {
         val mutableDailies = dailies.toMutableList()
         val snapshots = preserveLegacyScores(
@@ -86,6 +90,17 @@ internal object IntelligencePersistence {
             metricRows = (metricRows + cycle.recoveredOwnerMarkerRows)
                 .distinctBy { Triple(it.deviceId, it.day, it.key) },
             provenance = provenance,
+            calculationEvidence = calculationEvidence.filter { row ->
+                val daily = mutableDailies.lastOrNull { it.day == row.day }
+                val value = when (row.key) {
+                    "recovery" -> if (snapshots.containsKey(row.day)) null else daily?.recovery
+                    "strain" -> daily?.strain
+                    "sleep_performance" -> metricRows.lastOrNull { it.day == row.day && it.key == row.key }?.value
+                    else -> null
+                }
+                row.deviceId == computedId && daily != null && value == row.value &&
+                    provenance.lastOrNull { it.day == row.day && it.key == row.key }?.sourceId == row.sourceId
+            },
             markerSourceIds = DayCycleIntelligenceIntegration.markerRewriteSourceIds(
                 repo.computedSourceIds(importedDeviceId),
                 candidatePriorities.map { (owner, _) -> repo.computedDeviceId(owner) },
@@ -217,4 +232,5 @@ internal suspend fun WhoopRepository.replaceComputedScoreWindow(
     provenance = window.provenance,
     replaceMetricKeys = listOf(DayCycleIntelligenceIntegration.ONSET_KEY),
     replaceMetricSourceIds = window.markerSourceIds,
+    calculationEvidence = window.calculationEvidence,
 )

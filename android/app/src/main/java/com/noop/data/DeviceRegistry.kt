@@ -226,6 +226,8 @@ class DeviceRegistry(
             dao.deleteMetricSeriesFor(id)
             dao.deleteDayOwnershipFor(id)
             dao.deleteScoreInputProvenanceFor(id)
+            dao.deleteScoreCalculationHeadsFor(id)
+            dao.deleteScoreCalculationEvidenceFor(id)
             dao.deleteSleepStatesFor(id)
             dao.deleteLabMarkersFor(id)
             dao.deleteLiveSessionsFor(id)

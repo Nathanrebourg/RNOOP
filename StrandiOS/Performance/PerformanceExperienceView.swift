@@ -1,0 +1,429 @@
+#if os(iOS)
+import SwiftUI
+import StrandDesign
+import StrandAnalytics
+import WhoopStore
+
+/// Native daily and pillar pages. No fixture values or score calculations live in this view.
+struct PerformanceExperienceView: View {
+    let initialContext: PerformanceContext
+    var isRoot = false
+    @EnvironmentObject private var repo: Repository
+    @EnvironmentObject private var router: NavRouter
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.dynamicTypeSize) private var typeSize
+    @StateObject private var model = PerformanceSnapshotModel()
+    @AppStorage(UnitPrefs.systemKey) private var unitPreference = UnitSystem.metric.rawValue
+    @AppStorage(UnitPrefs.temperatureKey) private var temperaturePreference = ""
+    @AppStorage(UnitPrefs.skinTempDisplayKey) private var skinPreference = ""
+    @AppStorage(UnitPrefs.effortScaleKey) private var effortPreference = EffortScale.whoop.rawValue
+    @State private var day: String
+    @State private var showCalendar = false
+    @State private var showSettings = false
+    @State private var dataRevision = 0
+
+    init(context: PerformanceContext, isRoot: Bool = false) {
+        self.initialContext = context
+        self.isRoot = isRoot
+        _day = State(initialValue: context.day)
+    }
+    init(domain: PerformanceContext.Domain, isRoot: Bool = true) {
+        self.init(context: PerformanceContext(day: Repository.logicalDayKey(Date()), domain: domain)!, isRoot: isRoot)
+    }
+    private var context: PerformanceContext {
+        PerformanceContext(day: day, domain: initialContext.domain, metric: initialContext.metric,
+                           windowDays: initialContext.windowDays)!
+    }
+    private var today: String { Repository.logicalDayKey(Date()) }
+    private var loadID: String { context.id + "|" + repo.deviceId + "|" + String(dataRevision) + "|" + unitPreference + temperaturePreference + skinPreference + effortPreference }
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: NoopMetrics.space4) {
+                header
+                if context.domain == .today {
+                    Text(verbatim: "NROOP").font(StrandFont.rounded(PerformanceDesign.wordmarkSize, weight: .light))
+                        .tracking(PerformanceDesign.brandTracking).frame(maxWidth: .infinity).padding(.vertical, NoopMetrics.space1)
+                }
+                if let snapshot = model.snapshot, snapshot.context == context {
+                    if snapshot.hadReadErrors {
+                        PerformanceReadError { Task { await model.load(repo: repo, context: context) } }
+                    }
+                    contents(snapshot)
+                } else {
+                    ProgressView("Reading your measurements…").frame(maxWidth: .infinity).padding(.vertical, NoopMetrics.space8)
+                }
+                if context.domain != .today {
+                    NavigationLink(value: TabRoute.metricExplorer) {
+                        Label("Explore all metrics", systemImage: "chart.xyaxis.line").font(StrandFont.subhead)
+                    }.padding(.vertical, NoopMetrics.space3)
+                }
+            }
+            .padding(.horizontal, NoopMetrics.screenHPadding)
+            .padding(.top, NoopMetrics.space2)
+            .padding(.bottom, NoopMetrics.space6)
+        }
+        .background(PerformanceBackground())
+        .toolbar(.hidden, for: .navigationBar)
+        .refreshable { await repo.refresh() }
+        .task(id: loadID) {
+            router.performanceContext = context
+            await model.load(repo: repo, context: context)
+        }
+        .onAppear { router.performanceContext = context }
+        .onReceive(repo.performanceSnapshotCache.$revision) { dataRevision = $0 }
+        .sheet(isPresented: $showCalendar) { calendar }
+        .sheet(isPresented: $showSettings) { NavigationStack { SettingsView() } }
+    }
+
+    @ViewBuilder private var header: some View {
+        if context.domain == .today { dailyHeader }
+        else { secondaryHeader }
+    }
+
+    private var dailyHeader: some View {
+        HStack(spacing: NoopMetrics.space1) {
+            Button { showSettings = true } label: {
+                Image(systemName: "person.crop.circle").font(StrandFont.headline)
+                    .frame(width: PerformanceDesign.controlDiameter, height: PerformanceDesign.controlDiameter)
+            }.accessibilityLabel("Profile and settings")
+            Spacer(minLength: 0)
+            HStack(spacing: 0) {
+                Button { shiftDay(-1) } label: { Image(systemName: "chevron.left").frame(width: PerformanceDesign.controlDiameter, height: PerformanceDesign.controlDiameter) }.accessibilityLabel("Previous day")
+                Button { showCalendar = true } label: {
+                    Text(day == today ? String(localized: "Today") : day).font(StrandFont.caption).lineLimit(1).minimumScaleFactor(0.75)
+                }.frame(minHeight: PerformanceDesign.controlDiameter).accessibilityLabel(PerformanceFormat.date(day))
+                Button { shiftDay(1) } label: { Image(systemName: "chevron.right").frame(width: PerformanceDesign.controlDiameter, height: PerformanceDesign.controlDiameter) }.disabled(day >= today).accessibilityLabel("Next day")
+            }.background(StrandPalette.textPrimary.opacity(0.035), in: Capsule())
+            Spacer(minLength: 0)
+            Button { router.openDevices() } label: {
+                Image(systemName: "applewatch").font(StrandFont.headline)
+                    .frame(width: PerformanceDesign.controlDiameter, height: PerformanceDesign.controlDiameter)
+            }.accessibilityLabel("Manage devices")
+        }.foregroundStyle(StrandPalette.textPrimary).font(StrandFont.caption)
+    }
+
+    private var secondaryHeader: some View {
+        VStack(spacing: NoopMetrics.space2) {
+            HStack {
+                Button {
+                    if isRoot { showSettings = true } else { dismiss() }
+                } label: {
+                    Image(systemName: isRoot ? "person.crop.circle" : "chevron.left")
+                        .font(StrandFont.headline)
+                        .frame(width: PerformanceDesign.controlDiameter, height: PerformanceDesign.controlDiameter)
+                }.accessibilityLabel(isRoot ? "Profile and settings" : "Back")
+                Spacer(minLength: NoopMetrics.space1)
+                if context.domain != .today { Text(context.domain.title.uppercased()).font(StrandFont.overline).tracking(PerformanceDesign.labelTracking) }
+                else { Text(day == today ? "Today" : "Selected day").font(StrandFont.subhead) }
+                Spacer(minLength: NoopMetrics.space1)
+                Button { router.openDevices() } label: {
+                    Image(systemName: "applewatch").font(StrandFont.headline)
+                        .frame(width: PerformanceDesign.controlDiameter, height: PerformanceDesign.controlDiameter)
+                }.accessibilityLabel("Manage devices")
+            }
+            HStack(spacing: NoopMetrics.space1) {
+                Button { shiftDay(-1) } label: { Image(systemName: "chevron.left").frame(width: PerformanceDesign.controlDiameter, height: PerformanceDesign.controlDiameter) }
+                    .accessibilityLabel("Previous day")
+                Button { showCalendar = true } label: {
+                    Text(PerformanceFormat.date(day)).font(StrandFont.caption).multilineTextAlignment(.center)
+                }.frame(maxWidth: .infinity, minHeight: PerformanceDesign.controlDiameter)
+                Button { shiftDay(1) } label: { Image(systemName: "chevron.right").frame(width: PerformanceDesign.controlDiameter, height: PerformanceDesign.controlDiameter) }
+                    .disabled(day >= today).accessibilityLabel("Next day")
+            }.font(StrandFont.caption).foregroundStyle(StrandPalette.textSecondary)
+        }.foregroundStyle(StrandPalette.textPrimary)
+    }
+
+    private var calendar: some View {
+        NavigationStack {
+            DatePicker("Choose a day", selection: Binding(get: {
+                PerformanceSnapshotModel.localNoon(day) ?? Date()
+            }, set: { value in
+                let key = Repository.localDayKey(value)
+                day = min(today, key)
+                showCalendar = false
+            }), in: ...Date(), displayedComponents: .date)
+            .datePickerStyle(.graphical).padding(NoopMetrics.space4)
+            .navigationTitle("Choose a day")
+            .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Done") { showCalendar = false } } }
+        }.presentationDetents([.medium])
+    }
+
+    private func shiftDay(_ offset: Int) { day = min(today, context.shiftedDay(by: offset)) }
+
+    @ViewBuilder private func contents(_ snapshot: PerformanceSnapshot) -> some View {
+        switch context.domain {
+        case .today: todayContents(snapshot)
+        case .sleep, .recovery, .effort:
+            DatedPerformanceScoreRing(domain: context.domain, value: snapshot.value(context.domain.metricKey), large: true)
+                .frame(maxWidth: .infinity).padding(.vertical, NoopMetrics.space3)
+            if snapshot.value(context.domain.metricKey) == nil { emptyState }
+            pillarContents(snapshot)
+        case .health: healthContents(snapshot)
+        case .activities: activitiesContents(snapshot)
+        case .trend: EmptyView()
+        }
+    }
+
+    private func todayContents(_ snapshot: PerformanceSnapshot) -> some View {
+        VStack(alignment: .leading, spacing: NoopMetrics.space5) {
+            let layout = typeSize.isAccessibilitySize ? AnyLayout(VStackLayout(spacing: NoopMetrics.space5)) : AnyLayout(HStackLayout(spacing: NoopMetrics.space2))
+            layout {
+                ForEach([PerformanceContext.Domain.sleep, .recovery, .effort], id: \.self) { domain in
+                    NavigationLink(value: TabRoute.performance(PerformanceContext(day: day, domain: domain)!)) {
+                        VStack(spacing: NoopMetrics.space2) {
+                            DatedPerformanceScoreRing(domain: domain, value: snapshot.value(domain.metricKey))
+                            Text(domain.title.uppercased()).font(StrandFont.overline).tracking(PerformanceDesign.labelTracking)
+                        }.frame(maxWidth: .infinity).foregroundStyle(StrandPalette.textPrimary)
+                    }.buttonStyle(.plain)
+                }
+            }
+            ViewThatFits(in: .horizontal) {
+                HStack(alignment: .top, spacing: NoopMetrics.space3) { healthMonitor(snapshot); stressMonitor(snapshot) }
+                VStack(spacing: NoopMetrics.space3) { healthMonitor(snapshot); stressMonitor(snapshot) }
+            }
+            HStack { Text("My Day").font(StrandFont.title2); Spacer(); Button { router.requestQuickActions() } label: { Image(systemName: "plus").frame(width: PerformanceDesign.controlDiameter, height: PerformanceDesign.controlDiameter) }.accessibilityLabel("Quick actions") }
+            PerformancePanel {
+                VStack(alignment: .leading, spacing: NoopMetrics.space2) {
+                    Label("Your Daily Outlook", systemImage: "sun.max").font(StrandFont.headline)
+                    Text(snapshot.hasAnyData ? "Your recorded results and activities for this day." : "Your measurements will appear here after synchronization.")
+                        .font(StrandFont.subhead).foregroundStyle(StrandPalette.textSecondary)
+                }
+            }
+            PerformanceCoachLink(context: context)
+            activityList(snapshot, includeSleep: true)
+            if day == today {
+                HStack(spacing: NoopMetrics.space3) {
+                    WorkoutStartControl(compact: true)
+                    Button { router.openJournal(day: 0) } label: { Label("Journal", systemImage: "book.closed").font(StrandFont.subhead).frame(maxWidth: .infinity, minHeight: NoopMetrics.controlHeight) }
+                }
+                Button { router.openAlarms() } label: { PerformancePanel { PerformanceMeasureRow(title: String(localized: "Tonight’s sleep"), value: "", caption: String(localized: "Prepare your sleep and alarm"), symbol: "moon") } }.buttonStyle(.plain)
+                JournalReminderCard()
+            }
+        }
+    }
+
+    private func healthMonitor(_ snapshot: PerformanceSnapshot) -> some View {
+        NavigationLink(value: TabRoute.performance(PerformanceContext(day: day, domain: .health)!)) {
+            PerformancePanel {
+                VStack(alignment: .leading, spacing: NoopMetrics.space1) {
+                    Label("Vital signs", systemImage: "heart.text.square").font(StrandFont.overline)
+                    Text("\(snapshot.availableVitals.count)/5").font(StrandFont.title2)
+                    Text(snapshot.personalVitals.isEmpty ? String(localized: "Learning your personal reference") : String(localized: "\(snapshot.inPersonalRange) in your personal range"))
+                        .font(StrandFont.overline).foregroundStyle(StrandPalette.textSecondary).fixedSize(horizontal: false, vertical: true)
+                    Text("Available measurements").font(StrandFont.overline).foregroundStyle(StrandPalette.textSecondary)
+                }
+            }
+        }.buttonStyle(.plain).foregroundStyle(StrandPalette.textPrimary)
+    }
+
+    private func stressMonitor(_ snapshot: PerformanceSnapshot) -> some View {
+        NavigationLink(value: TabRoute.performance(PerformanceContext(day: day, domain: .trend, metric: "stress")!)) {
+            PerformancePanel {
+                VStack(alignment: .leading, spacing: NoopMetrics.space1) {
+                    Label("Stress estimate", systemImage: "waveform.path.ecg").font(StrandFont.overline)
+                    Text(PerformanceFormat.number(snapshot.stress, decimals: 1)).font(StrandFont.title2)
+                    Text("Daily proxy, 0–3").font(StrandFont.overline).foregroundStyle(StrandPalette.textSecondary)
+                    Text(PerformanceFormat.date(day)).font(StrandFont.overline).foregroundStyle(StrandPalette.textSecondary)
+                }
+            }
+        }.buttonStyle(.plain).foregroundStyle(StrandPalette.textPrimary)
+    }
+
+    @ViewBuilder private func pillarContents(_ snapshot: PerformanceSnapshot) -> some View {
+        if context.domain == .sleep {
+            PerformancePanel {
+                VStack(spacing: 0) {
+                    measure("sleep_total_min", snapshot, fallback: snapshot.daily?.totalSleepMin)
+                    Divider()
+                    measure("sleep_consistency", snapshot)
+                    Divider()
+                    measure("sleep_efficiency", snapshot, fallback: snapshot.daily?.efficiency.map { $0 <= 1 ? $0 * 100 : $0 })
+                    Divider()
+                    measure("sleep_need_min", snapshot)
+                }
+            }
+            PerformanceFullHistoryLink(key: context.domain.metricKey)
+            PerformanceCoachLink(context: context)
+            sleepDetail(snapshot)
+            trendLink("sleep_total_min")
+            trendLink("sleep_consistency")
+            NavigationLink(value: TabRoute.sleep) { Label("Detailed sleep tools", systemImage: "moon.zzz").font(StrandFont.subhead) }
+        } else if context.domain == .recovery {
+            PerformancePanel {
+                VStack(spacing: 0) {
+                    measure("hrv", snapshot, fallback: snapshot.daily?.avgHrv)
+                    Divider()
+                    measure("rhr", snapshot, fallback: snapshot.daily?.restingHr.map(Double.init))
+                    Divider()
+                    measure("resp_rate", snapshot, fallback: snapshot.daily?.respRateBpm)
+                    Divider()
+                    measure("sleep_performance", snapshot)
+                }
+            }
+            PerformanceFullHistoryLink(key: context.domain.metricKey)
+            PerformanceCoachLink(context: context)
+            Text("These measurements provide context; they are not a percentage breakdown of the recovery score.")
+                .font(StrandFont.footnote).foregroundStyle(StrandPalette.textSecondary)
+            trendLink("hrv")
+            trendLink("rhr")
+        } else {
+            PerformancePanel {
+                VStack(spacing: 0) {
+                    measure(snapshot.value("steps") != nil ? "steps" : "steps_est", snapshot)
+                    Divider()
+                    measure("hr_zones13_min", snapshot)
+                    Divider()
+                    measure("hr_zones45_min", snapshot)
+                    Divider()
+                    measure("strength_min", snapshot)
+                }
+            }
+            PerformanceFullHistoryLink(key: context.domain.metricKey)
+            PerformanceCoachLink(context: context)
+            activityList(snapshot, includeSleep: false)
+            trendLink("strain")
+            if day == today { WorkoutStartControl() }
+        }
+    }
+
+    private func measure(_ key: String, _ snapshot: PerformanceSnapshot, fallback: Double? = nil) -> some View {
+        let metric = PerformanceFormat.metric(key)
+        let value = snapshot.value(key) ?? PerformanceContext.finite(fallback)
+        return NavigationLink(value: TabRoute.performance(PerformanceContext(day: day, domain: .trend, metric: key)!)) {
+            PerformanceMeasureRow(title: PerformanceFormat.title(key), value: PerformanceFormat.value(key, value),
+                                  caption: value == nil ? String(localized: "Measurement unavailable") : sourceCaption(snapshot.source(key)),
+                                  symbol: metric?.icon ?? "waveform.path.ecg")
+        }.buttonStyle(.plain)
+    }
+
+    private func trendLink(_ key: String) -> some View {
+        NavigationLink(value: TabRoute.performance(PerformanceContext(day: day, domain: .trend, metric: key)!)) {
+            PerformancePanel { PerformanceMeasureRow(title: PerformanceFormat.title(key),
+                                                     value: "", caption: String(localized: "Explore this trend"), symbol: "chart.xyaxis.line") }
+        }.buttonStyle(.plain)
+    }
+
+    @ViewBuilder private func sleepDetail(_ snapshot: PerformanceSnapshot) -> some View {
+        if let night = snapshot.night {
+            Text("My night").font(StrandFont.title2).padding(.top, NoopMetrics.space2)
+            PerformancePanel {
+                VStack(alignment: .leading, spacing: NoopMetrics.space3) {
+                    HStack { Text("Asleep time").font(StrandFont.subhead); Spacer(); Text(PerformanceFormat.duration(night.stages.asleep)).font(StrandFont.title2) }
+                    Text("\(PerformanceFormat.clock(night.session.effectiveStartTs)) – \(PerformanceFormat.clock(night.session.endTs))")
+                        .font(StrandFont.caption).foregroundStyle(StrandPalette.textSecondary)
+                    if let segments = night.realSegments, !segments.isEmpty {
+                        Hypnogram(intervals: segments, height: PerformanceDesign.stageChartHeight,
+                                  showsHover: false, nightStart: Date(timeIntervalSince1970: TimeInterval(night.session.effectiveStartTs)), showsTimeAxis: true)
+                    } else {
+                        Text("Stage totals only; no recorded timeline is available.").font(StrandFont.footnote).foregroundStyle(StrandPalette.textSecondary)
+                    }
+                    HStack { stage("Deep", night.stages.deep); Spacer(); stage("REM", night.stages.rem); Spacer(); stage("Light", night.stages.light) }
+                }
+            }
+        }
+    }
+
+    private func stage(_ name: LocalizedStringKey, _ minutes: Double) -> some View {
+        VStack(alignment: .leading, spacing: NoopMetrics.space1) { Text(name).font(StrandFont.footnote).foregroundStyle(StrandPalette.textSecondary); Text(PerformanceFormat.duration(minutes)).font(StrandFont.headline) }
+    }
+
+    private func activityList(_ snapshot: PerformanceSnapshot, includeSleep: Bool) -> some View {
+        PerformancePanel {
+            VStack(alignment: .leading, spacing: NoopMetrics.space3) {
+                Text("Activities for this day").font(StrandFont.overline)
+                if includeSleep, let night = snapshot.night {
+                    NavigationLink(value: TabRoute.performance(PerformanceContext(day: day, domain: .sleep)!)) {
+                        PerformanceMeasureRow(title: String(localized: "Sleep"), value: PerformanceFormat.duration(night.stages.asleep),
+                                              caption: "\(PerformanceFormat.clock(night.session.effectiveStartTs)) – \(PerformanceFormat.clock(night.session.endTs))", symbol: "moon")
+                    }.buttonStyle(.plain)
+                }
+                ForEach(Array(snapshot.workouts.enumerated()), id: \.offset) { _, row in
+                    NavigationLink(value: TabRoute.performanceWorkout(start: row.startTs, source: row.source)) {
+                        PerformanceMeasureRow(title: row.sport, value: PerformanceFormat.effort(row.strain),
+                                              caption: "\(PerformanceFormat.clock(row.startTs)) – \(PerformanceFormat.clock(row.endTs))", symbol: "figure.run")
+                    }.buttonStyle(.plain)
+                }
+                if snapshot.workouts.isEmpty, !(includeSleep && snapshot.night != nil) {
+                    Text("No recorded activity for this day.").font(StrandFont.subhead).foregroundStyle(StrandPalette.textSecondary)
+                }
+            }
+        }
+    }
+
+    private func healthContents(_ snapshot: PerformanceSnapshot) -> some View {
+        VStack(alignment: .leading, spacing: NoopMetrics.space4) {
+            Text("Your personal reference").font(StrandFont.title1)
+            PerformancePanel {
+                VStack(alignment: .leading, spacing: NoopMetrics.space2) {
+                    Text("\(snapshot.availableVitals.count) available measurements").font(StrandFont.headline)
+                    Text(snapshot.personalVitals.isEmpty ? String(localized: "Learning your personal reference") : String(localized: "\(snapshot.inPersonalRange) in your personal range"))
+                        .font(StrandFont.subhead).foregroundStyle(StrandPalette.textSecondary)
+                }
+            }
+            PerformancePanel {
+                VStack(spacing: 0) {
+                    ForEach(snapshot.vitals) { vital in
+                        NavigationLink(value: TabRoute.performance(PerformanceContext(day: day, domain: .trend, metric: vital.key)!)) {
+                            PerformanceMeasureRow(title: vital.label,
+                                                  value: vital.day == day ? PerformanceFormat.value(PerformanceContext.canonicalMetric(vital.key), vital.value) : "—",
+                                                  caption: vital.day != day || vital.value == nil ? String(localized: "Measurement unavailable") : (vital.banding.basis == .personal ? String(localized: "Compared with your personal reference") : String(localized: "Personal reference not established")),
+                                                  symbol: PerformanceFormat.metric(vital.key)?.icon ?? "heart")
+                        }.buttonStyle(.plain)
+                        Divider()
+                    }
+                }
+            }
+            PerformanceCoachLink(context: context)
+            NavigationLink { LongitudinalTrendsView(repo: repo).modifier(PerformanceLegacyContextReset()) } label: { Label("Long-term trends", systemImage: "chart.line.uptrend.xyaxis").font(StrandFont.subhead) }
+            NavigationLink(value: TabRoute.health) { Label("All health tools", systemImage: "heart.text.square").font(StrandFont.subhead) }
+        }
+    }
+
+    private func activitiesContents(_ snapshot: PerformanceSnapshot) -> some View {
+        VStack(alignment: .leading, spacing: NoopMetrics.space4) {
+            Text("Prepare your activity").font(StrandFont.title1)
+            Image("NathanWhoopSensor").resizable().scaledToFit().frame(maxWidth: .infinity).frame(height: PerformanceDesign.productHeight)
+                .accessibilityLabel("Your WHOOP 5.0 sensor")
+            if day == today { WorkoutStartControl() }
+            PerformanceCoachLink(context: context)
+            activityList(snapshot, includeSleep: false)
+            NavigationLink { WeeklyPlanView().modifier(PerformanceLegacyContextReset()) } label: { Label("Weekly plan", systemImage: "calendar").font(StrandFont.subhead) }
+            NavigationLink(value: TabRoute.workouts) { Label("Workout history", systemImage: "figure.run").font(StrandFont.subhead) }
+        }
+    }
+
+    private var emptyState: some View {
+        PerformancePanel { VStack(alignment: .leading, spacing: NoopMetrics.space2) {
+            Label("No score for this day", systemImage: "chart.line.downtrend.xyaxis").font(StrandFont.headline)
+            Text("Some measurements may still be available even when this score has not been calculated.")
+                .font(StrandFont.subhead).foregroundStyle(StrandPalette.textSecondary)
+        } }
+    }
+
+    private func sourceCaption(_ source: String?) -> String? {
+        guard let source else { return nil }
+        return source.hasSuffix("-noop") ? String(localized: "Calculated on this device") : String(localized: "Recorded measurement")
+    }
+}
+
+struct PerformanceWorkoutRouteView: View {
+    let start: Int
+    let source: String
+    @EnvironmentObject private var repo: Repository
+    @State private var row: WorkoutRow?
+    @State private var loaded = false
+    @EnvironmentObject private var router: NavRouter
+    var body: some View {
+        Group {
+            if let row { WorkoutDetailView(row: row) }
+            else if loaded { Text("This recorded activity is unavailable.").font(StrandFont.body).padding(NoopMetrics.space4) }
+            else { ProgressView() }
+        }.task {
+            row = await repo.workoutRows(days: 4000).first { $0.startTs == start && $0.source == source }
+            if let row { router.performanceContext = PerformanceContext(day: Repository.localDayKey(Date(timeIntervalSince1970: TimeInterval(row.startTs))), domain: .activities) }
+            loaded = true
+        }
+    }
+}
+#endif

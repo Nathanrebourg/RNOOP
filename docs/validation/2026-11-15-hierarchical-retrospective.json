@@ -1,0 +1,4868 @@
+{
+  "all": {
+    "hierarchical-v1": {
+      "conditionalAccuracy": 0.5549850130214732,
+      "confusion": [
+        [
+          1171,
+          1818,
+          370,
+          744,
+          318
+        ],
+        [
+          417,
+          12555,
+          1858,
+          3707,
+          562
+        ],
+        [
+          126,
+          3076,
+          3852,
+          493,
+          23
+        ],
+        [
+          212,
+          5119,
+          173,
+          5011,
+          129
+        ]
+      ],
+      "confusionColumns": [
+        "wake",
+        "light",
+        "deep",
+        "rem",
+        "unknown"
+      ],
+      "coveredReferenceEpochs": 40702,
+      "meanParticipantReferenceMacroF1": 0.48529184325562963,
+      "meanParticipantStageF1": {
+        "deep": 0.5313840542765899,
+        "light": 0.5948093142733122,
+        "rem": 0.46639400084626276,
+        "wake": 0.3485800036263537
+      },
+      "nights": 47,
+      "participants": 47,
+      "participantsWithReference": 47,
+      "perParticipant": {
+        "Bidslab00": {
+          "conditionalAccuracy": 0.7366167023554604,
+          "coveredReferenceEpochs": 934,
+          "macroF1": 0.6700987625613924,
+          "referenceAccuracy": 0.7358288770053476,
+          "referenceEpochs": 935,
+          "stageF1": {
+            "deep": 0.7678958785249458,
+            "light": 0.7544910179640718,
+            "rem": 0.7168316831683168,
+            "wake": 0.4411764705882353
+          },
+          "unknownReferenceEpochs": 1
+        },
+        "Bidslab01": {
+          "conditionalAccuracy": 0.563953488372093,
+          "coveredReferenceEpochs": 860,
+          "macroF1": 0.4630641344414659,
+          "referenceAccuracy": 0.563953488372093,
+          "referenceEpochs": 860,
+          "stageF1": {
+            "deep": 0.1951219512195122,
+            "light": 0.684981684981685,
+            "rem": 0.43097643097643096,
+            "wake": 0.5411764705882353
+          },
+          "unknownReferenceEpochs": 0
+        },
+        "Bidslab02": {
+          "conditionalAccuracy": 0.4016110471806674,
+          "coveredReferenceEpochs": 869,
+          "macroF1": 0.30559894277853833,
+          "referenceAccuracy": 0.3428290766208251,
+          "referenceEpochs": 1018,
+          "stageF1": {
+            "deep": 0.3180428134556575,
+            "light": 0.44362969752520626,
+            "rem": 0.345679012345679,
+            "wake": 0.11504424778761062
+          },
+          "unknownReferenceEpochs": 149
+        },
+        "Bidslab06": {
+          "conditionalAccuracy": 0.5978391356542617,
+          "coveredReferenceEpochs": 833,
+          "macroF1": 0.5564848797696049,
+          "referenceAccuracy": 0.5978391356542617,
+          "referenceEpochs": 833,
+          "stageF1": {
+            "deep": 0.567741935483871,
+            "light": 0.6157965194109772,
+            "rem": 0.6391752577319587,
+            "wake": 0.4032258064516129
+          },
+          "unknownReferenceEpochs": 0
+        },
+        "Bidslab07": {
+          "conditionalAccuracy": 0.5722326454033771,
+          "coveredReferenceEpochs": 1066,
+          "macroF1": 0.5715964177218216,
+          "referenceAccuracy": 0.5722326454033771,
+          "referenceEpochs": 1066,
+          "stageF1": {
+            "deep": 0.7213114754098361,
+            "light": 0.6404886561954625,
+            "rem": 0.24336283185840707,
+            "wake": 0.6812227074235808
+          },
+          "unknownReferenceEpochs": 0
+        },
+        "Bidslab08": {
+          "conditionalAccuracy": 0.6301204819277109,
+          "coveredReferenceEpochs": 830,
+          "macroF1": 0.6214625829553297,
+          "referenceAccuracy": 0.6301204819277109,
+          "referenceEpochs": 830,
+          "stageF1": {
+            "deep": 0.7052631578947368,
+            "light": 0.6514575411913816,
+            "rem": 0.5223880597014925,
+            "wake": 0.6067415730337079
+          },
+          "unknownReferenceEpochs": 0
+        },
+        "Bidslab09": {
+          "conditionalAccuracy": 0.47533632286995514,
+          "coveredReferenceEpochs": 892,
+          "macroF1": 0.451129829764232,
+          "referenceAccuracy": 0.47533632286995514,
+          "referenceEpochs": 892,
+          "stageF1": {
+            "deep": 0.4852941176470588,
+            "light": 0.5619335347432024,
+            "rem": 0.22395833333333334,
+            "wake": 0.5333333333333333
+          },
+          "unknownReferenceEpochs": 0
+        },
+        "Bidslab10": {
+          "conditionalAccuracy": 0.5870841487279843,
+          "coveredReferenceEpochs": 1022,
+          "macroF1": 0.5327343821427047,
+          "referenceAccuracy": 0.5870841487279843,
+          "referenceEpochs": 1022,
+          "stageF1": {
+            "deep": 0.5704697986577181,
+            "light": 0.626362735381566,
+            "rem": 0.5687203791469194,
+            "wake": 0.36538461538461536
+          },
+          "unknownReferenceEpochs": 0
+        },
+        "Bidslab11": {
+          "conditionalAccuracy": 0.6888273314866112,
+          "coveredReferenceEpochs": 1083,
+          "macroF1": 0.6241792405221198,
+          "referenceAccuracy": 0.6888273314866112,
+          "referenceEpochs": 1083,
+          "stageF1": {
+            "deep": 0.7375565610859729,
+            "light": 0.6820175438596491,
+            "rem": 0.72,
+            "wake": 0.35714285714285715
+          },
+          "unknownReferenceEpochs": 0
+        },
+        "Bidslab13": {
+          "conditionalAccuracy": 0.5867537313432836,
+          "coveredReferenceEpochs": 1072,
+          "macroF1": 0.5203281128909725,
+          "referenceAccuracy": 0.5856610800744879,
+          "referenceEpochs": 1074,
+          "stageF1": {
+            "deep": 0.5163398692810458,
+            "light": 0.6554338668913227,
+            "rem": 0.5352697095435685,
+            "wake": 0.3742690058479532
+          },
+          "unknownReferenceEpochs": 2
+        },
+        "Bidslab14": {
+          "conditionalAccuracy": 0.6158878504672897,
+          "coveredReferenceEpochs": 1070,
+          "macroF1": 0.48363932363932366,
+          "referenceAccuracy": 0.61531279178338,
+          "referenceEpochs": 1071,
+          "stageF1": {
+            "deep": 0.45925925925925926,
+            "light": 0.7487179487179487,
+            "rem": 0.5447619047619048,
+            "wake": 0.18181818181818182
+          },
+          "unknownReferenceEpochs": 1
+        },
+        "Bidslab15": {
+          "conditionalAccuracy": 0.45588235294117646,
+          "coveredReferenceEpochs": 748,
+          "macroF1": 0.2966737960026551,
+          "referenceAccuracy": 0.45466666666666666,
+          "referenceEpochs": 750,
+          "stageF1": {
+            "deep": 0.0,
+            "light": 0.5932885906040268,
+            "rem": 0.4835164835164835,
+            "wake": 0.10989010989010989
+          },
+          "unknownReferenceEpochs": 2
+        },
+        "Bidslab16": {
+          "conditionalAccuracy": 0.4427390791027155,
+          "coveredReferenceEpochs": 847,
+          "macroF1": 0.43966967977247173,
+          "referenceAccuracy": 0.4427390791027155,
+          "referenceEpochs": 847,
+          "stageF1": {
+            "deep": 0.45394736842105265,
+            "light": 0.47706422018348627,
+            "rem": 0.2849162011173184,
+            "wake": 0.5427509293680297
+          },
+          "unknownReferenceEpochs": 0
+        },
+        "Bidslab17": {
+          "conditionalAccuracy": 0.6144834930777423,
+          "coveredReferenceEpochs": 939,
+          "macroF1": 0.4511142187981662,
+          "referenceAccuracy": 0.6144834930777423,
+          "referenceEpochs": 939,
+          "stageF1": {
+            "deep": 0.6687116564417178,
+            "light": 0.7328990228013029,
+            "rem": 0.05363984674329502,
+            "wake": 0.3492063492063492
+          },
+          "unknownReferenceEpochs": 0
+        },
+        "Bidslab18": {
+          "conditionalAccuracy": 0.5582089552238806,
+          "coveredReferenceEpochs": 670,
+          "macroF1": 0.5539801233740569,
+          "referenceAccuracy": 0.5187239944521498,
+          "referenceEpochs": 721,
+          "stageF1": {
+            "deep": 0.6225165562913907,
+            "light": 0.47191011235955055,
+            "rem": 0.5276073619631901,
+            "wake": 0.5938864628820961
+          },
+          "unknownReferenceEpochs": 51
+        },
+        "Bidslab19": {
+          "conditionalAccuracy": 0.45724465558194777,
+          "coveredReferenceEpochs": 842,
+          "macroF1": 0.39854027639962564,
+          "referenceAccuracy": 0.45724465558194777,
+          "referenceEpochs": 842,
+          "stageF1": {
+            "deep": 0.4787234042553192,
+            "light": 0.5561385099685204,
+            "rem": 0.27358490566037735,
+            "wake": 0.2857142857142857
+          },
+          "unknownReferenceEpochs": 0
+        },
+        "Bidslab20": {
+          "conditionalAccuracy": 0.5240963855421686,
+          "coveredReferenceEpochs": 1162,
+          "macroF1": 0.5139816786862001,
+          "referenceAccuracy": 0.5104777870913663,
+          "referenceEpochs": 1193,
+          "stageF1": {
+            "deep": 0.6229508196721312,
+            "light": 0.5173076923076924,
+            "rem": 0.5285714285714286,
+            "wake": 0.3870967741935484
+          },
+          "unknownReferenceEpochs": 31
+        },
+        "Bidslab22": {
+          "conditionalAccuracy": 0.5789473684210527,
+          "coveredReferenceEpochs": 608,
+          "macroF1": 0.5178731041696382,
+          "referenceAccuracy": 0.5761047463175123,
+          "referenceEpochs": 611,
+          "stageF1": {
+            "deep": 0.6666666666666666,
+            "light": 0.5536062378167641,
+            "rem": 0.7012195121951219,
+            "wake": 0.15
+          },
+          "unknownReferenceEpochs": 3
+        },
+        "Bidslab30": {
+          "conditionalAccuracy": 0.6460071513706794,
+          "coveredReferenceEpochs": 839,
+          "macroF1": 0.5416189530971085,
+          "referenceAccuracy": 0.6414201183431952,
+          "referenceEpochs": 845,
+          "stageF1": {
+            "deep": 0.7074829931972789,
+            "light": 0.7116564417177914,
+            "rem": 0.5555555555555556,
+            "wake": 0.1917808219178082
+          },
+          "unknownReferenceEpochs": 6
+        },
+        "Bidslab31": {
+          "conditionalAccuracy": 0.5776081424936387,
+          "coveredReferenceEpochs": 786,
+          "macroF1": 0.54165791347563,
+          "referenceAccuracy": 0.5761421319796954,
+          "referenceEpochs": 788,
+          "stageF1": {
+            "deep": 0.6441558441558441,
+            "light": 0.5678627145085804,
+            "rem": 0.5952380952380952,
+            "wake": 0.359375
+          },
+          "unknownReferenceEpochs": 2
+        },
+        "Bidslab32": {
+          "conditionalAccuracy": 0.6793032786885246,
+          "coveredReferenceEpochs": 976,
+          "macroF1": 0.5919460377767848,
+          "referenceAccuracy": 0.6779141104294478,
+          "referenceEpochs": 978,
+          "stageF1": {
+            "deep": 0.7841726618705036,
+            "light": 0.7484333034914951,
+            "rem": 0.5226781857451404,
+            "wake": 0.3125
+          },
+          "unknownReferenceEpochs": 2
+        },
+        "Bidslab34": {
+          "conditionalAccuracy": 0.6060606060606061,
+          "coveredReferenceEpochs": 792,
+          "macroF1": 0.2816156311163234,
+          "referenceAccuracy": 0.3592814371257485,
+          "referenceEpochs": 1336,
+          "stageF1": {
+            "deep": 0.0,
+            "light": 0.5616956850870553,
+            "rem": 0.0,
+            "wake": 0.5647668393782384
+          },
+          "unknownReferenceEpochs": 544
+        },
+        "Bidslab35": {
+          "conditionalAccuracy": 0.4817001180637544,
+          "coveredReferenceEpochs": 847,
+          "macroF1": 0.4964211028346577,
+          "referenceAccuracy": 0.4811320754716981,
+          "referenceEpochs": 848,
+          "stageF1": {
+            "deep": 0.5902777777777778,
+            "light": 0.4993757802746567,
+            "rem": 0.3858267716535433,
+            "wake": 0.5102040816326531
+          },
+          "unknownReferenceEpochs": 1
+        },
+        "Bidslab36": {
+          "conditionalAccuracy": 0.5200517464424321,
+          "coveredReferenceEpochs": 773,
+          "macroF1": 0.49662889775023716,
+          "referenceAccuracy": 0.5200517464424321,
+          "referenceEpochs": 773,
+          "stageF1": {
+            "deep": 0.5611510791366906,
+            "light": 0.5836575875486382,
+            "rem": 0.3851851851851852,
+            "wake": 0.45652173913043476
+          },
+          "unknownReferenceEpochs": 0
+        },
+        "Bidslab38": {
+          "conditionalAccuracy": 0.6273381294964029,
+          "coveredReferenceEpochs": 695,
+          "macroF1": 0.5583956722314533,
+          "referenceAccuracy": 0.6273381294964029,
+          "referenceEpochs": 695,
+          "stageF1": {
+            "deep": 0.5724381625441696,
+            "light": 0.6178343949044586,
+            "rem": 0.7099767981438515,
+            "wake": 0.3333333333333333
+          },
+          "unknownReferenceEpochs": 0
+        },
+        "Bidslab39": {
+          "conditionalAccuracy": 0.5972906403940886,
+          "coveredReferenceEpochs": 812,
+          "macroF1": 0.5242761003410091,
+          "referenceAccuracy": 0.5972906403940886,
+          "referenceEpochs": 812,
+          "stageF1": {
+            "deep": 0.6722689075630253,
+            "light": 0.6050156739811913,
+            "rem": 0.6216216216216216,
+            "wake": 0.1981981981981982
+          },
+          "unknownReferenceEpochs": 0
+        },
+        "Bidslab40": {
+          "conditionalAccuracy": 0.5045126353790613,
+          "coveredReferenceEpochs": 1108,
+          "macroF1": 0.44515406136672747,
+          "referenceAccuracy": 0.5045126353790613,
+          "referenceEpochs": 1108,
+          "stageF1": {
+            "deep": 0.44768856447688565,
+            "light": 0.5154419595314164,
+            "rem": 0.6047197640117994,
+            "wake": 0.2127659574468085
+          },
+          "unknownReferenceEpochs": 0
+        },
+        "Bidslab41": {
+          "conditionalAccuracy": 0.5732860520094563,
+          "coveredReferenceEpochs": 846,
+          "macroF1": 0.43923770782868643,
+          "referenceAccuracy": 0.5170575692963753,
+          "referenceEpochs": 938,
+          "stageF1": {
+            "deep": 0.33220338983050846,
+            "light": 0.6912242686890574,
+            "rem": 0.5203252032520326,
+            "wake": 0.2131979695431472
+          },
+          "unknownReferenceEpochs": 92
+        },
+        "Bidslab42": {
+          "conditionalAccuracy": 0.1909814323607427,
+          "coveredReferenceEpochs": 754,
+          "macroF1": 0.13757339684241301,
+          "referenceAccuracy": 0.17668711656441718,
+          "referenceEpochs": 815,
+          "stageF1": {
+            "deep": 0.12903225806451613,
+            "light": 0.10876132930513595,
+            "rem": 0.3125,
+            "wake": 0.0
+          },
+          "unknownReferenceEpochs": 61
+        },
+        "Bidslab43": {
+          "conditionalAccuracy": 0.5864077669902913,
+          "coveredReferenceEpochs": 1030,
+          "macroF1": 0.5258786670433055,
+          "referenceAccuracy": 0.5757864632983795,
+          "referenceEpochs": 1049,
+          "stageF1": {
+            "deep": 0.6746031746031746,
+            "light": 0.5285215366705471,
+            "rem": 0.6237942122186495,
+            "wake": 0.2765957446808511
+          },
+          "unknownReferenceEpochs": 19
+        },
+        "Bidslab44": {
+          "conditionalAccuracy": 0.43333333333333335,
+          "coveredReferenceEpochs": 1080,
+          "macroF1": 0.3510704033177052,
+          "referenceAccuracy": 0.43333333333333335,
+          "referenceEpochs": 1080,
+          "stageF1": {
+            "deep": 0.2521489971346705,
+            "light": 0.5545529122231337,
+            "rem": 0.2825112107623318,
+            "wake": 0.3150684931506849
+          },
+          "unknownReferenceEpochs": 0
+        },
+        "Bidslab45": {
+          "conditionalAccuracy": 0.6834532374100719,
+          "coveredReferenceEpochs": 834,
+          "macroF1": 0.5720749687989429,
+          "referenceAccuracy": 0.6761565836298933,
+          "referenceEpochs": 843,
+          "stageF1": {
+            "deep": 0.6666666666666666,
+            "light": 0.7689357622243528,
+            "rem": 0.4691358024691358,
+            "wake": 0.3835616438356164
+          },
+          "unknownReferenceEpochs": 9
+        },
+        "Bidslab47": {
+          "conditionalAccuracy": 0.4182795698924731,
+          "coveredReferenceEpochs": 930,
+          "macroF1": 0.3183949448427764,
+          "referenceAccuracy": 0.4178302900107411,
+          "referenceEpochs": 931,
+          "stageF1": {
+            "deep": 0.5542168674698795,
+            "light": 0.535819430814524,
+            "rem": 0.10191082802547771,
+            "wake": 0.08163265306122448
+          },
+          "unknownReferenceEpochs": 1
+        },
+        "Bidslab49": {
+          "conditionalAccuracy": 0.48095238095238096,
+          "coveredReferenceEpochs": 840,
+          "macroF1": 0.4225176514381587,
+          "referenceAccuracy": 0.48095238095238096,
+          "referenceEpochs": 840,
+          "stageF1": {
+            "deep": 0.36363636363636365,
+            "light": 0.5814207650273224,
+            "rem": 0.3450134770889488,
+            "wake": 0.4
+          },
+          "unknownReferenceEpochs": 0
+        },
+        "Bidslab50": {
+          "conditionalAccuracy": 0.55249343832021,
+          "coveredReferenceEpochs": 762,
+          "macroF1": 0.4756336622492992,
+          "referenceAccuracy": 0.55249343832021,
+          "referenceEpochs": 762,
+          "stageF1": {
+            "deep": 0.41904761904761906,
+            "light": 0.6350282485875707,
+            "rem": 0.5017921146953405,
+            "wake": 0.3466666666666667
+          },
+          "unknownReferenceEpochs": 0
+        },
+        "Bidslab51": {
+          "conditionalAccuracy": 0.5335463258785943,
+          "coveredReferenceEpochs": 939,
+          "macroF1": 0.4325264097486261,
+          "referenceAccuracy": 0.5229645093945721,
+          "referenceEpochs": 958,
+          "stageF1": {
+            "deep": 0.4479495268138801,
+            "light": 0.5991820040899796,
+            "rem": 0.5553145336225597,
+            "wake": 0.1276595744680851
+          },
+          "unknownReferenceEpochs": 19
+        },
+        "Bidslab52": {
+          "conditionalAccuracy": 0.5241844769403825,
+          "coveredReferenceEpochs": 889,
+          "macroF1": 0.5031480096028598,
+          "referenceAccuracy": 0.5241844769403825,
+          "referenceEpochs": 889,
+          "stageF1": {
+            "deep": 0.39195979899497485,
+            "light": 0.5861386138613861,
+            "rem": 0.3641025641025641,
+            "wake": 0.6703910614525139
+          },
+          "unknownReferenceEpochs": 0
+        },
+        "Bidslab53": {
+          "conditionalAccuracy": 0.61,
+          "coveredReferenceEpochs": 700,
+          "macroF1": 0.49925752951377894,
+          "referenceAccuracy": 0.61,
+          "referenceEpochs": 700,
+          "stageF1": {
+            "deep": 0.43333333333333335,
+            "light": 0.684596577017115,
+            "rem": 0.6006191950464397,
+            "wake": 0.27848101265822783
+          },
+          "unknownReferenceEpochs": 0
+        },
+        "Bidslab55": {
+          "conditionalAccuracy": 0.49935316946959896,
+          "coveredReferenceEpochs": 773,
+          "macroF1": 0.48531821736657504,
+          "referenceAccuracy": 0.49935316946959896,
+          "referenceEpochs": 773,
+          "stageF1": {
+            "deep": 0.7053571428571429,
+            "light": 0.5333333333333333,
+            "rem": 0.41849148418491483,
+            "wake": 0.2840909090909091
+          },
+          "unknownReferenceEpochs": 0
+        },
+        "Bidslab56": {
+          "conditionalAccuracy": 0.5369349503858876,
+          "coveredReferenceEpochs": 907,
+          "macroF1": 0.492651978879869,
+          "referenceAccuracy": 0.5369349503858876,
+          "referenceEpochs": 907,
+          "stageF1": {
+            "deep": 0.5863192182410424,
+            "light": 0.5773420479302832,
+            "rem": 0.46548323471400394,
+            "wake": 0.34146341463414637
+          },
+          "unknownReferenceEpochs": 0
+        },
+        "Bidslab60": {
+          "conditionalAccuracy": 0.5488095238095239,
+          "coveredReferenceEpochs": 840,
+          "macroF1": 0.528332345024346,
+          "referenceAccuracy": 0.5488095238095239,
+          "referenceEpochs": 840,
+          "stageF1": {
+            "deep": 0.5797101449275363,
+            "light": 0.5291723202170964,
+            "rem": 0.5758754863813229,
+            "wake": 0.42857142857142855
+          },
+          "unknownReferenceEpochs": 0
+        },
+        "Bidslab62": {
+          "conditionalAccuracy": 0.7575360419397117,
+          "coveredReferenceEpochs": 763,
+          "macroF1": 0.5627242359736964,
+          "referenceAccuracy": 0.7372448979591837,
+          "referenceEpochs": 784,
+          "stageF1": {
+            "deep": 0.6972477064220184,
+            "light": 0.7712418300653595,
+            "rem": 0.7824074074074074,
+            "wake": 0.0
+          },
+          "unknownReferenceEpochs": 21
+        },
+        "Bidslab63": {
+          "conditionalAccuracy": 0.695906432748538,
+          "coveredReferenceEpochs": 684,
+          "macroF1": 0.6970168829052945,
+          "referenceAccuracy": 0.695906432748538,
+          "referenceEpochs": 684,
+          "stageF1": {
+            "deep": 0.6514657980456026,
+            "light": 0.7052631578947368,
+            "rem": 0.7100271002710027,
+            "wake": 0.7213114754098361
+          },
+          "unknownReferenceEpochs": 0
+        },
+        "Bidslab64": {
+          "conditionalAccuracy": 0.4788235294117647,
+          "coveredReferenceEpochs": 850,
+          "macroF1": 0.5069639904250214,
+          "referenceAccuracy": 0.4788235294117647,
+          "referenceEpochs": 850,
+          "stageF1": {
+            "deep": 0.7126436781609196,
+            "light": 0.5151148730350665,
+            "rem": 0.2804123711340206,
+            "wake": 0.5196850393700787
+          },
+          "unknownReferenceEpochs": 0
+        },
+        "Bidslab65": {
+          "conditionalAccuracy": 0.41680395387149916,
+          "coveredReferenceEpochs": 607,
+          "macroF1": 0.3517173466376092,
+          "referenceAccuracy": 0.4067524115755627,
+          "referenceEpochs": 622,
+          "stageF1": {
+            "deep": 0.5611510791366906,
+            "light": 0.49337748344370863,
+            "rem": 0.12734082397003746,
+            "wake": 0.225
+          },
+          "unknownReferenceEpochs": 15
+        },
+        "Bidslab66": {
+          "conditionalAccuracy": 0.7079741379310345,
+          "coveredReferenceEpochs": 928,
+          "macroF1": 0.6461323112785884,
+          "referenceAccuracy": 0.7079741379310345,
+          "referenceEpochs": 928,
+          "stageF1": {
+            "deep": 0.7303370786516854,
+            "light": 0.7127192982456141,
+            "rem": 0.7248062015503876,
+            "wake": 0.4166666666666667
+          },
+          "unknownReferenceEpochs": 0
+        },
+        "Bidslab68": {
+          "conditionalAccuracy": 0.4565499351491569,
+          "coveredReferenceEpochs": 771,
+          "macroF1": 0.4106821169167903,
+          "referenceAccuracy": 0.4565499351491569,
+          "referenceEpochs": 771,
+          "stageF1": {
+            "deep": 0.5485714285714286,
+            "light": 0.4657933042212518,
+            "rem": 0.4336734693877551,
+            "wake": 0.19469026548672566
+          },
+          "unknownReferenceEpochs": 0
+        }
+      },
+      "referenceAccuracy": 0.5412613217041261,
+      "referenceEpochs": 41734,
+      "unknownReferenceEpochs": 1032
+    },
+    "shipped": {
+      "conditionalAccuracy": 0.557003881727129,
+      "confusion": [
+        [
+          1381,
+          2025,
+          370,
+          645,
+          0
+        ],
+        [
+          752,
+          13045,
+          1929,
+          3373,
+          0
+        ],
+        [
+          200,
+          3051,
+          3901,
+          418,
+          0
+        ],
+        [
+          249,
+          5281,
+          195,
+          4919,
+          0
+        ]
+      ],
+      "confusionColumns": [
+        "wake",
+        "light",
+        "deep",
+        "rem",
+        "unknown"
+      ],
+      "coveredReferenceEpochs": 41734,
+      "meanParticipantReferenceMacroF1": 0.4986465772233384,
+      "meanParticipantStageF1": {
+        "deep": 0.5322318730523239,
+        "light": 0.6029444371800042,
+        "rem": 0.47370974794652504,
+        "wake": 0.3857002507145005
+      },
+      "nights": 47,
+      "participants": 47,
+      "participantsWithReference": 47,
+      "perParticipant": {
+        "Bidslab00": {
+          "conditionalAccuracy": 0.7454545454545455,
+          "coveredReferenceEpochs": 935,
+          "macroF1": 0.7013897659841924,
+          "referenceAccuracy": 0.7454545454545455,
+          "referenceEpochs": 935,
+          "stageF1": {
+            "deep": 0.7966101694915254,
+            "light": 0.7520958083832335,
+            "rem": 0.7139959432048681,
+            "wake": 0.5428571428571428
+          },
+          "unknownReferenceEpochs": 0
+        },
+        "Bidslab01": {
+          "conditionalAccuracy": 0.5906976744186047,
+          "coveredReferenceEpochs": 860,
+          "macroF1": 0.4964163258361565,
+          "referenceAccuracy": 0.5906976744186047,
+          "referenceEpochs": 860,
+          "stageF1": {
+            "deep": 0.20242914979757085,
+            "light": 0.7010119595216191,
+            "rem": 0.5170068027210885,
+            "wake": 0.5652173913043478
+          },
+          "unknownReferenceEpochs": 0
+        },
+        "Bidslab02": {
+          "conditionalAccuracy": 0.3664047151277014,
+          "coveredReferenceEpochs": 1018,
+          "macroF1": 0.3247958462457064,
+          "referenceAccuracy": 0.3664047151277014,
+          "referenceEpochs": 1018,
+          "stageF1": {
+            "deep": 0.38235294117647056,
+            "light": 0.45746691871455575,
+            "rem": 0.3488372093023256,
+            "wake": 0.11052631578947368
+          },
+          "unknownReferenceEpochs": 0
+        },
+        "Bidslab06": {
+          "conditionalAccuracy": 0.6074429771908764,
+          "coveredReferenceEpochs": 833,
+          "macroF1": 0.5694520601217212,
+          "referenceAccuracy": 0.6074429771908764,
+          "referenceEpochs": 833,
+          "stageF1": {
+            "deep": 0.567741935483871,
+            "light": 0.6190476190476191,
+            "rem": 0.6624472573839663,
+            "wake": 0.42857142857142855
+          },
+          "unknownReferenceEpochs": 0
+        },
+        "Bidslab07": {
+          "conditionalAccuracy": 0.5806754221388368,
+          "coveredReferenceEpochs": 1066,
+          "macroF1": 0.568665784231254,
+          "referenceAccuracy": 0.5806754221388368,
+          "referenceEpochs": 1066,
+          "stageF1": {
+            "deep": 0.7213114754098361,
+            "light": 0.648228176318064,
+            "rem": 0.25471698113207547,
+            "wake": 0.6504065040650406
+          },
+          "unknownReferenceEpochs": 0
+        },
+        "Bidslab08": {
+          "conditionalAccuracy": 0.6457831325301204,
+          "coveredReferenceEpochs": 830,
+          "macroF1": 0.6390608044343941,
+          "referenceAccuracy": 0.6457831325301204,
+          "referenceEpochs": 830,
+          "stageF1": {
+            "deep": 0.7052631578947368,
+            "light": 0.6581632653061225,
+            "rem": 0.5721271393643031,
+            "wake": 0.6206896551724138
+          },
+          "unknownReferenceEpochs": 0
+        },
+        "Bidslab09": {
+          "conditionalAccuracy": 0.4798206278026906,
+          "coveredReferenceEpochs": 892,
+          "macroF1": 0.45763176694309843,
+          "referenceAccuracy": 0.4798206278026906,
+          "referenceEpochs": 892,
+          "stageF1": {
+            "deep": 0.4852941176470588,
+            "light": 0.562624254473161,
+            "rem": 0.21739130434782608,
+            "wake": 0.5652173913043478
+          },
+          "unknownReferenceEpochs": 0
+        },
+        "Bidslab10": {
+          "conditionalAccuracy": 0.487279843444227,
+          "coveredReferenceEpochs": 1022,
+          "macroF1": 0.4363065938702818,
+          "referenceAccuracy": 0.487279843444227,
+          "referenceEpochs": 1022,
+          "stageF1": {
+            "deep": 0.4709141274238227,
+            "light": 0.5464025026068822,
+            "rem": 0.45694200351493847,
+            "wake": 0.2709677419354839
+          },
+          "unknownReferenceEpochs": 0
+        },
+        "Bidslab11": {
+          "conditionalAccuracy": 0.6962142197599261,
+          "coveredReferenceEpochs": 1083,
+          "macroF1": 0.6368578460774544,
+          "referenceAccuracy": 0.6962142197599261,
+          "referenceEpochs": 1083,
+          "stageF1": {
+            "deep": 0.7387387387387387,
+            "light": 0.6943231441048034,
+            "rem": 0.7272727272727273,
+            "wake": 0.3870967741935484
+          },
+          "unknownReferenceEpochs": 0
+        },
+        "Bidslab13": {
+          "conditionalAccuracy": 0.6089385474860335,
+          "coveredReferenceEpochs": 1074,
+          "macroF1": 0.5561552533462193,
+          "referenceAccuracy": 0.6089385474860335,
+          "referenceEpochs": 1074,
+          "stageF1": {
+            "deep": 0.5163398692810458,
+            "light": 0.6722268557130943,
+            "rem": 0.5687645687645687,
+            "wake": 0.4672897196261682
+          },
+          "unknownReferenceEpochs": 0
+        },
+        "Bidslab14": {
+          "conditionalAccuracy": 0.6442577030812325,
+          "coveredReferenceEpochs": 1071,
+          "macroF1": 0.5268563993562777,
+          "referenceAccuracy": 0.6442577030812325,
+          "referenceEpochs": 1071,
+          "stageF1": {
+            "deep": 0.4575645756457565,
+            "light": 0.7481781376518218,
+            "rem": 0.623608017817372,
+            "wake": 0.27807486631016043
+          },
+          "unknownReferenceEpochs": 0
+        },
+        "Bidslab15": {
+          "conditionalAccuracy": 0.452,
+          "coveredReferenceEpochs": 750,
+          "macroF1": 0.30164071698408895,
+          "referenceAccuracy": 0.452,
+          "referenceEpochs": 750,
+          "stageF1": {
+            "deep": 0.0,
+            "light": 0.596537949400799,
+            "rem": 0.45045045045045046,
+            "wake": 0.1595744680851064
+          },
+          "unknownReferenceEpochs": 0
+        },
+        "Bidslab16": {
+          "conditionalAccuracy": 0.4462809917355372,
+          "coveredReferenceEpochs": 847,
+          "macroF1": 0.4493672643908889,
+          "referenceAccuracy": 0.4462809917355372,
+          "referenceEpochs": 847,
+          "stageF1": {
+            "deep": 0.4495114006514658,
+            "light": 0.4562334217506631,
+            "rem": 0.3063583815028902,
+            "wake": 0.5853658536585366
+          },
+          "unknownReferenceEpochs": 0
+        },
+        "Bidslab17": {
+          "conditionalAccuracy": 0.625133120340788,
+          "coveredReferenceEpochs": 939,
+          "macroF1": 0.46131476964563667,
+          "referenceAccuracy": 0.625133120340788,
+          "referenceEpochs": 939,
+          "stageF1": {
+            "deep": 0.672782874617737,
+            "light": 0.7382875605815832,
+            "rem": 0.05737704918032787,
+            "wake": 0.37681159420289856
+          },
+          "unknownReferenceEpochs": 0
+        },
+        "Bidslab18": {
+          "conditionalAccuracy": 0.5325936199722607,
+          "coveredReferenceEpochs": 721,
+          "macroF1": 0.5502628835302191,
+          "referenceAccuracy": 0.5325936199722607,
+          "referenceEpochs": 721,
+          "stageF1": {
+            "deep": 0.6225165562913907,
+            "light": 0.4752475247524752,
+            "rem": 0.5100671140939598,
+            "wake": 0.5932203389830508
+          },
+          "unknownReferenceEpochs": 0
+        },
+        "Bidslab19": {
+          "conditionalAccuracy": 0.47030878859857483,
+          "coveredReferenceEpochs": 842,
+          "macroF1": 0.40946602992365516,
+          "referenceAccuracy": 0.47030878859857483,
+          "referenceEpochs": 842,
+          "stageF1": {
+            "deep": 0.4787234042553192,
+            "light": 0.5681581685744017,
+            "rem": 0.28846153846153844,
+            "wake": 0.3025210084033613
+          },
+          "unknownReferenceEpochs": 0
+        },
+        "Bidslab20": {
+          "conditionalAccuracy": 0.5364626990779547,
+          "coveredReferenceEpochs": 1193,
+          "macroF1": 0.5362580386114233,
+          "referenceAccuracy": 0.5364626990779547,
+          "referenceEpochs": 1193,
+          "stageF1": {
+            "deep": 0.6229508196721312,
+            "light": 0.5421800947867299,
+            "rem": 0.5306704707560628,
+            "wake": 0.4492307692307692
+          },
+          "unknownReferenceEpochs": 0
+        },
+        "Bidslab22": {
+          "conditionalAccuracy": 0.6202945990180033,
+          "coveredReferenceEpochs": 611,
+          "macroF1": 0.5611192997427046,
+          "referenceAccuracy": 0.6202945990180033,
+          "referenceEpochs": 611,
+          "stageF1": {
+            "deep": 0.6666666666666666,
+            "light": 0.6015325670498084,
+            "rem": 0.7873015873015873,
+            "wake": 0.1889763779527559
+          },
+          "unknownReferenceEpochs": 0
+        },
+        "Bidslab30": {
+          "conditionalAccuracy": 0.6082840236686391,
+          "coveredReferenceEpochs": 845,
+          "macroF1": 0.5332571658017456,
+          "referenceAccuracy": 0.6082840236686391,
+          "referenceEpochs": 845,
+          "stageF1": {
+            "deep": 0.7074829931972789,
+            "light": 0.6742976066597295,
+            "rem": 0.535031847133758,
+            "wake": 0.21621621621621623
+          },
+          "unknownReferenceEpochs": 0
+        },
+        "Bidslab31": {
+          "conditionalAccuracy": 0.5799492385786802,
+          "coveredReferenceEpochs": 788,
+          "macroF1": 0.5486101883159112,
+          "referenceAccuracy": 0.5799492385786802,
+          "referenceEpochs": 788,
+          "stageF1": {
+            "deep": 0.6441558441558441,
+            "light": 0.5553869499241275,
+            "rem": 0.6377551020408163,
+            "wake": 0.35714285714285715
+          },
+          "unknownReferenceEpochs": 0
+        },
+        "Bidslab32": {
+          "conditionalAccuracy": 0.6595092024539877,
+          "coveredReferenceEpochs": 978,
+          "macroF1": 0.5987449961200746,
+          "referenceAccuracy": 0.6595092024539877,
+          "referenceEpochs": 978,
+          "stageF1": {
+            "deep": 0.7752442996742671,
+            "light": 0.7073643410852714,
+            "rem": 0.5506692160611855,
+            "wake": 0.3617021276595745
+          },
+          "unknownReferenceEpochs": 0
+        },
+        "Bidslab34": {
+          "conditionalAccuracy": 0.594311377245509,
+          "coveredReferenceEpochs": 1336,
+          "macroF1": 0.3265107998207317,
+          "referenceAccuracy": 0.594311377245509,
+          "referenceEpochs": 1336,
+          "stageF1": {
+            "deep": 0.0,
+            "light": 0.7295125870380289,
+            "rem": 0.0,
+            "wake": 0.576530612244898
+          },
+          "unknownReferenceEpochs": 0
+        },
+        "Bidslab35": {
+          "conditionalAccuracy": 0.4846698113207547,
+          "coveredReferenceEpochs": 848,
+          "macroF1": 0.5175093546150826,
+          "referenceAccuracy": 0.4846698113207547,
+          "referenceEpochs": 848,
+          "stageF1": {
+            "deep": 0.5902777777777778,
+            "light": 0.4975,
+            "rem": 0.3784860557768924,
+            "wake": 0.6037735849056604
+          },
+          "unknownReferenceEpochs": 0
+        },
+        "Bidslab36": {
+          "conditionalAccuracy": 0.5161707632600259,
+          "coveredReferenceEpochs": 773,
+          "macroF1": 0.48277013309986927,
+          "referenceAccuracy": 0.5161707632600259,
+          "referenceEpochs": 773,
+          "stageF1": {
+            "deep": 0.5611510791366906,
+            "light": 0.5802469135802469,
+            "rem": 0.3611111111111111,
+            "wake": 0.42857142857142855
+          },
+          "unknownReferenceEpochs": 0
+        },
+        "Bidslab38": {
+          "conditionalAccuracy": 0.6258992805755396,
+          "coveredReferenceEpochs": 695,
+          "macroF1": 0.5597689539177961,
+          "referenceAccuracy": 0.6258992805755396,
+          "referenceEpochs": 695,
+          "stageF1": {
+            "deep": 0.5724381625441696,
+            "light": 0.6212121212121212,
+            "rem": 0.705,
+            "wake": 0.3404255319148936
+          },
+          "unknownReferenceEpochs": 0
+        },
+        "Bidslab39": {
+          "conditionalAccuracy": 0.5911330049261084,
+          "coveredReferenceEpochs": 812,
+          "macroF1": 0.5357060639139625,
+          "referenceAccuracy": 0.5911330049261084,
+          "referenceEpochs": 812,
+          "stageF1": {
+            "deep": 0.6722689075630253,
+            "light": 0.6042944785276073,
+            "rem": 0.588,
+            "wake": 0.2782608695652174
+          },
+          "unknownReferenceEpochs": 0
+        },
+        "Bidslab40": {
+          "conditionalAccuracy": 0.5288808664259927,
+          "coveredReferenceEpochs": 1108,
+          "macroF1": 0.4846670107372589,
+          "referenceAccuracy": 0.5288808664259927,
+          "referenceEpochs": 1108,
+          "stageF1": {
+            "deep": 0.44768856447688565,
+            "light": 0.5369978858350951,
+            "rem": 0.6274509803921569,
+            "wake": 0.32653061224489793
+          },
+          "unknownReferenceEpochs": 0
+        },
+        "Bidslab41": {
+          "conditionalAccuracy": 0.5287846481876333,
+          "coveredReferenceEpochs": 938,
+          "macroF1": 0.42606689737981707,
+          "referenceAccuracy": 0.5287846481876333,
+          "referenceEpochs": 938,
+          "stageF1": {
+            "deep": 0.33220338983050846,
+            "light": 0.6995614035087719,
+            "rem": 0.4491525423728814,
+            "wake": 0.2233502538071066
+          },
+          "unknownReferenceEpochs": 0
+        },
+        "Bidslab42": {
+          "conditionalAccuracy": 0.1950920245398773,
+          "coveredReferenceEpochs": 815,
+          "macroF1": 0.20029624869828921,
+          "referenceAccuracy": 0.1950920245398773,
+          "referenceEpochs": 815,
+          "stageF1": {
+            "deep": 0.12857142857142856,
+            "light": 0.11178247734138973,
+            "rem": 0.3130434782608696,
+            "wake": 0.24778761061946902
+          },
+          "unknownReferenceEpochs": 0
+        },
+        "Bidslab43": {
+          "conditionalAccuracy": 0.546234509056244,
+          "coveredReferenceEpochs": 1049,
+          "macroF1": 0.5195774196411255,
+          "referenceAccuracy": 0.546234509056244,
+          "referenceEpochs": 1049,
+          "stageF1": {
+            "deep": 0.6746031746031746,
+            "light": 0.5097588978185993,
+            "rem": 0.5235772357723577,
+            "wake": 0.37037037037037035
+          },
+          "unknownReferenceEpochs": 0
+        },
+        "Bidslab44": {
+          "conditionalAccuracy": 0.49537037037037035,
+          "coveredReferenceEpochs": 1080,
+          "macroF1": 0.3926837980802484,
+          "referenceAccuracy": 0.49537037037037035,
+          "referenceEpochs": 1080,
+          "stageF1": {
+            "deep": 0.2521489971346705,
+            "light": 0.6145510835913313,
+            "rem": 0.3806818181818182,
+            "wake": 0.32335329341317365
+          },
+          "unknownReferenceEpochs": 0
+        },
+        "Bidslab45": {
+          "conditionalAccuracy": 0.6892052194543298,
+          "coveredReferenceEpochs": 843,
+          "macroF1": 0.5810865215835105,
+          "referenceAccuracy": 0.6892052194543298,
+          "referenceEpochs": 843,
+          "stageF1": {
+            "deep": 0.6666666666666666,
+            "light": 0.7770460959548448,
+            "rem": 0.4755700325732899,
+            "wake": 0.4050632911392405
+          },
+          "unknownReferenceEpochs": 0
+        },
+        "Bidslab47": {
+          "conditionalAccuracy": 0.40601503759398494,
+          "coveredReferenceEpochs": 931,
+          "macroF1": 0.3071046541216216,
+          "referenceAccuracy": 0.40601503759398494,
+          "referenceEpochs": 931,
+          "stageF1": {
+            "deep": 0.5492537313432836,
+            "light": 0.5254901960784314,
+            "rem": 0.046357615894039736,
+            "wake": 0.1073170731707317
+          },
+          "unknownReferenceEpochs": 0
+        },
+        "Bidslab49": {
+          "conditionalAccuracy": 0.4738095238095238,
+          "coveredReferenceEpochs": 840,
+          "macroF1": 0.4120569700095551,
+          "referenceAccuracy": 0.4738095238095238,
+          "referenceEpochs": 840,
+          "stageF1": {
+            "deep": 0.32558139534883723,
+            "light": 0.5776330076004343,
+            "rem": 0.3450134770889488,
+            "wake": 0.4
+          },
+          "unknownReferenceEpochs": 0
+        },
+        "Bidslab50": {
+          "conditionalAccuracy": 0.5774278215223098,
+          "coveredReferenceEpochs": 762,
+          "macroF1": 0.5347935786310074,
+          "referenceAccuracy": 0.5774278215223098,
+          "referenceEpochs": 762,
+          "stageF1": {
+            "deep": 0.4636363636363636,
+            "light": 0.6282853566958698,
+            "rem": 0.5963855421686747,
+            "wake": 0.4508670520231214
+          },
+          "unknownReferenceEpochs": 0
+        },
+        "Bidslab51": {
+          "conditionalAccuracy": 0.558455114822547,
+          "coveredReferenceEpochs": 958,
+          "macroF1": 0.4974795875047259,
+          "referenceAccuracy": 0.558455114822547,
+          "referenceEpochs": 958,
+          "stageF1": {
+            "deep": 0.4528301886792453,
+            "light": 0.624750499001996,
+            "rem": 0.5714285714285714,
+            "wake": 0.3409090909090909
+          },
+          "unknownReferenceEpochs": 0
+        },
+        "Bidslab52": {
+          "conditionalAccuracy": 0.5421822272215973,
+          "coveredReferenceEpochs": 889,
+          "macroF1": 0.5119812708107074,
+          "referenceAccuracy": 0.5421822272215973,
+          "referenceEpochs": 889,
+          "stageF1": {
+            "deep": 0.3979591836734694,
+            "light": 0.6027397260273972,
+            "rem": 0.3945945945945946,
+            "wake": 0.6526315789473685
+          },
+          "unknownReferenceEpochs": 0
+        },
+        "Bidslab53": {
+          "conditionalAccuracy": 0.6171428571428571,
+          "coveredReferenceEpochs": 700,
+          "macroF1": 0.5290241043395089,
+          "referenceAccuracy": 0.6171428571428571,
+          "referenceEpochs": 700,
+          "stageF1": {
+            "deep": 0.43333333333333335,
+            "light": 0.6838235294117647,
+            "rem": 0.6086956521739131,
+            "wake": 0.3902439024390244
+          },
+          "unknownReferenceEpochs": 0
+        },
+        "Bidslab55": {
+          "conditionalAccuracy": 0.49805950840879687,
+          "coveredReferenceEpochs": 773,
+          "macroF1": 0.47512007697182584,
+          "referenceAccuracy": 0.49805950840879687,
+          "referenceEpochs": 773,
+          "stageF1": {
+            "deep": 0.7022222222222222,
+            "light": 0.5401069518716578,
+            "rem": 0.4139650872817955,
+            "wake": 0.2441860465116279
+          },
+          "unknownReferenceEpochs": 0
+        },
+        "Bidslab56": {
+          "conditionalAccuracy": 0.5512679162072768,
+          "coveredReferenceEpochs": 907,
+          "macroF1": 0.4912301200316904,
+          "referenceAccuracy": 0.5512679162072768,
+          "referenceEpochs": 907,
+          "stageF1": {
+            "deep": 0.5863192182410424,
+            "light": 0.6064516129032258,
+            "rem": 0.47107438016528924,
+            "wake": 0.3010752688172043
+          },
+          "unknownReferenceEpochs": 0
+        },
+        "Bidslab60": {
+          "conditionalAccuracy": 0.5869047619047619,
+          "coveredReferenceEpochs": 840,
+          "macroF1": 0.5777638827666557,
+          "referenceAccuracy": 0.5869047619047619,
+          "referenceEpochs": 840,
+          "stageF1": {
+            "deep": 0.5919540229885057,
+            "light": 0.5763612217795485,
+            "rem": 0.6094069529652352,
+            "wake": 0.5333333333333333
+          },
+          "unknownReferenceEpochs": 0
+        },
+        "Bidslab62": {
+          "conditionalAccuracy": 0.7474489795918368,
+          "coveredReferenceEpochs": 784,
+          "macroF1": 0.5611364520576944,
+          "referenceAccuracy": 0.7474489795918368,
+          "referenceEpochs": 784,
+          "stageF1": {
+            "deep": 0.7012195121951219,
+            "light": 0.7755102040816326,
+            "rem": 0.767816091954023,
+            "wake": 0.0
+          },
+          "unknownReferenceEpochs": 0
+        },
+        "Bidslab63": {
+          "conditionalAccuracy": 0.706140350877193,
+          "coveredReferenceEpochs": 684,
+          "macroF1": 0.6971242710611267,
+          "referenceAccuracy": 0.706140350877193,
+          "referenceEpochs": 684,
+          "stageF1": {
+            "deep": 0.6558441558441559,
+            "light": 0.7285223367697594,
+            "rem": 0.7215909090909091,
+            "wake": 0.6825396825396826
+          },
+          "unknownReferenceEpochs": 0
+        },
+        "Bidslab64": {
+          "conditionalAccuracy": 0.5141176470588236,
+          "coveredReferenceEpochs": 850,
+          "macroF1": 0.526774881408502,
+          "referenceAccuracy": 0.5141176470588236,
+          "referenceEpochs": 850,
+          "stageF1": {
+            "deep": 0.7126436781609196,
+            "light": 0.5532407407407407,
+            "rem": 0.31264367816091954,
+            "wake": 0.5285714285714286
+          },
+          "unknownReferenceEpochs": 0
+        },
+        "Bidslab65": {
+          "conditionalAccuracy": 0.41479099678456594,
+          "coveredReferenceEpochs": 622,
+          "macroF1": 0.3661891677927688,
+          "referenceAccuracy": 0.41479099678456594,
+          "referenceEpochs": 622,
+          "stageF1": {
+            "deep": 0.5611510791366906,
+            "light": 0.4967105263157895,
+            "rem": 0.12454212454212454,
+            "wake": 0.2823529411764706
+          },
+          "unknownReferenceEpochs": 0
+        },
+        "Bidslab66": {
+          "conditionalAccuracy": 0.7144396551724138,
+          "coveredReferenceEpochs": 928,
+          "macroF1": 0.6524983234625976,
+          "referenceAccuracy": 0.7144396551724138,
+          "referenceEpochs": 928,
+          "stageF1": {
+            "deep": 0.7374301675977654,
+            "light": 0.7185104052573932,
+            "rem": 0.7315175097276264,
+            "wake": 0.4225352112676056
+          },
+          "unknownReferenceEpochs": 0
+        },
+        "Bidslab68": {
+          "conditionalAccuracy": 0.4474708171206226,
+          "coveredReferenceEpochs": 771,
+          "macroF1": 0.40583878752612124,
+          "referenceAccuracy": 0.4474708171206226,
+          "referenceEpochs": 771,
+          "stageF1": {
+            "deep": 0.5609065155807366,
+            "light": 0.4427934621099554,
+            "rem": 0.43,
+            "wake": 0.1896551724137931
+          },
+          "unknownReferenceEpochs": 0
+        }
+      },
+      "referenceAccuracy": 0.557003881727129,
+      "referenceEpochs": 41734,
+      "unknownReferenceEpochs": 0
+    }
+  },
+  "benchmarkConclusion": "candidate-worse-on-mean-participant-macroF1",
+  "binarySHA256": "6fd6447e518539832c15528b21a07f4b35b87ea9718cd635bc033ba73100ad45",
+  "candidate": "hierarchical-v1",
+  "candidateCount": 1,
+  "cases": [
+    {
+      "cohort": "previous-training",
+      "inputSHA256": "a97c8336add8d6e32e5f30ab3256c81e358df2601620ae04d4665b41f593f226",
+      "night": "1",
+      "reportSHA256": "e36db21daa6e2c6c81e86651f3dd7382e5a5372d83ae4ebb5f16caa8ae06d85e",
+      "subject": "Bidslab01"
+    },
+    {
+      "cohort": "previous-training",
+      "inputSHA256": "534bb7459bae453c8c732badce961a95b84626bc41dc46bb22237219e2f8f566",
+      "night": "1",
+      "reportSHA256": "ca764036e2bc9603c722ff550c70538d5e4c0d3123d3ec8e48882c43cd445f31",
+      "subject": "Bidslab02"
+    },
+    {
+      "cohort": "previous-training",
+      "inputSHA256": "b4cb4592d75b22ee51b4f0ff8aeee6393b7fc68bfba0c4d7548ce06ace116490",
+      "night": "1",
+      "reportSHA256": "21115e3a5c14139f1d17887095dfe902c54dc66bc9c2691661e1ebf7c49caf51",
+      "subject": "Bidslab06"
+    },
+    {
+      "cohort": "previous-training",
+      "inputSHA256": "0d8b177aee28a71caa5b9d1bd63d11758f4180663d5e5bd0d3e57cdcb1464f54",
+      "night": "1",
+      "reportSHA256": "716479e141c8cd661d6b4db6135dac77811a9ba7efeadc0a429f6c581d76c60c",
+      "subject": "Bidslab07"
+    },
+    {
+      "cohort": "previous-training",
+      "inputSHA256": "1b4beff4a972ec00267ab0c214f198ac7c770d8514158fe6af1d46acd366a71e",
+      "night": "1",
+      "reportSHA256": "82ada7d4420143c9f899d4f97f12fcd4ccc59f46bab08f569bbd2284a2f05ecc",
+      "subject": "Bidslab08"
+    },
+    {
+      "cohort": "previous-training",
+      "inputSHA256": "c0c8a6864d666f6de31dd197a99baa1eb0aa997393f60c0679018755313dcf6f",
+      "night": "1",
+      "reportSHA256": "d627c5ae7602e2fdc842beb0478517176064ebd3c3917583ea8733a38d8880bd",
+      "subject": "Bidslab09"
+    },
+    {
+      "cohort": "previous-training",
+      "inputSHA256": "beefc256b103347756b7a1a77aa7ce9b4be4312fbe1834952f13cfd008b7eb0c",
+      "night": "1",
+      "reportSHA256": "f114b7ce9071773572c0525069e277cf1ba97a5c8261ea9e4fd0e46556c8fb2f",
+      "subject": "Bidslab10"
+    },
+    {
+      "cohort": "previous-training",
+      "inputSHA256": "f2fddc864943b6ca91685b5872151f947fc7d6eb2baebbf66b6d1df783b3ec03",
+      "night": "1",
+      "reportSHA256": "47aef5c5a0aecac189f1fd637557c74e6d70f0ce7944d010b0d952bfb7f9b8a0",
+      "subject": "Bidslab11"
+    },
+    {
+      "cohort": "previous-training",
+      "inputSHA256": "8192333a2e5dae4f658f09a636a2d82ffd03196831ed94837931eb92a1a94559",
+      "night": "1",
+      "reportSHA256": "0596712a68c15c59719c084b9fe4aa67b2d6e24bad47e8328bba025e85791524",
+      "subject": "Bidslab14"
+    },
+    {
+      "cohort": "previous-training",
+      "inputSHA256": "6e8475e8d7a6067122edf3ea709890804d048e426ebe5d441b3bc75bc7896eca",
+      "night": "1",
+      "reportSHA256": "8b5e2343cb88dae600fe8d6db38c10cd0a7edc902249a71f82149427f62dac76",
+      "subject": "Bidslab15"
+    },
+    {
+      "cohort": "previous-training",
+      "inputSHA256": "e93836e9ffa2dd7038ab9ae808308eb489eced0b162d3b890cf5f00990c2e4f3",
+      "night": "1",
+      "reportSHA256": "258f44fcc4cd18208342d09b1777390052945b126e7dc61e20a08c002c394548",
+      "subject": "Bidslab16"
+    },
+    {
+      "cohort": "previous-training",
+      "inputSHA256": "4aada27ad404e8105f7fd7714ed41f88888bd7d0e765815cfcf61a471d997926",
+      "night": "1",
+      "reportSHA256": "ccf94422e44162f6b6ea5a84bfe26d8a41c55263cbf0bded0614a7ed74dbe76a",
+      "subject": "Bidslab18"
+    },
+    {
+      "cohort": "previous-training",
+      "inputSHA256": "3568536fc8bd793d042b420aae76121e90e837e5c0eeef4331daefdfcd8540b0",
+      "night": "1",
+      "reportSHA256": "c92744f176bdea1f2eaaf6569b7dc1b3b18d17bfe487e8ee8d2843f7c8c3eddd",
+      "subject": "Bidslab22"
+    },
+    {
+      "cohort": "previous-training",
+      "inputSHA256": "eec97b40376b17f8bace6f69c58d7f5a54732604ebdaa8283a354f13fc248280",
+      "night": "1",
+      "reportSHA256": "649901a27004777491697ed9618a7a4a7899efa2cee186dcb894bfd1c6b56216",
+      "subject": "Bidslab31"
+    },
+    {
+      "cohort": "previous-training",
+      "inputSHA256": "a477727ab1a24745d36084311ee88145cb8c2b621c3a2b4abf680afa2a05f07b",
+      "night": "1",
+      "reportSHA256": "e1da946105568ef32c9921840ae1d91fa852c8d9eb609b76619fc7933d9075e9",
+      "subject": "Bidslab32"
+    },
+    {
+      "cohort": "previous-training",
+      "inputSHA256": "e71c1784faa466616cfdc8979d017a191d41e86530b68a8844d68f1f5928f757",
+      "night": "1",
+      "reportSHA256": "7a4a4fc79bedbc3bdfb4d40a949823ebf731eda39a9b85e3bac00b12ac81715b",
+      "subject": "Bidslab34"
+    },
+    {
+      "cohort": "previous-training",
+      "inputSHA256": "f377dafc9431d7d0d260530a3505b32e38eb84304026a302e29a5cda3cafa29e",
+      "night": "1",
+      "reportSHA256": "4e18ba1782b9812af4034de046e10499cd258d39fd655d4965f37e8f8b06a120",
+      "subject": "Bidslab35"
+    },
+    {
+      "cohort": "previous-training",
+      "inputSHA256": "4fa2cd6babad8194b45212a3adad6051c508e27777e3fb1f68df3428033d43a3",
+      "night": "1",
+      "reportSHA256": "afaac3fa035a9a44717e75b7d3cbb9f0f451c268026475cd0018a3fdf58deb25",
+      "subject": "Bidslab36"
+    },
+    {
+      "cohort": "previous-training",
+      "inputSHA256": "7ba45232176a8c10a9a37417407f856c480159dc9b0742c709d8f2bd7e3e6d24",
+      "night": "1",
+      "reportSHA256": "2f05490bcef8016f2599f2370819c8c392be04d376da0be985aff86e68cbf9f9",
+      "subject": "Bidslab38"
+    },
+    {
+      "cohort": "previous-training",
+      "inputSHA256": "c476a5662a6ae451ad0f5388a9c5723b366f3fe4aa857c82fa0de6aaf318e43a",
+      "night": "1",
+      "reportSHA256": "85234449a810a79093e5e6921f7bc85d7a74bc86c089ee496d8ae4d82c6f5359",
+      "subject": "Bidslab40"
+    },
+    {
+      "cohort": "previous-training",
+      "inputSHA256": "e30990360bf941bec3915db34c394d5b2c009e2fab20f96340b3c86a8a8dc253",
+      "night": "1",
+      "reportSHA256": "89d850caa46e74cee7766eb85492de726b8f2be65b41eec90a18183793373fad",
+      "subject": "Bidslab42"
+    },
+    {
+      "cohort": "previous-training",
+      "inputSHA256": "2b659a851df874f20c838f3601aea82b19684735be192d1ac118e62b0a00c984",
+      "night": "1",
+      "reportSHA256": "4e460b431fe0ebf5454fc5ce1eeaa3b4255260dc0babbccf4dbbe7064acfac20",
+      "subject": "Bidslab43"
+    },
+    {
+      "cohort": "previous-training",
+      "inputSHA256": "4d7d0f41629184d111b67c4b46ef01cbca01ee2096d08bd5ba0597242a80e9ae",
+      "night": "1",
+      "reportSHA256": "e89cad0fc9dd12e6707e643bc923f666ea26d5f18af386f34174243a355541fc",
+      "subject": "Bidslab44"
+    },
+    {
+      "cohort": "previous-training",
+      "inputSHA256": "cdd00e2ecd027549cc0c14f112d1c29bf264f797301c40b447e6005a15a20403",
+      "night": "1",
+      "reportSHA256": "425fe6841c413640d76e8e8850b9bed9409bc03c1f3a8dd778fb11e64bb17c8d",
+      "subject": "Bidslab47"
+    },
+    {
+      "cohort": "previous-training",
+      "inputSHA256": "2c939b446780235fca8d74aee6d9946385eea8c24feb833cb238cee34b944595",
+      "night": "1",
+      "reportSHA256": "3eac22625ee737a8841d7a884b539f0303e99a03e93c05b9e671ca5ed6ec0e09",
+      "subject": "Bidslab49"
+    },
+    {
+      "cohort": "previous-training",
+      "inputSHA256": "1f72173f642736c7ea6919f48324a755404a17a02565c66588a0f1d621550c06",
+      "night": "1",
+      "reportSHA256": "6b4b3d54a71dd40d459ecd376cd36f54c8590be305cd4e9bcf4d98ab00f5dbc6",
+      "subject": "Bidslab51"
+    },
+    {
+      "cohort": "previous-training",
+      "inputSHA256": "69d97e1a39bc0f5a79dfb64ed008ff3833beca612fa549f34dc79e71cb4dcdd5",
+      "night": "1",
+      "reportSHA256": "54d2d6efb748a6d7d311aed7add3400e09546cdf00133409fb1da6bf631717e1",
+      "subject": "Bidslab53"
+    },
+    {
+      "cohort": "previous-training",
+      "inputSHA256": "b0a9b94c766a32f242b047538184ab5865c6828dbeb97d1f2a9f6c1f09a06715",
+      "night": "1",
+      "reportSHA256": "42fa7cb92e8cba5d52f335bd00748b1cad1dfbb591b6a9b73127b930f7b899f6",
+      "subject": "Bidslab56"
+    },
+    {
+      "cohort": "previous-training",
+      "inputSHA256": "478740c5395e5f0d779b33cf911f5cdada57b6439399140882863988dbe802c4",
+      "night": "1",
+      "reportSHA256": "77490ca4f3d4953ef5a15c0afb93bd4bd8eb926ff2d93bfd42bddb1b330a0e5e",
+      "subject": "Bidslab64"
+    },
+    {
+      "cohort": "previous-training",
+      "inputSHA256": "d046c9b8a8b46c054a56a34b0b1b55d2daf4848279bcd201c229adc1ef790ad3",
+      "night": "1",
+      "reportSHA256": "b5121cc21537fead68c1bc8a03781cda08c88099fbfb80d824b0ac4a9391814a",
+      "subject": "Bidslab65"
+    },
+    {
+      "cohort": "previous-holdout",
+      "inputSHA256": "8af20774c2004d4e978541ae65c7500fdd48c1ecb637640081e04610df29286c",
+      "night": "1",
+      "reportSHA256": "b7b37182e174ae9dbbba905c064d86abc9c72de74bf1dfc119baf9516d2da562",
+      "subject": "Bidslab00"
+    },
+    {
+      "cohort": "previous-holdout",
+      "inputSHA256": "ed4714489dd0e728517228d42ff7eb85601f9aa5322e36b00285d57256fe478f",
+      "night": "1",
+      "reportSHA256": "33590083f43c6b99f755fe81140e1f7742580a7a1f7c657151e8aae6fb5c3004",
+      "subject": "Bidslab13"
+    },
+    {
+      "cohort": "previous-holdout",
+      "inputSHA256": "636c2334d06c4cdff5b2fa5d709aa277b96bdd1cecbe032b131c3ffb5a333ef0",
+      "night": "1",
+      "reportSHA256": "10028813aa901e7f06837f1e31f67222a7af98a52288ca04ed31f51914e752c4",
+      "subject": "Bidslab17"
+    },
+    {
+      "cohort": "previous-holdout",
+      "inputSHA256": "00bd6aa004e1378b726c796cf43af8712ea22be0dd136737d3058dab798e4a29",
+      "night": "1",
+      "reportSHA256": "445f704d29d0ef6084a68c9103fc8180ed13b7d7e2214dae64122ddba1396d01",
+      "subject": "Bidslab19"
+    },
+    {
+      "cohort": "previous-holdout",
+      "inputSHA256": "8d40bcd11f403f7fa1387defd72029990cfbfcf1386fc337cd33791f5ac99502",
+      "night": "1",
+      "reportSHA256": "9022734e677116330640343a1862a690f376a3acc1afb6ecaec36d9cd2d22290",
+      "subject": "Bidslab20"
+    },
+    {
+      "cohort": "previous-holdout",
+      "inputSHA256": "77d05cab389a1057a49ba33ecb2281b40bb37e1cd37679dd36df2e28ba9af87d",
+      "night": "1",
+      "reportSHA256": "26b04ac70885421f0e64ce1729ce17c7942313cf7dbc1b0525e185d7cf528e9d",
+      "subject": "Bidslab30"
+    },
+    {
+      "cohort": "previous-holdout",
+      "inputSHA256": "fb5e263c663a4910a9b11dd7de8a10b02b0975ed626e1b90843a370d53b7463c",
+      "night": "1",
+      "reportSHA256": "7059053ad3adda681dd4ec7f4bac8c7e64a0433662e2f3b1542c44595beb7dec",
+      "subject": "Bidslab39"
+    },
+    {
+      "cohort": "previous-holdout",
+      "inputSHA256": "bb7b84cddf662e83eddf46f1aeedf8907286dfbb21465550405fd177cc229067",
+      "night": "1",
+      "reportSHA256": "6754979dfc37fea4ab93bbafaf8814b84f46f7c96be8426e7c788de5e2c02157",
+      "subject": "Bidslab41"
+    },
+    {
+      "cohort": "previous-holdout",
+      "inputSHA256": "1f326f84293553db982e1a214a7664f59af44738e3af55a333adfcfa0ba81537",
+      "night": "1",
+      "reportSHA256": "74cc57975dcb7e9d75b409da0d9716667662a18c70a469d546de34eefe9419f8",
+      "subject": "Bidslab45"
+    },
+    {
+      "cohort": "previous-holdout",
+      "inputSHA256": "8a75a59539db4405f247bc2cc7c3149479517bef81d5a38266fccbd623995eb8",
+      "night": "1",
+      "reportSHA256": "217d8e3e698dd14e5c6e6b372a05dd122c63901c0e1ad8ef8cbad77d2b7a1dcd",
+      "subject": "Bidslab50"
+    },
+    {
+      "cohort": "previous-holdout",
+      "inputSHA256": "662937ee85fc9f10eb04a412fdef90c7f352ade56b262e93143949d729420523",
+      "night": "1",
+      "reportSHA256": "3a6196d472f839ac0052756ae6a6db96fd930ffa82c8b27cf7656005681407a7",
+      "subject": "Bidslab52"
+    },
+    {
+      "cohort": "previous-holdout",
+      "inputSHA256": "043369decc2563c922547dec38d3182962c0d1a0406a5a6069995be59766f3f0",
+      "night": "1",
+      "reportSHA256": "fca808c4075487e8b2117a85ad9901e658e697a882aeecf82785728768e90a54",
+      "subject": "Bidslab55"
+    },
+    {
+      "cohort": "previous-holdout",
+      "inputSHA256": "b71a78fe95773b54f70b5fc97f321ef865398c816c7167f56cdeeffb2eed0d8a",
+      "night": "1",
+      "reportSHA256": "0ac80c513efbacdb984ce32c4cf0e555bc308eea384e4ebde599137a86022ab3",
+      "subject": "Bidslab60"
+    },
+    {
+      "cohort": "previous-holdout",
+      "inputSHA256": "85dac54ac243f6508f903551a91d7e61d50dcb6ddd905af60a9520e262f7b91e",
+      "night": "1",
+      "reportSHA256": "f9594a0911b8d8ec0b215841a09336cbfa42bf8168a91e9b4fe61fdfba3613ba",
+      "subject": "Bidslab62"
+    },
+    {
+      "cohort": "previous-holdout",
+      "inputSHA256": "5e1824112567c7e2d1be27fa29340f50d9b9eafadbf56e57a7c1a26680d9a442",
+      "night": "1",
+      "reportSHA256": "6c1157884814ae49aa5bfba230f712ec83288d1f05d3b13832c8bd260ea1cac5",
+      "subject": "Bidslab63"
+    },
+    {
+      "cohort": "previous-holdout",
+      "inputSHA256": "45f6058152aa6ff88c1092fe2da887103ae87000bc56bcf4fc4ea1987c3e5339",
+      "night": "1",
+      "reportSHA256": "69a74e0d489ae8cfa45e9e47934526988a41242ff15b74b013ec757fb87a904d",
+      "subject": "Bidslab66"
+    },
+    {
+      "cohort": "previous-holdout",
+      "inputSHA256": "9e6ab0c48cf5b440c62556f8dae52a9e2409837976f58a55b0cdff952b9227b0",
+      "night": "1",
+      "reportSHA256": "b1933a07e7d690578f0414f96144487c414dbcd4945f5987c717d177b29da4ee",
+      "subject": "Bidslab68"
+    }
+  ],
+  "cohorts": {
+    "previous-holdout": {
+      "commonSupport": {
+        "hierarchical-v1": {
+          "conditionalAccuracy": 0.5968005445881552,
+          "confusion": [
+            [
+              387,
+              649,
+              84,
+              227,
+              0
+            ],
+            [
+              151,
+              4898,
+              578,
+              1302,
+              0
+            ],
+            [
+              44,
+              998,
+              1507,
+              203,
+              0
+            ],
+            [
+              61,
+              1607,
+              19,
+              1975,
+              0
+            ]
+          ],
+          "confusionColumns": [
+            "wake",
+            "light",
+            "deep",
+            "rem",
+            "unknown"
+          ],
+          "coveredReferenceEpochs": 14690,
+          "meanParticipantReferenceMacroF1": 0.5302368951676688,
+          "meanParticipantStageF1": {
+            "deep": 0.5974670766441557,
+            "light": 0.6450001969679555,
+            "rem": 0.5169403906429433,
+            "wake": 0.3615399164156207
+          },
+          "nights": 17,
+          "participants": 17,
+          "participantsWithReference": 17,
+          "perParticipant": {
+            "Bidslab00": {
+              "conditionalAccuracy": 0.7366167023554604,
+              "coveredReferenceEpochs": 934,
+              "macroF1": 0.6717449434217962,
+              "referenceAccuracy": 0.7366167023554604,
+              "referenceEpochs": 934,
+              "stageF1": {
+                "deep": 0.7678958785249458,
+                "light": 0.7544910179640718,
+                "rem": 0.7168316831683168,
+                "wake": 0.44776119402985076
+              },
+              "unknownReferenceEpochs": 0
+            },
+            "Bidslab13": {
+              "conditionalAccuracy": 0.5867537313432836,
+              "coveredReferenceEpochs": 1072,
+              "macroF1": 0.521435417642002,
+              "referenceAccuracy": 0.5867537313432836,
+              "referenceEpochs": 1072,
+              "stageF1": {
+                "deep": 0.5163398692810458,
+                "light": 0.6554338668913227,
+                "rem": 0.5352697095435685,
+                "wake": 0.378698224852071
+              },
+              "unknownReferenceEpochs": 0
+            },
+            "Bidslab17": {
+              "conditionalAccuracy": 0.6144834930777423,
+              "coveredReferenceEpochs": 939,
+              "macroF1": 0.4511142187981662,
+              "referenceAccuracy": 0.6144834930777423,
+              "referenceEpochs": 939,
+              "stageF1": {
+                "deep": 0.6687116564417178,
+                "light": 0.7328990228013029,
+                "rem": 0.05363984674329502,
+                "wake": 0.3492063492063492
+              },
+              "unknownReferenceEpochs": 0
+            },
+            "Bidslab19": {
+              "conditionalAccuracy": 0.45724465558194777,
+              "coveredReferenceEpochs": 842,
+              "macroF1": 0.39854027639962564,
+              "referenceAccuracy": 0.45724465558194777,
+              "referenceEpochs": 842,
+              "stageF1": {
+                "deep": 0.4787234042553192,
+                "light": 0.5561385099685204,
+                "rem": 0.27358490566037735,
+                "wake": 0.2857142857142857
+              },
+              "unknownReferenceEpochs": 0
+            },
+            "Bidslab20": {
+              "conditionalAccuracy": 0.5240963855421686,
+              "coveredReferenceEpochs": 1162,
+              "macroF1": 0.5190617026368931,
+              "referenceAccuracy": 0.5240963855421686,
+              "referenceEpochs": 1162,
+              "stageF1": {
+                "deep": 0.6229508196721312,
+                "light": 0.5290068829891839,
+                "rem": 0.5308464849354376,
+                "wake": 0.39344262295081966
+              },
+              "unknownReferenceEpochs": 0
+            },
+            "Bidslab30": {
+              "conditionalAccuracy": 0.6460071513706794,
+              "coveredReferenceEpochs": 839,
+              "macroF1": 0.544221175649747,
+              "referenceAccuracy": 0.6460071513706794,
+              "referenceEpochs": 839,
+              "stageF1": {
+                "deep": 0.7074829931972789,
+                "light": 0.7138461538461538,
+                "rem": 0.5555555555555556,
+                "wake": 0.2
+              },
+              "unknownReferenceEpochs": 0
+            },
+            "Bidslab39": {
+              "conditionalAccuracy": 0.5972906403940886,
+              "coveredReferenceEpochs": 812,
+              "macroF1": 0.5242761003410091,
+              "referenceAccuracy": 0.5972906403940886,
+              "referenceEpochs": 812,
+              "stageF1": {
+                "deep": 0.6722689075630253,
+                "light": 0.6050156739811913,
+                "rem": 0.6216216216216216,
+                "wake": 0.1981981981981982
+              },
+              "unknownReferenceEpochs": 0
+            },
+            "Bidslab41": {
+              "conditionalAccuracy": 0.5732860520094563,
+              "coveredReferenceEpochs": 846,
+              "macroF1": 0.4859382154428996,
+              "referenceAccuracy": 0.5732860520094563,
+              "referenceEpochs": 846,
+              "stageF1": {
+                "deep": 0.33220338983050846,
+                "light": 0.6912242686890574,
+                "rem": 0.5203252032520326,
+                "wake": 0.4
+              },
+              "unknownReferenceEpochs": 0
+            },
+            "Bidslab45": {
+              "conditionalAccuracy": 0.6834532374100719,
+              "coveredReferenceEpochs": 834,
+              "macroF1": 0.5840613510799051,
+              "referenceAccuracy": 0.6834532374100719,
+              "referenceEpochs": 834,
+              "stageF1": {
+                "deep": 0.6666666666666666,
+                "light": 0.7696737044145874,
+                "rem": 0.4691358024691358,
+                "wake": 0.4307692307692308
+              },
+              "unknownReferenceEpochs": 0
+            },
+            "Bidslab50": {
+              "conditionalAccuracy": 0.55249343832021,
+              "coveredReferenceEpochs": 762,
+              "macroF1": 0.4756336622492992,
+              "referenceAccuracy": 0.55249343832021,
+              "referenceEpochs": 762,
+              "stageF1": {
+                "deep": 0.41904761904761906,
+                "light": 0.6350282485875707,
+                "rem": 0.5017921146953405,
+                "wake": 0.3466666666666667
+              },
+              "unknownReferenceEpochs": 0
+            },
+            "Bidslab52": {
+              "conditionalAccuracy": 0.5241844769403825,
+              "coveredReferenceEpochs": 889,
+              "macroF1": 0.5031480096028598,
+              "referenceAccuracy": 0.5241844769403825,
+              "referenceEpochs": 889,
+              "stageF1": {
+                "deep": 0.39195979899497485,
+                "light": 0.5861386138613861,
+                "rem": 0.3641025641025641,
+                "wake": 0.6703910614525139
+              },
+              "unknownReferenceEpochs": 0
+            },
+            "Bidslab55": {
+              "conditionalAccuracy": 0.49935316946959896,
+              "coveredReferenceEpochs": 773,
+              "macroF1": 0.48531821736657504,
+              "referenceAccuracy": 0.49935316946959896,
+              "referenceEpochs": 773,
+              "stageF1": {
+                "deep": 0.7053571428571429,
+                "light": 0.5333333333333333,
+                "rem": 0.41849148418491483,
+                "wake": 0.2840909090909091
+              },
+              "unknownReferenceEpochs": 0
+            },
+            "Bidslab60": {
+              "conditionalAccuracy": 0.5488095238095239,
+              "coveredReferenceEpochs": 840,
+              "macroF1": 0.528332345024346,
+              "referenceAccuracy": 0.5488095238095239,
+              "referenceEpochs": 840,
+              "stageF1": {
+                "deep": 0.5797101449275363,
+                "light": 0.5291723202170964,
+                "rem": 0.5758754863813229,
+                "wake": 0.42857142857142855
+              },
+              "unknownReferenceEpochs": 0
+            },
+            "Bidslab62": {
+              "conditionalAccuracy": 0.7575360419397117,
+              "coveredReferenceEpochs": 763,
+              "macroF1": 0.567370271094572,
+              "referenceAccuracy": 0.7575360419397117,
+              "referenceEpochs": 763,
+              "stageF1": {
+                "deep": 0.6972477064220184,
+                "light": 0.7898259705488622,
+                "rem": 0.7824074074074074,
+                "wake": 0.0
+              },
+              "unknownReferenceEpochs": 0
+            },
+            "Bidslab63": {
+              "conditionalAccuracy": 0.695906432748538,
+              "coveredReferenceEpochs": 684,
+              "macroF1": 0.6970168829052945,
+              "referenceAccuracy": 0.695906432748538,
+              "referenceEpochs": 684,
+              "stageF1": {
+                "deep": 0.6514657980456026,
+                "light": 0.7052631578947368,
+                "rem": 0.7100271002710027,
+                "wake": 0.7213114754098361
+              },
+              "unknownReferenceEpochs": 0
+            },
+            "Bidslab66": {
+              "conditionalAccuracy": 0.7079741379310345,
+              "coveredReferenceEpochs": 928,
+              "macroF1": 0.6461323112785884,
+              "referenceAccuracy": 0.7079741379310345,
+              "referenceEpochs": 928,
+              "stageF1": {
+                "deep": 0.7303370786516854,
+                "light": 0.7127192982456141,
+                "rem": 0.7248062015503876,
+                "wake": 0.4166666666666667
+              },
+              "unknownReferenceEpochs": 0
+            },
+            "Bidslab68": {
+              "conditionalAccuracy": 0.4565499351491569,
+              "coveredReferenceEpochs": 771,
+              "macroF1": 0.4106821169167903,
+              "referenceAccuracy": 0.4565499351491569,
+              "referenceEpochs": 771,
+              "stageF1": {
+                "deep": 0.5485714285714286,
+                "light": 0.4657933042212518,
+                "rem": 0.4336734693877551,
+                "wake": 0.19469026548672566
+              },
+              "unknownReferenceEpochs": 0
+            }
+          },
+          "referenceAccuracy": 0.5968005445881552,
+          "referenceEpochs": 14690,
+          "unknownReferenceEpochs": 0
+        },
+        "shipped": {
+          "conditionalAccuracy": 0.6066031313818925,
+          "confusion": [
+            [
+              447,
+              626,
+              83,
+              191,
+              0
+            ],
+            [
+              219,
+              4956,
+              580,
+              1174,
+              0
+            ],
+            [
+              60,
+              977,
+              1536,
+              179,
+              0
+            ],
+            [
+              61,
+              1610,
+              19,
+              1972,
+              0
+            ]
+          ],
+          "confusionColumns": [
+            "wake",
+            "light",
+            "deep",
+            "rem",
+            "unknown"
+          ],
+          "coveredReferenceEpochs": 14690,
+          "meanParticipantReferenceMacroF1": 0.5436860923259236,
+          "meanParticipantStageF1": {
+            "deep": 0.6045412493125635,
+            "light": 0.651611342528593,
+            "rem": 0.531720290953587,
+            "wake": 0.38687148650895076
+          },
+          "nights": 17,
+          "participants": 17,
+          "participantsWithReference": 17,
+          "perParticipant": {
+            "Bidslab00": {
+              "conditionalAccuracy": 0.7451820128479657,
+              "coveredReferenceEpochs": 934,
+              "macroF1": 0.6980284214463773,
+              "referenceAccuracy": 0.7451820128479657,
+              "referenceEpochs": 934,
+              "stageF1": {
+                "deep": 0.7966101694915254,
+                "light": 0.7520958083832335,
+                "rem": 0.7139959432048681,
+                "wake": 0.5294117647058824
+              },
+              "unknownReferenceEpochs": 0
+            },
+            "Bidslab13": {
+              "conditionalAccuracy": 0.6100746268656716,
+              "coveredReferenceEpochs": 1072,
+              "macroF1": 0.5579233524075646,
+              "referenceAccuracy": 0.6100746268656716,
+              "referenceEpochs": 1072,
+              "stageF1": {
+                "deep": 0.5163398692810458,
+                "light": 0.6722268557130943,
+                "rem": 0.5714285714285714,
+                "wake": 0.4716981132075472
+              },
+              "unknownReferenceEpochs": 0
+            },
+            "Bidslab17": {
+              "conditionalAccuracy": 0.625133120340788,
+              "coveredReferenceEpochs": 939,
+              "macroF1": 0.46131476964563667,
+              "referenceAccuracy": 0.625133120340788,
+              "referenceEpochs": 939,
+              "stageF1": {
+                "deep": 0.672782874617737,
+                "light": 0.7382875605815832,
+                "rem": 0.05737704918032787,
+                "wake": 0.37681159420289856
+              },
+              "unknownReferenceEpochs": 0
+            },
+            "Bidslab19": {
+              "conditionalAccuracy": 0.47030878859857483,
+              "coveredReferenceEpochs": 842,
+              "macroF1": 0.40946602992365516,
+              "referenceAccuracy": 0.47030878859857483,
+              "referenceEpochs": 842,
+              "stageF1": {
+                "deep": 0.4787234042553192,
+                "light": 0.5681581685744017,
+                "rem": 0.28846153846153844,
+                "wake": 0.3025210084033613
+              },
+              "unknownReferenceEpochs": 0
+            },
+            "Bidslab20": {
+              "conditionalAccuracy": 0.5481927710843374,
+              "coveredReferenceEpochs": 1162,
+              "macroF1": 0.5455475056862533,
+              "referenceAccuracy": 0.5481927710843374,
+              "referenceEpochs": 1162,
+              "stageF1": {
+                "deep": 0.6229508196721312,
+                "light": 0.5542635658914729,
+                "rem": 0.5487256371814093,
+                "wake": 0.45625
+              },
+              "unknownReferenceEpochs": 0
+            },
+            "Bidslab30": {
+              "conditionalAccuracy": 0.6090584028605482,
+              "coveredReferenceEpochs": 839,
+              "macroF1": 0.5238486535925222,
+              "referenceAccuracy": 0.6090584028605482,
+              "referenceEpochs": 839,
+              "stageF1": {
+                "deep": 0.7074829931972789,
+                "light": 0.6764091858037579,
+                "rem": 0.535031847133758,
+                "wake": 0.17647058823529413
+              },
+              "unknownReferenceEpochs": 0
+            },
+            "Bidslab39": {
+              "conditionalAccuracy": 0.5911330049261084,
+              "coveredReferenceEpochs": 812,
+              "macroF1": 0.5357060639139625,
+              "referenceAccuracy": 0.5911330049261084,
+              "referenceEpochs": 812,
+              "stageF1": {
+                "deep": 0.6722689075630253,
+                "light": 0.6042944785276073,
+                "rem": 0.588,
+                "wake": 0.2782608695652174
+              },
+              "unknownReferenceEpochs": 0
+            },
+            "Bidslab41": {
+              "conditionalAccuracy": 0.5851063829787234,
+              "coveredReferenceEpochs": 846,
+              "macroF1": 0.498010348344915,
+              "referenceAccuracy": 0.5851063829787234,
+              "referenceEpochs": 846,
+              "stageF1": {
+                "deep": 0.33220338983050846,
+                "light": 0.6995614035087719,
+                "rem": 0.5564304461942258,
+                "wake": 0.40384615384615385
+              },
+              "unknownReferenceEpochs": 0
+            },
+            "Bidslab45": {
+              "conditionalAccuracy": 0.6930455635491607,
+              "coveredReferenceEpochs": 834,
+              "macroF1": 0.5822691136794169,
+              "referenceAccuracy": 0.6930455635491607,
+              "referenceEpochs": 834,
+              "stageF1": {
+                "deep": 0.6666666666666666,
+                "light": 0.781042654028436,
+                "rem": 0.4755700325732899,
+                "wake": 0.4057971014492754
+              },
+              "unknownReferenceEpochs": 0
+            },
+            "Bidslab50": {
+              "conditionalAccuracy": 0.5774278215223098,
+              "coveredReferenceEpochs": 762,
+              "macroF1": 0.5347935786310074,
+              "referenceAccuracy": 0.5774278215223098,
+              "referenceEpochs": 762,
+              "stageF1": {
+                "deep": 0.4636363636363636,
+                "light": 0.6282853566958698,
+                "rem": 0.5963855421686747,
+                "wake": 0.4508670520231214
+              },
+              "unknownReferenceEpochs": 0
+            },
+            "Bidslab52": {
+              "conditionalAccuracy": 0.5421822272215973,
+              "coveredReferenceEpochs": 889,
+              "macroF1": 0.5119812708107074,
+              "referenceAccuracy": 0.5421822272215973,
+              "referenceEpochs": 889,
+              "stageF1": {
+                "deep": 0.3979591836734694,
+                "light": 0.6027397260273972,
+                "rem": 0.3945945945945946,
+                "wake": 0.6526315789473685
+              },
+              "unknownReferenceEpochs": 0
+            },
+            "Bidslab55": {
+              "conditionalAccuracy": 0.49805950840879687,
+              "coveredReferenceEpochs": 773,
+              "macroF1": 0.47512007697182584,
+              "referenceAccuracy": 0.49805950840879687,
+              "referenceEpochs": 773,
+              "stageF1": {
+                "deep": 0.7022222222222222,
+                "light": 0.5401069518716578,
+                "rem": 0.4139650872817955,
+                "wake": 0.2441860465116279
+              },
+              "unknownReferenceEpochs": 0
+            },
+            "Bidslab60": {
+              "conditionalAccuracy": 0.5869047619047619,
+              "coveredReferenceEpochs": 840,
+              "macroF1": 0.5777638827666557,
+              "referenceAccuracy": 0.5869047619047619,
+              "referenceEpochs": 840,
+              "stageF1": {
+                "deep": 0.5919540229885057,
+                "light": 0.5763612217795485,
+                "rem": 0.6094069529652352,
+                "wake": 0.5333333333333333
+              },
+              "unknownReferenceEpochs": 0
+            },
+            "Bidslab62": {
+              "conditionalAccuracy": 0.7680209698558322,
+              "coveredReferenceEpochs": 763,
+              "macroF1": 0.5754291196703544,
+              "referenceAccuracy": 0.7680209698558322,
+              "referenceEpochs": 763,
+              "stageF1": {
+                "deep": 0.7012195121951219,
+                "light": 0.793733681462141,
+                "rem": 0.8067632850241546,
+                "wake": 0.0
+              },
+              "unknownReferenceEpochs": 0
+            },
+            "Bidslab63": {
+              "conditionalAccuracy": 0.706140350877193,
+              "coveredReferenceEpochs": 684,
+              "macroF1": 0.6971242710611267,
+              "referenceAccuracy": 0.706140350877193,
+              "referenceEpochs": 684,
+              "stageF1": {
+                "deep": 0.6558441558441559,
+                "light": 0.7285223367697594,
+                "rem": 0.7215909090909091,
+                "wake": 0.6825396825396826
+              },
+              "unknownReferenceEpochs": 0
+            },
+            "Bidslab66": {
+              "conditionalAccuracy": 0.7144396551724138,
+              "coveredReferenceEpochs": 928,
+              "macroF1": 0.6524983234625976,
+              "referenceAccuracy": 0.7144396551724138,
+              "referenceEpochs": 928,
+              "stageF1": {
+                "deep": 0.7374301675977654,
+                "light": 0.7185104052573932,
+                "rem": 0.7315175097276264,
+                "wake": 0.4225352112676056
+              },
+              "unknownReferenceEpochs": 0
+            },
+            "Bidslab68": {
+              "conditionalAccuracy": 0.4474708171206226,
+              "coveredReferenceEpochs": 771,
+              "macroF1": 0.40583878752612124,
+              "referenceAccuracy": 0.4474708171206226,
+              "referenceEpochs": 771,
+              "stageF1": {
+                "deep": 0.5609065155807366,
+                "light": 0.4427934621099554,
+                "rem": 0.43,
+                "wake": 0.1896551724137931
+              },
+              "unknownReferenceEpochs": 0
+            }
+          },
+          "referenceAccuracy": 0.6066031313818925,
+          "referenceEpochs": 14690,
+          "unknownReferenceEpochs": 0
+        }
+      },
+      "hierarchical-v1": {
+        "conditionalAccuracy": 0.5968005445881552,
+        "confusion": [
+          [
+            387,
+            649,
+            84,
+            227,
+            114
+          ],
+          [
+            151,
+            4898,
+            578,
+            1302,
+            45
+          ],
+          [
+            44,
+            998,
+            1507,
+            203,
+            0
+          ],
+          [
+            61,
+            1607,
+            19,
+            1975,
+            3
+          ]
+        ],
+        "confusionColumns": [
+          "wake",
+          "light",
+          "deep",
+          "rem",
+          "unknown"
+        ],
+        "coveredReferenceEpochs": 14690,
+        "meanParticipantReferenceMacroF1": 0.5258975623952679,
+        "meanParticipantStageF1": {
+          "deep": 0.5974670766441557,
+          "light": 0.6430466095865678,
+          "rem": 0.5168065637980016,
+          "wake": 0.3462699995523464
+        },
+        "nights": 17,
+        "participants": 17,
+        "participantsWithReference": 17,
+        "perParticipant": {
+          "Bidslab00": {
+            "conditionalAccuracy": 0.7366167023554604,
+            "coveredReferenceEpochs": 934,
+            "macroF1": 0.6700987625613924,
+            "referenceAccuracy": 0.7358288770053476,
+            "referenceEpochs": 935,
+            "stageF1": {
+              "deep": 0.7678958785249458,
+              "light": 0.7544910179640718,
+              "rem": 0.7168316831683168,
+              "wake": 0.4411764705882353
+            },
+            "unknownReferenceEpochs": 1
+          },
+          "Bidslab13": {
+            "conditionalAccuracy": 0.5867537313432836,
+            "coveredReferenceEpochs": 1072,
+            "macroF1": 0.5203281128909725,
+            "referenceAccuracy": 0.5856610800744879,
+            "referenceEpochs": 1074,
+            "stageF1": {
+              "deep": 0.5163398692810458,
+              "light": 0.6554338668913227,
+              "rem": 0.5352697095435685,
+              "wake": 0.3742690058479532
+            },
+            "unknownReferenceEpochs": 2
+          },
+          "Bidslab17": {
+            "conditionalAccuracy": 0.6144834930777423,
+            "coveredReferenceEpochs": 939,
+            "macroF1": 0.4511142187981662,
+            "referenceAccuracy": 0.6144834930777423,
+            "referenceEpochs": 939,
+            "stageF1": {
+              "deep": 0.6687116564417178,
+              "light": 0.7328990228013029,
+              "rem": 0.05363984674329502,
+              "wake": 0.3492063492063492
+            },
+            "unknownReferenceEpochs": 0
+          },
+          "Bidslab19": {
+            "conditionalAccuracy": 0.45724465558194777,
+            "coveredReferenceEpochs": 842,
+            "macroF1": 0.39854027639962564,
+            "referenceAccuracy": 0.45724465558194777,
+            "referenceEpochs": 842,
+            "stageF1": {
+              "deep": 0.4787234042553192,
+              "light": 0.5561385099685204,
+              "rem": 0.27358490566037735,
+              "wake": 0.2857142857142857
+            },
+            "unknownReferenceEpochs": 0
+          },
+          "Bidslab20": {
+            "conditionalAccuracy": 0.5240963855421686,
+            "coveredReferenceEpochs": 1162,
+            "macroF1": 0.5139816786862001,
+            "referenceAccuracy": 0.5104777870913663,
+            "referenceEpochs": 1193,
+            "stageF1": {
+              "deep": 0.6229508196721312,
+              "light": 0.5173076923076924,
+              "rem": 0.5285714285714286,
+              "wake": 0.3870967741935484
+            },
+            "unknownReferenceEpochs": 31
+          },
+          "Bidslab30": {
+            "conditionalAccuracy": 0.6460071513706794,
+            "coveredReferenceEpochs": 839,
+            "macroF1": 0.5416189530971085,
+            "referenceAccuracy": 0.6414201183431952,
+            "referenceEpochs": 845,
+            "stageF1": {
+              "deep": 0.7074829931972789,
+              "light": 0.7116564417177914,
+              "rem": 0.5555555555555556,
+              "wake": 0.1917808219178082
+            },
+            "unknownReferenceEpochs": 6
+          },
+          "Bidslab39": {
+            "conditionalAccuracy": 0.5972906403940886,
+            "coveredReferenceEpochs": 812,
+            "macroF1": 0.5242761003410091,
+            "referenceAccuracy": 0.5972906403940886,
+            "referenceEpochs": 812,
+            "stageF1": {
+              "deep": 0.6722689075630253,
+              "light": 0.6050156739811913,
+              "rem": 0.6216216216216216,
+              "wake": 0.1981981981981982
+            },
+            "unknownReferenceEpochs": 0
+          },
+          "Bidslab41": {
+            "conditionalAccuracy": 0.5732860520094563,
+            "coveredReferenceEpochs": 846,
+            "macroF1": 0.43923770782868643,
+            "referenceAccuracy": 0.5170575692963753,
+            "referenceEpochs": 938,
+            "stageF1": {
+              "deep": 0.33220338983050846,
+              "light": 0.6912242686890574,
+              "rem": 0.5203252032520326,
+              "wake": 0.2131979695431472
+            },
+            "unknownReferenceEpochs": 92
+          },
+          "Bidslab45": {
+            "conditionalAccuracy": 0.6834532374100719,
+            "coveredReferenceEpochs": 834,
+            "macroF1": 0.5720749687989429,
+            "referenceAccuracy": 0.6761565836298933,
+            "referenceEpochs": 843,
+            "stageF1": {
+              "deep": 0.6666666666666666,
+              "light": 0.7689357622243528,
+              "rem": 0.4691358024691358,
+              "wake": 0.3835616438356164
+            },
+            "unknownReferenceEpochs": 9
+          },
+          "Bidslab50": {
+            "conditionalAccuracy": 0.55249343832021,
+            "coveredReferenceEpochs": 762,
+            "macroF1": 0.4756336622492992,
+            "referenceAccuracy": 0.55249343832021,
+            "referenceEpochs": 762,
+            "stageF1": {
+              "deep": 0.41904761904761906,
+              "light": 0.6350282485875707,
+              "rem": 0.5017921146953405,
+              "wake": 0.3466666666666667
+            },
+            "unknownReferenceEpochs": 0
+          },
+          "Bidslab52": {
+            "conditionalAccuracy": 0.5241844769403825,
+            "coveredReferenceEpochs": 889,
+            "macroF1": 0.5031480096028598,
+            "referenceAccuracy": 0.5241844769403825,
+            "referenceEpochs": 889,
+            "stageF1": {
+              "deep": 0.39195979899497485,
+              "light": 0.5861386138613861,
+              "rem": 0.3641025641025641,
+              "wake": 0.6703910614525139
+            },
+            "unknownReferenceEpochs": 0
+          },
+          "Bidslab55": {
+            "conditionalAccuracy": 0.49935316946959896,
+            "coveredReferenceEpochs": 773,
+            "macroF1": 0.48531821736657504,
+            "referenceAccuracy": 0.49935316946959896,
+            "referenceEpochs": 773,
+            "stageF1": {
+              "deep": 0.7053571428571429,
+              "light": 0.5333333333333333,
+              "rem": 0.41849148418491483,
+              "wake": 0.2840909090909091
+            },
+            "unknownReferenceEpochs": 0
+          },
+          "Bidslab60": {
+            "conditionalAccuracy": 0.5488095238095239,
+            "coveredReferenceEpochs": 840,
+            "macroF1": 0.528332345024346,
+            "referenceAccuracy": 0.5488095238095239,
+            "referenceEpochs": 840,
+            "stageF1": {
+              "deep": 0.5797101449275363,
+              "light": 0.5291723202170964,
+              "rem": 0.5758754863813229,
+              "wake": 0.42857142857142855
+            },
+            "unknownReferenceEpochs": 0
+          },
+          "Bidslab62": {
+            "conditionalAccuracy": 0.7575360419397117,
+            "coveredReferenceEpochs": 763,
+            "macroF1": 0.5627242359736964,
+            "referenceAccuracy": 0.7372448979591837,
+            "referenceEpochs": 784,
+            "stageF1": {
+              "deep": 0.6972477064220184,
+              "light": 0.7712418300653595,
+              "rem": 0.7824074074074074,
+              "wake": 0.0
+            },
+            "unknownReferenceEpochs": 21
+          },
+          "Bidslab63": {
+            "conditionalAccuracy": 0.695906432748538,
+            "coveredReferenceEpochs": 684,
+            "macroF1": 0.6970168829052945,
+            "referenceAccuracy": 0.695906432748538,
+            "referenceEpochs": 684,
+            "stageF1": {
+              "deep": 0.6514657980456026,
+              "light": 0.7052631578947368,
+              "rem": 0.7100271002710027,
+              "wake": 0.7213114754098361
+            },
+            "unknownReferenceEpochs": 0
+          },
+          "Bidslab66": {
+            "conditionalAccuracy": 0.7079741379310345,
+            "coveredReferenceEpochs": 928,
+            "macroF1": 0.6461323112785884,
+            "referenceAccuracy": 0.7079741379310345,
+            "referenceEpochs": 928,
+            "stageF1": {
+              "deep": 0.7303370786516854,
+              "light": 0.7127192982456141,
+              "rem": 0.7248062015503876,
+              "wake": 0.4166666666666667
+            },
+            "unknownReferenceEpochs": 0
+          },
+          "Bidslab68": {
+            "conditionalAccuracy": 0.4565499351491569,
+            "coveredReferenceEpochs": 771,
+            "macroF1": 0.4106821169167903,
+            "referenceAccuracy": 0.4565499351491569,
+            "referenceEpochs": 771,
+            "stageF1": {
+              "deep": 0.5485714285714286,
+              "light": 0.4657933042212518,
+              "rem": 0.4336734693877551,
+              "wake": 0.19469026548672566
+            },
+            "unknownReferenceEpochs": 0
+          }
+        },
+        "referenceAccuracy": 0.5902908699165096,
+        "referenceEpochs": 14852,
+        "unknownReferenceEpochs": 162
+      },
+      "shipped": {
+        "conditionalAccuracy": 0.6007271747912739,
+        "confusion": [
+          [
+            454,
+            632,
+            83,
+            292,
+            0
+          ],
+          [
+            222,
+            4957,
+            580,
+            1215,
+            0
+          ],
+          [
+            60,
+            977,
+            1536,
+            179,
+            0
+          ],
+          [
+            61,
+            1610,
+            19,
+            1975,
+            0
+          ]
+        ],
+        "confusionColumns": [
+          "wake",
+          "light",
+          "deep",
+          "rem",
+          "unknown"
+        ],
+        "coveredReferenceEpochs": 14852,
+        "meanParticipantReferenceMacroF1": 0.5386445382045822,
+        "meanParticipantStageF1": {
+          "deep": 0.6045412493125635,
+          "light": 0.6494692786637183,
+          "rem": 0.5219000400135384,
+          "wake": 0.378667584828509
+        },
+        "nights": 17,
+        "participants": 17,
+        "participantsWithReference": 17,
+        "perParticipant": {
+          "Bidslab00": {
+            "conditionalAccuracy": 0.7454545454545455,
+            "coveredReferenceEpochs": 935,
+            "macroF1": 0.7013897659841924,
+            "referenceAccuracy": 0.7454545454545455,
+            "referenceEpochs": 935,
+            "stageF1": {
+              "deep": 0.7966101694915254,
+              "light": 0.7520958083832335,
+              "rem": 0.7139959432048681,
+              "wake": 0.5428571428571428
+            },
+            "unknownReferenceEpochs": 0
+          },
+          "Bidslab13": {
+            "conditionalAccuracy": 0.6089385474860335,
+            "coveredReferenceEpochs": 1074,
+            "macroF1": 0.5561552533462193,
+            "referenceAccuracy": 0.6089385474860335,
+            "referenceEpochs": 1074,
+            "stageF1": {
+              "deep": 0.5163398692810458,
+              "light": 0.6722268557130943,
+              "rem": 0.5687645687645687,
+              "wake": 0.4672897196261682
+            },
+            "unknownReferenceEpochs": 0
+          },
+          "Bidslab17": {
+            "conditionalAccuracy": 0.625133120340788,
+            "coveredReferenceEpochs": 939,
+            "macroF1": 0.46131476964563667,
+            "referenceAccuracy": 0.625133120340788,
+            "referenceEpochs": 939,
+            "stageF1": {
+              "deep": 0.672782874617737,
+              "light": 0.7382875605815832,
+              "rem": 0.05737704918032787,
+              "wake": 0.37681159420289856
+            },
+            "unknownReferenceEpochs": 0
+          },
+          "Bidslab19": {
+            "conditionalAccuracy": 0.47030878859857483,
+            "coveredReferenceEpochs": 842,
+            "macroF1": 0.40946602992365516,
+            "referenceAccuracy": 0.47030878859857483,
+            "referenceEpochs": 842,
+            "stageF1": {
+              "deep": 0.4787234042553192,
+              "light": 0.5681581685744017,
+              "rem": 0.28846153846153844,
+              "wake": 0.3025210084033613
+            },
+            "unknownReferenceEpochs": 0
+          },
+          "Bidslab20": {
+            "conditionalAccuracy": 0.5364626990779547,
+            "coveredReferenceEpochs": 1193,
+            "macroF1": 0.5362580386114233,
+            "referenceAccuracy": 0.5364626990779547,
+            "referenceEpochs": 1193,
+            "stageF1": {
+              "deep": 0.6229508196721312,
+              "light": 0.5421800947867299,
+              "rem": 0.5306704707560628,
+              "wake": 0.4492307692307692
+            },
+            "unknownReferenceEpochs": 0
+          },
+          "Bidslab30": {
+            "conditionalAccuracy": 0.6082840236686391,
+            "coveredReferenceEpochs": 845,
+            "macroF1": 0.5332571658017456,
+            "referenceAccuracy": 0.6082840236686391,
+            "referenceEpochs": 845,
+            "stageF1": {
+              "deep": 0.7074829931972789,
+              "light": 0.6742976066597295,
+              "rem": 0.535031847133758,
+              "wake": 0.21621621621621623
+            },
+            "unknownReferenceEpochs": 0
+          },
+          "Bidslab39": {
+            "conditionalAccuracy": 0.5911330049261084,
+            "coveredReferenceEpochs": 812,
+            "macroF1": 0.5357060639139625,
+            "referenceAccuracy": 0.5911330049261084,
+            "referenceEpochs": 812,
+            "stageF1": {
+              "deep": 0.6722689075630253,
+              "light": 0.6042944785276073,
+              "rem": 0.588,
+              "wake": 0.2782608695652174
+            },
+            "unknownReferenceEpochs": 0
+          },
+          "Bidslab41": {
+            "conditionalAccuracy": 0.5287846481876333,
+            "coveredReferenceEpochs": 938,
+            "macroF1": 0.42606689737981707,
+            "referenceAccuracy": 0.5287846481876333,
+            "referenceEpochs": 938,
+            "stageF1": {
+              "deep": 0.33220338983050846,
+              "light": 0.6995614035087719,
+              "rem": 0.4491525423728814,
+              "wake": 0.2233502538071066
+            },
+            "unknownReferenceEpochs": 0
+          },
+          "Bidslab45": {
+            "conditionalAccuracy": 0.6892052194543298,
+            "coveredReferenceEpochs": 843,
+            "macroF1": 0.5810865215835105,
+            "referenceAccuracy": 0.6892052194543298,
+            "referenceEpochs": 843,
+            "stageF1": {
+              "deep": 0.6666666666666666,
+              "light": 0.7770460959548448,
+              "rem": 0.4755700325732899,
+              "wake": 0.4050632911392405
+            },
+            "unknownReferenceEpochs": 0
+          },
+          "Bidslab50": {
+            "conditionalAccuracy": 0.5774278215223098,
+            "coveredReferenceEpochs": 762,
+            "macroF1": 0.5347935786310074,
+            "referenceAccuracy": 0.5774278215223098,
+            "referenceEpochs": 762,
+            "stageF1": {
+              "deep": 0.4636363636363636,
+              "light": 0.6282853566958698,
+              "rem": 0.5963855421686747,
+              "wake": 0.4508670520231214
+            },
+            "unknownReferenceEpochs": 0
+          },
+          "Bidslab52": {
+            "conditionalAccuracy": 0.5421822272215973,
+            "coveredReferenceEpochs": 889,
+            "macroF1": 0.5119812708107074,
+            "referenceAccuracy": 0.5421822272215973,
+            "referenceEpochs": 889,
+            "stageF1": {
+              "deep": 0.3979591836734694,
+              "light": 0.6027397260273972,
+              "rem": 0.3945945945945946,
+              "wake": 0.6526315789473685
+            },
+            "unknownReferenceEpochs": 0
+          },
+          "Bidslab55": {
+            "conditionalAccuracy": 0.49805950840879687,
+            "coveredReferenceEpochs": 773,
+            "macroF1": 0.47512007697182584,
+            "referenceAccuracy": 0.49805950840879687,
+            "referenceEpochs": 773,
+            "stageF1": {
+              "deep": 0.7022222222222222,
+              "light": 0.5401069518716578,
+              "rem": 0.4139650872817955,
+              "wake": 0.2441860465116279
+            },
+            "unknownReferenceEpochs": 0
+          },
+          "Bidslab60": {
+            "conditionalAccuracy": 0.5869047619047619,
+            "coveredReferenceEpochs": 840,
+            "macroF1": 0.5777638827666557,
+            "referenceAccuracy": 0.5869047619047619,
+            "referenceEpochs": 840,
+            "stageF1": {
+              "deep": 0.5919540229885057,
+              "light": 0.5763612217795485,
+              "rem": 0.6094069529652352,
+              "wake": 0.5333333333333333
+            },
+            "unknownReferenceEpochs": 0
+          },
+          "Bidslab62": {
+            "conditionalAccuracy": 0.7474489795918368,
+            "coveredReferenceEpochs": 784,
+            "macroF1": 0.5611364520576944,
+            "referenceAccuracy": 0.7474489795918368,
+            "referenceEpochs": 784,
+            "stageF1": {
+              "deep": 0.7012195121951219,
+              "light": 0.7755102040816326,
+              "rem": 0.767816091954023,
+              "wake": 0.0
+            },
+            "unknownReferenceEpochs": 0
+          },
+          "Bidslab63": {
+            "conditionalAccuracy": 0.706140350877193,
+            "coveredReferenceEpochs": 684,
+            "macroF1": 0.6971242710611267,
+            "referenceAccuracy": 0.706140350877193,
+            "referenceEpochs": 684,
+            "stageF1": {
+              "deep": 0.6558441558441559,
+              "light": 0.7285223367697594,
+              "rem": 0.7215909090909091,
+              "wake": 0.6825396825396826
+            },
+            "unknownReferenceEpochs": 0
+          },
+          "Bidslab66": {
+            "conditionalAccuracy": 0.7144396551724138,
+            "coveredReferenceEpochs": 928,
+            "macroF1": 0.6524983234625976,
+            "referenceAccuracy": 0.7144396551724138,
+            "referenceEpochs": 928,
+            "stageF1": {
+              "deep": 0.7374301675977654,
+              "light": 0.7185104052573932,
+              "rem": 0.7315175097276264,
+              "wake": 0.4225352112676056
+            },
+            "unknownReferenceEpochs": 0
+          },
+          "Bidslab68": {
+            "conditionalAccuracy": 0.4474708171206226,
+            "coveredReferenceEpochs": 771,
+            "macroF1": 0.40583878752612124,
+            "referenceAccuracy": 0.4474708171206226,
+            "referenceEpochs": 771,
+            "stageF1": {
+              "deep": 0.5609065155807366,
+              "light": 0.4427934621099554,
+              "rem": 0.43,
+              "wake": 0.1896551724137931
+            },
+            "unknownReferenceEpochs": 0
+          }
+        },
+        "referenceAccuracy": 0.6007271747912739,
+        "referenceEpochs": 14852,
+        "unknownReferenceEpochs": 0
+      }
+    },
+    "previous-training": {
+      "commonSupport": {
+        "hierarchical-v1": {
+          "conditionalAccuracy": 0.5313701368599109,
+          "confusion": [
+            [
+              784,
+              1169,
+              286,
+              517,
+              0
+            ],
+            [
+              266,
+              7657,
+              1280,
+              2405,
+              0
+            ],
+            [
+              82,
+              2078,
+              2345,
+              290,
+              0
+            ],
+            [
+              151,
+              3512,
+              154,
+              3036,
+              0
+            ]
+          ],
+          "confusionColumns": [
+            "wake",
+            "light",
+            "deep",
+            "rem",
+            "unknown"
+          ],
+          "coveredReferenceEpochs": 26012,
+          "meanParticipantReferenceMacroF1": 0.46805226575043163,
+          "meanParticipantStageF1": {
+            "deep": 0.4943234329994853,
+            "light": 0.5766251985793899,
+            "rem": 0.4380025176723417,
+            "wake": 0.36325791375050964
+          },
+          "nights": 30,
+          "participants": 30,
+          "participantsWithReference": 30,
+          "perParticipant": {
+            "Bidslab01": {
+              "conditionalAccuracy": 0.563953488372093,
+              "coveredReferenceEpochs": 860,
+              "macroF1": 0.4630641344414659,
+              "referenceAccuracy": 0.563953488372093,
+              "referenceEpochs": 860,
+              "stageF1": {
+                "deep": 0.1951219512195122,
+                "light": 0.684981684981685,
+                "rem": 0.43097643097643096,
+                "wake": 0.5411764705882353
+              },
+              "unknownReferenceEpochs": 0
+            },
+            "Bidslab02": {
+              "conditionalAccuracy": 0.4016110471806674,
+              "coveredReferenceEpochs": 869,
+              "macroF1": 0.3231134560990872,
+              "referenceAccuracy": 0.4016110471806674,
+              "referenceEpochs": 869,
+              "stageF1": {
+                "deep": 0.3180428134556575,
+                "light": 0.5100105374077977,
+                "rem": 0.345679012345679,
+                "wake": 0.1187214611872146
+              },
+              "unknownReferenceEpochs": 0
+            },
+            "Bidslab06": {
+              "conditionalAccuracy": 0.5978391356542617,
+              "coveredReferenceEpochs": 833,
+              "macroF1": 0.5564848797696049,
+              "referenceAccuracy": 0.5978391356542617,
+              "referenceEpochs": 833,
+              "stageF1": {
+                "deep": 0.567741935483871,
+                "light": 0.6157965194109772,
+                "rem": 0.6391752577319587,
+                "wake": 0.4032258064516129
+              },
+              "unknownReferenceEpochs": 0
+            },
+            "Bidslab07": {
+              "conditionalAccuracy": 0.5722326454033771,
+              "coveredReferenceEpochs": 1066,
+              "macroF1": 0.5715964177218216,
+              "referenceAccuracy": 0.5722326454033771,
+              "referenceEpochs": 1066,
+              "stageF1": {
+                "deep": 0.7213114754098361,
+                "light": 0.6404886561954625,
+                "rem": 0.24336283185840707,
+                "wake": 0.6812227074235808
+              },
+              "unknownReferenceEpochs": 0
+            },
+            "Bidslab08": {
+              "conditionalAccuracy": 0.6301204819277109,
+              "coveredReferenceEpochs": 830,
+              "macroF1": 0.6214625829553297,
+              "referenceAccuracy": 0.6301204819277109,
+              "referenceEpochs": 830,
+              "stageF1": {
+                "deep": 0.7052631578947368,
+                "light": 0.6514575411913816,
+                "rem": 0.5223880597014925,
+                "wake": 0.6067415730337079
+              },
+              "unknownReferenceEpochs": 0
+            },
+            "Bidslab09": {
+              "conditionalAccuracy": 0.47533632286995514,
+              "coveredReferenceEpochs": 892,
+              "macroF1": 0.451129829764232,
+              "referenceAccuracy": 0.47533632286995514,
+              "referenceEpochs": 892,
+              "stageF1": {
+                "deep": 0.4852941176470588,
+                "light": 0.5619335347432024,
+                "rem": 0.22395833333333334,
+                "wake": 0.5333333333333333
+              },
+              "unknownReferenceEpochs": 0
+            },
+            "Bidslab10": {
+              "conditionalAccuracy": 0.5870841487279843,
+              "coveredReferenceEpochs": 1022,
+              "macroF1": 0.5327343821427047,
+              "referenceAccuracy": 0.5870841487279843,
+              "referenceEpochs": 1022,
+              "stageF1": {
+                "deep": 0.5704697986577181,
+                "light": 0.626362735381566,
+                "rem": 0.5687203791469194,
+                "wake": 0.36538461538461536
+              },
+              "unknownReferenceEpochs": 0
+            },
+            "Bidslab11": {
+              "conditionalAccuracy": 0.6888273314866112,
+              "coveredReferenceEpochs": 1083,
+              "macroF1": 0.6241792405221198,
+              "referenceAccuracy": 0.6888273314866112,
+              "referenceEpochs": 1083,
+              "stageF1": {
+                "deep": 0.7375565610859729,
+                "light": 0.6820175438596491,
+                "rem": 0.72,
+                "wake": 0.35714285714285715
+              },
+              "unknownReferenceEpochs": 0
+            },
+            "Bidslab14": {
+              "conditionalAccuracy": 0.6158878504672897,
+              "coveredReferenceEpochs": 1070,
+              "macroF1": 0.4838990638990639,
+              "referenceAccuracy": 0.6158878504672897,
+              "referenceEpochs": 1070,
+              "stageF1": {
+                "deep": 0.45925925925925926,
+                "light": 0.7487179487179487,
+                "rem": 0.5447619047619048,
+                "wake": 0.18285714285714286
+              },
+              "unknownReferenceEpochs": 0
+            },
+            "Bidslab15": {
+              "conditionalAccuracy": 0.45588235294117646,
+              "coveredReferenceEpochs": 748,
+              "macroF1": 0.2969790463079054,
+              "referenceAccuracy": 0.45588235294117646,
+              "referenceEpochs": 748,
+              "stageF1": {
+                "deep": 0.0,
+                "light": 0.5932885906040268,
+                "rem": 0.4835164835164835,
+                "wake": 0.1111111111111111
+              },
+              "unknownReferenceEpochs": 0
+            },
+            "Bidslab16": {
+              "conditionalAccuracy": 0.4427390791027155,
+              "coveredReferenceEpochs": 847,
+              "macroF1": 0.43966967977247173,
+              "referenceAccuracy": 0.4427390791027155,
+              "referenceEpochs": 847,
+              "stageF1": {
+                "deep": 0.45394736842105265,
+                "light": 0.47706422018348627,
+                "rem": 0.2849162011173184,
+                "wake": 0.5427509293680297
+              },
+              "unknownReferenceEpochs": 0
+            },
+            "Bidslab18": {
+              "conditionalAccuracy": 0.5582089552238806,
+              "coveredReferenceEpochs": 670,
+              "macroF1": 0.5854322967467136,
+              "referenceAccuracy": 0.5582089552238806,
+              "referenceEpochs": 670,
+              "stageF1": {
+                "deep": 0.6225165562913907,
+                "light": 0.4836852207293666,
+                "rem": 0.5308641975308642,
+                "wake": 0.7046632124352331
+              },
+              "unknownReferenceEpochs": 0
+            },
+            "Bidslab22": {
+              "conditionalAccuracy": 0.5789473684210527,
+              "coveredReferenceEpochs": 608,
+              "macroF1": 0.5188346426311766,
+              "referenceAccuracy": 0.5789473684210527,
+              "referenceEpochs": 608,
+              "stageF1": {
+                "deep": 0.6666666666666666,
+                "light": 0.5536062378167641,
+                "rem": 0.7012195121951219,
+                "wake": 0.15384615384615385
+              },
+              "unknownReferenceEpochs": 0
+            },
+            "Bidslab31": {
+              "conditionalAccuracy": 0.5776081424936387,
+              "coveredReferenceEpochs": 786,
+              "macroF1": 0.5430840047454712,
+              "referenceAccuracy": 0.5776081424936387,
+              "referenceEpochs": 786,
+              "stageF1": {
+                "deep": 0.6441558441558441,
+                "light": 0.5678627145085804,
+                "rem": 0.5952380952380952,
+                "wake": 0.36507936507936506
+              },
+              "unknownReferenceEpochs": 0
+            },
+            "Bidslab32": {
+              "conditionalAccuracy": 0.6793032786885246,
+              "coveredReferenceEpochs": 976,
+              "macroF1": 0.593608271819338,
+              "referenceAccuracy": 0.6793032786885246,
+              "referenceEpochs": 976,
+              "stageF1": {
+                "deep": 0.7841726618705036,
+                "light": 0.7484333034914951,
+                "rem": 0.5226781857451404,
+                "wake": 0.3191489361702128
+              },
+              "unknownReferenceEpochs": 0
+            },
+            "Bidslab34": {
+              "conditionalAccuracy": 0.6060606060606061,
+              "coveredReferenceEpochs": 792,
+              "macroF1": 0.38238681077490666,
+              "referenceAccuracy": 0.6060606060606061,
+              "referenceEpochs": 792,
+              "stageF1": {
+                "deep": 0.0,
+                "light": 0.7339268051434223,
+                "rem": 0.0,
+                "wake": 0.7956204379562044
+              },
+              "unknownReferenceEpochs": 0
+            },
+            "Bidslab35": {
+              "conditionalAccuracy": 0.4817001180637544,
+              "coveredReferenceEpochs": 847,
+              "macroF1": 0.4977360618079377,
+              "referenceAccuracy": 0.4817001180637544,
+              "referenceEpochs": 847,
+              "stageF1": {
+                "deep": 0.5902777777777778,
+                "light": 0.4993757802746567,
+                "rem": 0.3858267716535433,
+                "wake": 0.5154639175257731
+              },
+              "unknownReferenceEpochs": 0
+            },
+            "Bidslab36": {
+              "conditionalAccuracy": 0.5200517464424321,
+              "coveredReferenceEpochs": 773,
+              "macroF1": 0.49662889775023716,
+              "referenceAccuracy": 0.5200517464424321,
+              "referenceEpochs": 773,
+              "stageF1": {
+                "deep": 0.5611510791366906,
+                "light": 0.5836575875486382,
+                "rem": 0.3851851851851852,
+                "wake": 0.45652173913043476
+              },
+              "unknownReferenceEpochs": 0
+            },
+            "Bidslab38": {
+              "conditionalAccuracy": 0.6273381294964029,
+              "coveredReferenceEpochs": 695,
+              "macroF1": 0.5583956722314533,
+              "referenceAccuracy": 0.6273381294964029,
+              "referenceEpochs": 695,
+              "stageF1": {
+                "deep": 0.5724381625441696,
+                "light": 0.6178343949044586,
+                "rem": 0.7099767981438515,
+                "wake": 0.3333333333333333
+              },
+              "unknownReferenceEpochs": 0
+            },
+            "Bidslab40": {
+              "conditionalAccuracy": 0.5045126353790613,
+              "coveredReferenceEpochs": 1108,
+              "macroF1": 0.44515406136672747,
+              "referenceAccuracy": 0.5045126353790613,
+              "referenceEpochs": 1108,
+              "stageF1": {
+                "deep": 0.44768856447688565,
+                "light": 0.5154419595314164,
+                "rem": 0.6047197640117994,
+                "wake": 0.2127659574468085
+              },
+              "unknownReferenceEpochs": 0
+            },
+            "Bidslab42": {
+              "conditionalAccuracy": 0.1909814323607427,
+              "coveredReferenceEpochs": 754,
+              "macroF1": 0.14149441614420064,
+              "referenceAccuracy": 0.1909814323607427,
+              "referenceEpochs": 754,
+              "stageF1": {
+                "deep": 0.140625,
+                "light": 0.11285266457680251,
+                "rem": 0.3125,
+                "wake": 0.0
+              },
+              "unknownReferenceEpochs": 0
+            },
+            "Bidslab43": {
+              "conditionalAccuracy": 0.5864077669902913,
+              "coveredReferenceEpochs": 1030,
+              "macroF1": 0.529633076588076,
+              "referenceAccuracy": 0.5864077669902913,
+              "referenceEpochs": 1030,
+              "stageF1": {
+                "deep": 0.6746031746031746,
+                "light": 0.538552787663108,
+                "rem": 0.6258064516129033,
+                "wake": 0.27956989247311825
+              },
+              "unknownReferenceEpochs": 0
+            },
+            "Bidslab44": {
+              "conditionalAccuracy": 0.43333333333333335,
+              "coveredReferenceEpochs": 1080,
+              "macroF1": 0.3510704033177052,
+              "referenceAccuracy": 0.43333333333333335,
+              "referenceEpochs": 1080,
+              "stageF1": {
+                "deep": 0.2521489971346705,
+                "light": 0.5545529122231337,
+                "rem": 0.2825112107623318,
+                "wake": 0.3150684931506849
+              },
+              "unknownReferenceEpochs": 0
+            },
+            "Bidslab47": {
+              "conditionalAccuracy": 0.4182795698924731,
+              "coveredReferenceEpochs": 930,
+              "macroF1": 0.3184996020902908,
+              "referenceAccuracy": 0.4182795698924731,
+              "referenceEpochs": 930,
+              "stageF1": {
+                "deep": 0.5542168674698795,
+                "light": 0.535819430814524,
+                "rem": 0.10191082802547771,
+                "wake": 0.08205128205128205
+              },
+              "unknownReferenceEpochs": 0
+            },
+            "Bidslab49": {
+              "conditionalAccuracy": 0.48095238095238096,
+              "coveredReferenceEpochs": 840,
+              "macroF1": 0.4225176514381587,
+              "referenceAccuracy": 0.48095238095238096,
+              "referenceEpochs": 840,
+              "stageF1": {
+                "deep": 0.36363636363636365,
+                "light": 0.5814207650273224,
+                "rem": 0.3450134770889488,
+                "wake": 0.4
+              },
+              "unknownReferenceEpochs": 0
+            },
+            "Bidslab51": {
+              "conditionalAccuracy": 0.5335463258785943,
+              "coveredReferenceEpochs": 939,
+              "macroF1": 0.43749676203324417,
+              "referenceAccuracy": 0.5335463258785943,
+              "referenceEpochs": 939,
+              "stageF1": {
+                "deep": 0.4479495268138801,
+                "light": 0.5991820040899796,
+                "rem": 0.5553145336225597,
+                "wake": 0.14754098360655737
+              },
+              "unknownReferenceEpochs": 0
+            },
+            "Bidslab53": {
+              "conditionalAccuracy": 0.61,
+              "coveredReferenceEpochs": 700,
+              "macroF1": 0.49925752951377894,
+              "referenceAccuracy": 0.61,
+              "referenceEpochs": 700,
+              "stageF1": {
+                "deep": 0.43333333333333335,
+                "light": 0.684596577017115,
+                "rem": 0.6006191950464397,
+                "wake": 0.27848101265822783
+              },
+              "unknownReferenceEpochs": 0
+            },
+            "Bidslab56": {
+              "conditionalAccuracy": 0.5369349503858876,
+              "coveredReferenceEpochs": 907,
+              "macroF1": 0.492651978879869,
+              "referenceAccuracy": 0.5369349503858876,
+              "referenceEpochs": 907,
+              "stageF1": {
+                "deep": 0.5863192182410424,
+                "light": 0.5773420479302832,
+                "rem": 0.46548323471400394,
+                "wake": 0.34146341463414637
+              },
+              "unknownReferenceEpochs": 0
+            },
+            "Bidslab64": {
+              "conditionalAccuracy": 0.4788235294117647,
+              "coveredReferenceEpochs": 850,
+              "macroF1": 0.5069639904250214,
+              "referenceAccuracy": 0.4788235294117647,
+              "referenceEpochs": 850,
+              "stageF1": {
+                "deep": 0.7126436781609196,
+                "light": 0.5151148730350665,
+                "rem": 0.2804123711340206,
+                "wake": 0.5196850393700787
+              },
+              "unknownReferenceEpochs": 0
+            },
+            "Bidslab65": {
+              "conditionalAccuracy": 0.41680395387149916,
+              "coveredReferenceEpochs": 607,
+              "macroF1": 0.35640912881283504,
+              "referenceAccuracy": 0.41680395387149916,
+              "referenceEpochs": 607,
+              "stageF1": {
+                "deep": 0.5611510791366906,
+                "light": 0.5033783783783784,
+                "rem": 0.12734082397003746,
+                "wake": 0.23376623376623376
+              },
+              "unknownReferenceEpochs": 0
+            }
+          },
+          "referenceAccuracy": 0.5313701368599109,
+          "referenceEpochs": 26012,
+          "unknownReferenceEpochs": 0
+        },
+        "shipped": {
+          "conditionalAccuracy": 0.5360602798708288,
+          "confusion": [
+            [
+              872,
+              1245,
+              287,
+              352,
+              0
+            ],
+            [
+              363,
+              7765,
+              1349,
+              2131,
+              0
+            ],
+            [
+              117,
+              2074,
+              2365,
+              239,
+              0
+            ],
+            [
+              188,
+              3547,
+              176,
+              2942,
+              0
+            ]
+          ],
+          "confusionColumns": [
+            "wake",
+            "light",
+            "deep",
+            "rem",
+            "unknown"
+          ],
+          "coveredReferenceEpochs": 26012,
+          "meanParticipantReferenceMacroF1": 0.4750551369977197,
+          "meanParticipantStageF1": {
+            "deep": 0.49164010625286303,
+            "light": 0.5801000533674335,
+            "rem": 0.4470836346693848,
+            "wake": 0.3813967537011973
+          },
+          "nights": 30,
+          "participants": 30,
+          "participantsWithReference": 30,
+          "perParticipant": {
+            "Bidslab01": {
+              "conditionalAccuracy": 0.5906976744186047,
+              "coveredReferenceEpochs": 860,
+              "macroF1": 0.4964163258361565,
+              "referenceAccuracy": 0.5906976744186047,
+              "referenceEpochs": 860,
+              "stageF1": {
+                "deep": 0.20242914979757085,
+                "light": 0.7010119595216191,
+                "rem": 0.5170068027210885,
+                "wake": 0.5652173913043478
+              },
+              "unknownReferenceEpochs": 0
+            },
+            "Bidslab02": {
+              "conditionalAccuracy": 0.42117376294591485,
+              "coveredReferenceEpochs": 869,
+              "macroF1": 0.34614360748869466,
+              "referenceAccuracy": 0.42117376294591485,
+              "referenceEpochs": 869,
+              "stageF1": {
+                "deep": 0.38235294117647056,
+                "light": 0.5283842794759825,
+                "rem": 0.3488372093023256,
+                "wake": 0.125
+              },
+              "unknownReferenceEpochs": 0
+            },
+            "Bidslab06": {
+              "conditionalAccuracy": 0.6074429771908764,
+              "coveredReferenceEpochs": 833,
+              "macroF1": 0.5694520601217212,
+              "referenceAccuracy": 0.6074429771908764,
+              "referenceEpochs": 833,
+              "stageF1": {
+                "deep": 0.567741935483871,
+                "light": 0.6190476190476191,
+                "rem": 0.6624472573839663,
+                "wake": 0.42857142857142855
+              },
+              "unknownReferenceEpochs": 0
+            },
+            "Bidslab07": {
+              "conditionalAccuracy": 0.5806754221388368,
+              "coveredReferenceEpochs": 1066,
+              "macroF1": 0.568665784231254,
+              "referenceAccuracy": 0.5806754221388368,
+              "referenceEpochs": 1066,
+              "stageF1": {
+                "deep": 0.7213114754098361,
+                "light": 0.648228176318064,
+                "rem": 0.25471698113207547,
+                "wake": 0.6504065040650406
+              },
+              "unknownReferenceEpochs": 0
+            },
+            "Bidslab08": {
+              "conditionalAccuracy": 0.6457831325301204,
+              "coveredReferenceEpochs": 830,
+              "macroF1": 0.6390608044343941,
+              "referenceAccuracy": 0.6457831325301204,
+              "referenceEpochs": 830,
+              "stageF1": {
+                "deep": 0.7052631578947368,
+                "light": 0.6581632653061225,
+                "rem": 0.5721271393643031,
+                "wake": 0.6206896551724138
+              },
+              "unknownReferenceEpochs": 0
+            },
+            "Bidslab09": {
+              "conditionalAccuracy": 0.4798206278026906,
+              "coveredReferenceEpochs": 892,
+              "macroF1": 0.45763176694309843,
+              "referenceAccuracy": 0.4798206278026906,
+              "referenceEpochs": 892,
+              "stageF1": {
+                "deep": 0.4852941176470588,
+                "light": 0.562624254473161,
+                "rem": 0.21739130434782608,
+                "wake": 0.5652173913043478
+              },
+              "unknownReferenceEpochs": 0
+            },
+            "Bidslab10": {
+              "conditionalAccuracy": 0.487279843444227,
+              "coveredReferenceEpochs": 1022,
+              "macroF1": 0.4363065938702818,
+              "referenceAccuracy": 0.487279843444227,
+              "referenceEpochs": 1022,
+              "stageF1": {
+                "deep": 0.4709141274238227,
+                "light": 0.5464025026068822,
+                "rem": 0.45694200351493847,
+                "wake": 0.2709677419354839
+              },
+              "unknownReferenceEpochs": 0
+            },
+            "Bidslab11": {
+              "conditionalAccuracy": 0.6962142197599261,
+              "coveredReferenceEpochs": 1083,
+              "macroF1": 0.6368578460774544,
+              "referenceAccuracy": 0.6962142197599261,
+              "referenceEpochs": 1083,
+              "stageF1": {
+                "deep": 0.7387387387387387,
+                "light": 0.6943231441048034,
+                "rem": 0.7272727272727273,
+                "wake": 0.3870967741935484
+              },
+              "unknownReferenceEpochs": 0
+            },
+            "Bidslab14": {
+              "conditionalAccuracy": 0.6439252336448598,
+              "coveredReferenceEpochs": 1070,
+              "macroF1": 0.5249052503463052,
+              "referenceAccuracy": 0.6439252336448598,
+              "referenceEpochs": 1070,
+              "stageF1": {
+                "deep": 0.4575645756457565,
+                "light": 0.7481781376518218,
+                "rem": 0.623608017817372,
+                "wake": 0.2702702702702703
+              },
+              "unknownReferenceEpochs": 0
+            },
+            "Bidslab15": {
+              "conditionalAccuracy": 0.4532085561497326,
+              "coveredReferenceEpochs": 748,
+              "macroF1": 0.30246790353814773,
+              "referenceAccuracy": 0.4532085561497326,
+              "referenceEpochs": 748,
+              "stageF1": {
+                "deep": 0.0,
+                "light": 0.5981308411214953,
+                "rem": 0.45045045045045046,
+                "wake": 0.16129032258064516
+              },
+              "unknownReferenceEpochs": 0
+            },
+            "Bidslab16": {
+              "conditionalAccuracy": 0.4462809917355372,
+              "coveredReferenceEpochs": 847,
+              "macroF1": 0.4493672643908889,
+              "referenceAccuracy": 0.4462809917355372,
+              "referenceEpochs": 847,
+              "stageF1": {
+                "deep": 0.4495114006514658,
+                "light": 0.4562334217506631,
+                "rem": 0.3063583815028902,
+                "wake": 0.5853658536585366
+              },
+              "unknownReferenceEpochs": 0
+            },
+            "Bidslab18": {
+              "conditionalAccuracy": 0.5507462686567164,
+              "coveredReferenceEpochs": 670,
+              "macroF1": 0.5761291009331037,
+              "referenceAccuracy": 0.5507462686567164,
+              "referenceEpochs": 670,
+              "stageF1": {
+                "deep": 0.6225165562913907,
+                "light": 0.48161764705882354,
+                "rem": 0.5135135135135135,
+                "wake": 0.6868686868686869
+              },
+              "unknownReferenceEpochs": 0
+            },
+            "Bidslab22": {
+              "conditionalAccuracy": 0.618421052631579,
+              "coveredReferenceEpochs": 608,
+              "macroF1": 0.5510652878991437,
+              "referenceAccuracy": 0.618421052631579,
+              "referenceEpochs": 608,
+              "stageF1": {
+                "deep": 0.6666666666666666,
+                "light": 0.6015325670498084,
+                "rem": 0.7873015873015873,
+                "wake": 0.1487603305785124
+              },
+              "unknownReferenceEpochs": 0
+            },
+            "Bidslab31": {
+              "conditionalAccuracy": 0.5788804071246819,
+              "coveredReferenceEpochs": 786,
+              "macroF1": 0.5438832975596087,
+              "referenceAccuracy": 0.5788804071246819,
+              "referenceEpochs": 786,
+              "stageF1": {
+                "deep": 0.6441558441558441,
+                "light": 0.5553869499241275,
+                "rem": 0.6377551020408163,
+                "wake": 0.3382352941176471
+              },
+              "unknownReferenceEpochs": 0
+            },
+            "Bidslab32": {
+              "conditionalAccuracy": 0.6588114754098361,
+              "coveredReferenceEpochs": 976,
+              "macroF1": 0.5916527975385143,
+              "referenceAccuracy": 0.6588114754098361,
+              "referenceEpochs": 976,
+              "stageF1": {
+                "deep": 0.7752442996742671,
+                "light": 0.7073643410852714,
+                "rem": 0.5506692160611855,
+                "wake": 0.3333333333333333
+              },
+              "unknownReferenceEpochs": 0
+            },
+            "Bidslab34": {
+              "conditionalAccuracy": 0.6111111111111112,
+              "coveredReferenceEpochs": 792,
+              "macroF1": 0.3849051614722888,
+              "referenceAccuracy": 0.6111111111111112,
+              "referenceEpochs": 792,
+              "stageF1": {
+                "deep": 0.0,
+                "light": 0.7324777887462981,
+                "rem": 0.0,
+                "wake": 0.8071428571428572
+              },
+              "unknownReferenceEpochs": 0
+            },
+            "Bidslab35": {
+              "conditionalAccuracy": 0.48406139315230223,
+              "coveredReferenceEpochs": 847,
+              "macroF1": 0.5156044199271291,
+              "referenceAccuracy": 0.48406139315230223,
+              "referenceEpochs": 847,
+              "stageF1": {
+                "deep": 0.5902777777777778,
+                "light": 0.4975,
+                "rem": 0.3784860557768924,
+                "wake": 0.5961538461538461
+              },
+              "unknownReferenceEpochs": 0
+            },
+            "Bidslab36": {
+              "conditionalAccuracy": 0.5161707632600259,
+              "coveredReferenceEpochs": 773,
+              "macroF1": 0.48277013309986927,
+              "referenceAccuracy": 0.5161707632600259,
+              "referenceEpochs": 773,
+              "stageF1": {
+                "deep": 0.5611510791366906,
+                "light": 0.5802469135802469,
+                "rem": 0.3611111111111111,
+                "wake": 0.42857142857142855
+              },
+              "unknownReferenceEpochs": 0
+            },
+            "Bidslab38": {
+              "conditionalAccuracy": 0.6258992805755396,
+              "coveredReferenceEpochs": 695,
+              "macroF1": 0.5597689539177961,
+              "referenceAccuracy": 0.6258992805755396,
+              "referenceEpochs": 695,
+              "stageF1": {
+                "deep": 0.5724381625441696,
+                "light": 0.6212121212121212,
+                "rem": 0.705,
+                "wake": 0.3404255319148936
+              },
+              "unknownReferenceEpochs": 0
+            },
+            "Bidslab40": {
+              "conditionalAccuracy": 0.5288808664259927,
+              "coveredReferenceEpochs": 1108,
+              "macroF1": 0.4846670107372589,
+              "referenceAccuracy": 0.5288808664259927,
+              "referenceEpochs": 1108,
+              "stageF1": {
+                "deep": 0.44768856447688565,
+                "light": 0.5369978858350951,
+                "rem": 0.6274509803921569,
+                "wake": 0.32653061224489793
+              },
+              "unknownReferenceEpochs": 0
+            },
+            "Bidslab42": {
+              "conditionalAccuracy": 0.19230769230769232,
+              "coveredReferenceEpochs": 754,
+              "macroF1": 0.14227719002189743,
+              "referenceAccuracy": 0.19230769230769232,
+              "referenceEpochs": 754,
+              "stageF1": {
+                "deep": 0.14007782101167315,
+                "light": 0.11598746081504702,
+                "rem": 0.3130434782608696,
+                "wake": 0.0
+              },
+              "unknownReferenceEpochs": 0
+            },
+            "Bidslab43": {
+              "conditionalAccuracy": 0.554368932038835,
+              "coveredReferenceEpochs": 1030,
+              "macroF1": 0.5257716828179199,
+              "referenceAccuracy": 0.554368932038835,
+              "referenceEpochs": 1030,
+              "stageF1": {
+                "deep": 0.6746031746031746,
+                "light": 0.519298245614035,
+                "rem": 0.5353535353535354,
+                "wake": 0.37383177570093457
+              },
+              "unknownReferenceEpochs": 0
+            },
+            "Bidslab44": {
+              "conditionalAccuracy": 0.49537037037037035,
+              "coveredReferenceEpochs": 1080,
+              "macroF1": 0.3926837980802484,
+              "referenceAccuracy": 0.49537037037037035,
+              "referenceEpochs": 1080,
+              "stageF1": {
+                "deep": 0.2521489971346705,
+                "light": 0.6145510835913313,
+                "rem": 0.3806818181818182,
+                "wake": 0.32335329341317365
+              },
+              "unknownReferenceEpochs": 0
+            },
+            "Bidslab47": {
+              "conditionalAccuracy": 0.4053763440860215,
+              "coveredReferenceEpochs": 930,
+              "macroF1": 0.3049059277008599,
+              "referenceAccuracy": 0.4053763440860215,
+              "referenceEpochs": 930,
+              "stageF1": {
+                "deep": 0.5492537313432836,
+                "light": 0.5254901960784314,
+                "rem": 0.046357615894039736,
+                "wake": 0.09852216748768473
+              },
+              "unknownReferenceEpochs": 0
+            },
+            "Bidslab49": {
+              "conditionalAccuracy": 0.4738095238095238,
+              "coveredReferenceEpochs": 840,
+              "macroF1": 0.4120569700095551,
+              "referenceAccuracy": 0.4738095238095238,
+              "referenceEpochs": 840,
+              "stageF1": {
+                "deep": 0.32558139534883723,
+                "light": 0.5776330076004343,
+                "rem": 0.3450134770889488,
+                "wake": 0.4
+              },
+              "unknownReferenceEpochs": 0
+            },
+            "Bidslab51": {
+              "conditionalAccuracy": 0.549520766773163,
+              "coveredReferenceEpochs": 939,
+              "macroF1": 0.4521073872412213,
+              "referenceAccuracy": 0.549520766773163,
+              "referenceEpochs": 939,
+              "stageF1": {
+                "deep": 0.4528301886792453,
+                "light": 0.624750499001996,
+                "rem": 0.5714285714285714,
+                "wake": 0.15942028985507245
+              },
+              "unknownReferenceEpochs": 0
+            },
+            "Bidslab53": {
+              "conditionalAccuracy": 0.6171428571428571,
+              "coveredReferenceEpochs": 700,
+              "macroF1": 0.5290241043395089,
+              "referenceAccuracy": 0.6171428571428571,
+              "referenceEpochs": 700,
+              "stageF1": {
+                "deep": 0.43333333333333335,
+                "light": 0.6838235294117647,
+                "rem": 0.6086956521739131,
+                "wake": 0.3902439024390244
+              },
+              "unknownReferenceEpochs": 0
+            },
+            "Bidslab56": {
+              "conditionalAccuracy": 0.5512679162072768,
+              "coveredReferenceEpochs": 907,
+              "macroF1": 0.4912301200316904,
+              "referenceAccuracy": 0.5512679162072768,
+              "referenceEpochs": 907,
+              "stageF1": {
+                "deep": 0.5863192182410424,
+                "light": 0.6064516129032258,
+                "rem": 0.47107438016528924,
+                "wake": 0.3010752688172043
+              },
+              "unknownReferenceEpochs": 0
+            },
+            "Bidslab64": {
+              "conditionalAccuracy": 0.5141176470588236,
+              "coveredReferenceEpochs": 850,
+              "macroF1": 0.526774881408502,
+              "referenceAccuracy": 0.5141176470588236,
+              "referenceEpochs": 850,
+              "stageF1": {
+                "deep": 0.7126436781609196,
+                "light": 0.5532407407407407,
+                "rem": 0.31264367816091954,
+                "wake": 0.5285714285714286
+              },
+              "unknownReferenceEpochs": 0
+            },
+            "Bidslab65": {
+              "conditionalAccuracy": 0.4200988467874794,
+              "coveredReferenceEpochs": 607,
+              "macroF1": 0.35710067791707667,
+              "referenceAccuracy": 0.4200988467874794,
+              "referenceEpochs": 607,
+              "stageF1": {
+                "deep": 0.5611510791366906,
+                "light": 0.5067114093959731,
+                "rem": 0.1297709923664122,
+                "wake": 0.23076923076923078
+              },
+              "unknownReferenceEpochs": 0
+            }
+          },
+          "referenceAccuracy": 0.5360602798708288,
+          "referenceEpochs": 26012,
+          "unknownReferenceEpochs": 0
+        }
+      },
+      "hierarchical-v1": {
+        "conditionalAccuracy": 0.5313701368599109,
+        "confusion": [
+          [
+            784,
+            1169,
+            286,
+            517,
+            204
+          ],
+          [
+            266,
+            7657,
+            1280,
+            2405,
+            517
+          ],
+          [
+            82,
+            2078,
+            2345,
+            290,
+            23
+          ],
+          [
+            151,
+            3512,
+            154,
+            3036,
+            126
+          ]
+        ],
+        "confusionColumns": [
+          "wake",
+          "light",
+          "deep",
+          "rem",
+          "unknown"
+        ],
+        "coveredReferenceEpochs": 26012,
+        "meanParticipantReferenceMacroF1": 0.462281935743168,
+        "meanParticipantStageF1": {
+          "deep": 0.4939370082683025,
+          "light": 0.5674748469291341,
+          "rem": 0.43782688184027746,
+          "wake": 0.3498890059349579
+        },
+        "nights": 30,
+        "participants": 30,
+        "participantsWithReference": 30,
+        "perParticipant": {
+          "Bidslab01": {
+            "conditionalAccuracy": 0.563953488372093,
+            "coveredReferenceEpochs": 860,
+            "macroF1": 0.4630641344414659,
+            "referenceAccuracy": 0.563953488372093,
+            "referenceEpochs": 860,
+            "stageF1": {
+              "deep": 0.1951219512195122,
+              "light": 0.684981684981685,
+              "rem": 0.43097643097643096,
+              "wake": 0.5411764705882353
+            },
+            "unknownReferenceEpochs": 0
+          },
+          "Bidslab02": {
+            "conditionalAccuracy": 0.4016110471806674,
+            "coveredReferenceEpochs": 869,
+            "macroF1": 0.30559894277853833,
+            "referenceAccuracy": 0.3428290766208251,
+            "referenceEpochs": 1018,
+            "stageF1": {
+              "deep": 0.3180428134556575,
+              "light": 0.44362969752520626,
+              "rem": 0.345679012345679,
+              "wake": 0.11504424778761062
+            },
+            "unknownReferenceEpochs": 149
+          },
+          "Bidslab06": {
+            "conditionalAccuracy": 0.5978391356542617,
+            "coveredReferenceEpochs": 833,
+            "macroF1": 0.5564848797696049,
+            "referenceAccuracy": 0.5978391356542617,
+            "referenceEpochs": 833,
+            "stageF1": {
+              "deep": 0.567741935483871,
+              "light": 0.6157965194109772,
+              "rem": 0.6391752577319587,
+              "wake": 0.4032258064516129
+            },
+            "unknownReferenceEpochs": 0
+          },
+          "Bidslab07": {
+            "conditionalAccuracy": 0.5722326454033771,
+            "coveredReferenceEpochs": 1066,
+            "macroF1": 0.5715964177218216,
+            "referenceAccuracy": 0.5722326454033771,
+            "referenceEpochs": 1066,
+            "stageF1": {
+              "deep": 0.7213114754098361,
+              "light": 0.6404886561954625,
+              "rem": 0.24336283185840707,
+              "wake": 0.6812227074235808
+            },
+            "unknownReferenceEpochs": 0
+          },
+          "Bidslab08": {
+            "conditionalAccuracy": 0.6301204819277109,
+            "coveredReferenceEpochs": 830,
+            "macroF1": 0.6214625829553297,
+            "referenceAccuracy": 0.6301204819277109,
+            "referenceEpochs": 830,
+            "stageF1": {
+              "deep": 0.7052631578947368,
+              "light": 0.6514575411913816,
+              "rem": 0.5223880597014925,
+              "wake": 0.6067415730337079
+            },
+            "unknownReferenceEpochs": 0
+          },
+          "Bidslab09": {
+            "conditionalAccuracy": 0.47533632286995514,
+            "coveredReferenceEpochs": 892,
+            "macroF1": 0.451129829764232,
+            "referenceAccuracy": 0.47533632286995514,
+            "referenceEpochs": 892,
+            "stageF1": {
+              "deep": 0.4852941176470588,
+              "light": 0.5619335347432024,
+              "rem": 0.22395833333333334,
+              "wake": 0.5333333333333333
+            },
+            "unknownReferenceEpochs": 0
+          },
+          "Bidslab10": {
+            "conditionalAccuracy": 0.5870841487279843,
+            "coveredReferenceEpochs": 1022,
+            "macroF1": 0.5327343821427047,
+            "referenceAccuracy": 0.5870841487279843,
+            "referenceEpochs": 1022,
+            "stageF1": {
+              "deep": 0.5704697986577181,
+              "light": 0.626362735381566,
+              "rem": 0.5687203791469194,
+              "wake": 0.36538461538461536
+            },
+            "unknownReferenceEpochs": 0
+          },
+          "Bidslab11": {
+            "conditionalAccuracy": 0.6888273314866112,
+            "coveredReferenceEpochs": 1083,
+            "macroF1": 0.6241792405221198,
+            "referenceAccuracy": 0.6888273314866112,
+            "referenceEpochs": 1083,
+            "stageF1": {
+              "deep": 0.7375565610859729,
+              "light": 0.6820175438596491,
+              "rem": 0.72,
+              "wake": 0.35714285714285715
+            },
+            "unknownReferenceEpochs": 0
+          },
+          "Bidslab14": {
+            "conditionalAccuracy": 0.6158878504672897,
+            "coveredReferenceEpochs": 1070,
+            "macroF1": 0.48363932363932366,
+            "referenceAccuracy": 0.61531279178338,
+            "referenceEpochs": 1071,
+            "stageF1": {
+              "deep": 0.45925925925925926,
+              "light": 0.7487179487179487,
+              "rem": 0.5447619047619048,
+              "wake": 0.18181818181818182
+            },
+            "unknownReferenceEpochs": 1
+          },
+          "Bidslab15": {
+            "conditionalAccuracy": 0.45588235294117646,
+            "coveredReferenceEpochs": 748,
+            "macroF1": 0.2966737960026551,
+            "referenceAccuracy": 0.45466666666666666,
+            "referenceEpochs": 750,
+            "stageF1": {
+              "deep": 0.0,
+              "light": 0.5932885906040268,
+              "rem": 0.4835164835164835,
+              "wake": 0.10989010989010989
+            },
+            "unknownReferenceEpochs": 2
+          },
+          "Bidslab16": {
+            "conditionalAccuracy": 0.4427390791027155,
+            "coveredReferenceEpochs": 847,
+            "macroF1": 0.43966967977247173,
+            "referenceAccuracy": 0.4427390791027155,
+            "referenceEpochs": 847,
+            "stageF1": {
+              "deep": 0.45394736842105265,
+              "light": 0.47706422018348627,
+              "rem": 0.2849162011173184,
+              "wake": 0.5427509293680297
+            },
+            "unknownReferenceEpochs": 0
+          },
+          "Bidslab18": {
+            "conditionalAccuracy": 0.5582089552238806,
+            "coveredReferenceEpochs": 670,
+            "macroF1": 0.5539801233740569,
+            "referenceAccuracy": 0.5187239944521498,
+            "referenceEpochs": 721,
+            "stageF1": {
+              "deep": 0.6225165562913907,
+              "light": 0.47191011235955055,
+              "rem": 0.5276073619631901,
+              "wake": 0.5938864628820961
+            },
+            "unknownReferenceEpochs": 51
+          },
+          "Bidslab22": {
+            "conditionalAccuracy": 0.5789473684210527,
+            "coveredReferenceEpochs": 608,
+            "macroF1": 0.5178731041696382,
+            "referenceAccuracy": 0.5761047463175123,
+            "referenceEpochs": 611,
+            "stageF1": {
+              "deep": 0.6666666666666666,
+              "light": 0.5536062378167641,
+              "rem": 0.7012195121951219,
+              "wake": 0.15
+            },
+            "unknownReferenceEpochs": 3
+          },
+          "Bidslab31": {
+            "conditionalAccuracy": 0.5776081424936387,
+            "coveredReferenceEpochs": 786,
+            "macroF1": 0.54165791347563,
+            "referenceAccuracy": 0.5761421319796954,
+            "referenceEpochs": 788,
+            "stageF1": {
+              "deep": 0.6441558441558441,
+              "light": 0.5678627145085804,
+              "rem": 0.5952380952380952,
+              "wake": 0.359375
+            },
+            "unknownReferenceEpochs": 2
+          },
+          "Bidslab32": {
+            "conditionalAccuracy": 0.6793032786885246,
+            "coveredReferenceEpochs": 976,
+            "macroF1": 0.5919460377767848,
+            "referenceAccuracy": 0.6779141104294478,
+            "referenceEpochs": 978,
+            "stageF1": {
+              "deep": 0.7841726618705036,
+              "light": 0.7484333034914951,
+              "rem": 0.5226781857451404,
+              "wake": 0.3125
+            },
+            "unknownReferenceEpochs": 2
+          },
+          "Bidslab34": {
+            "conditionalAccuracy": 0.6060606060606061,
+            "coveredReferenceEpochs": 792,
+            "macroF1": 0.2816156311163234,
+            "referenceAccuracy": 0.3592814371257485,
+            "referenceEpochs": 1336,
+            "stageF1": {
+              "deep": 0.0,
+              "light": 0.5616956850870553,
+              "rem": 0.0,
+              "wake": 0.5647668393782384
+            },
+            "unknownReferenceEpochs": 544
+          },
+          "Bidslab35": {
+            "conditionalAccuracy": 0.4817001180637544,
+            "coveredReferenceEpochs": 847,
+            "macroF1": 0.4964211028346577,
+            "referenceAccuracy": 0.4811320754716981,
+            "referenceEpochs": 848,
+            "stageF1": {
+              "deep": 0.5902777777777778,
+              "light": 0.4993757802746567,
+              "rem": 0.3858267716535433,
+              "wake": 0.5102040816326531
+            },
+            "unknownReferenceEpochs": 1
+          },
+          "Bidslab36": {
+            "conditionalAccuracy": 0.5200517464424321,
+            "coveredReferenceEpochs": 773,
+            "macroF1": 0.49662889775023716,
+            "referenceAccuracy": 0.5200517464424321,
+            "referenceEpochs": 773,
+            "stageF1": {
+              "deep": 0.5611510791366906,
+              "light": 0.5836575875486382,
+              "rem": 0.3851851851851852,
+              "wake": 0.45652173913043476
+            },
+            "unknownReferenceEpochs": 0
+          },
+          "Bidslab38": {
+            "conditionalAccuracy": 0.6273381294964029,
+            "coveredReferenceEpochs": 695,
+            "macroF1": 0.5583956722314533,
+            "referenceAccuracy": 0.6273381294964029,
+            "referenceEpochs": 695,
+            "stageF1": {
+              "deep": 0.5724381625441696,
+              "light": 0.6178343949044586,
+              "rem": 0.7099767981438515,
+              "wake": 0.3333333333333333
+            },
+            "unknownReferenceEpochs": 0
+          },
+          "Bidslab40": {
+            "conditionalAccuracy": 0.5045126353790613,
+            "coveredReferenceEpochs": 1108,
+            "macroF1": 0.44515406136672747,
+            "referenceAccuracy": 0.5045126353790613,
+            "referenceEpochs": 1108,
+            "stageF1": {
+              "deep": 0.44768856447688565,
+              "light": 0.5154419595314164,
+              "rem": 0.6047197640117994,
+              "wake": 0.2127659574468085
+            },
+            "unknownReferenceEpochs": 0
+          },
+          "Bidslab42": {
+            "conditionalAccuracy": 0.1909814323607427,
+            "coveredReferenceEpochs": 754,
+            "macroF1": 0.13757339684241301,
+            "referenceAccuracy": 0.17668711656441718,
+            "referenceEpochs": 815,
+            "stageF1": {
+              "deep": 0.12903225806451613,
+              "light": 0.10876132930513595,
+              "rem": 0.3125,
+              "wake": 0.0
+            },
+            "unknownReferenceEpochs": 61
+          },
+          "Bidslab43": {
+            "conditionalAccuracy": 0.5864077669902913,
+            "coveredReferenceEpochs": 1030,
+            "macroF1": 0.5258786670433055,
+            "referenceAccuracy": 0.5757864632983795,
+            "referenceEpochs": 1049,
+            "stageF1": {
+              "deep": 0.6746031746031746,
+              "light": 0.5285215366705471,
+              "rem": 0.6237942122186495,
+              "wake": 0.2765957446808511
+            },
+            "unknownReferenceEpochs": 19
+          },
+          "Bidslab44": {
+            "conditionalAccuracy": 0.43333333333333335,
+            "coveredReferenceEpochs": 1080,
+            "macroF1": 0.3510704033177052,
+            "referenceAccuracy": 0.43333333333333335,
+            "referenceEpochs": 1080,
+            "stageF1": {
+              "deep": 0.2521489971346705,
+              "light": 0.5545529122231337,
+              "rem": 0.2825112107623318,
+              "wake": 0.3150684931506849
+            },
+            "unknownReferenceEpochs": 0
+          },
+          "Bidslab47": {
+            "conditionalAccuracy": 0.4182795698924731,
+            "coveredReferenceEpochs": 930,
+            "macroF1": 0.3183949448427764,
+            "referenceAccuracy": 0.4178302900107411,
+            "referenceEpochs": 931,
+            "stageF1": {
+              "deep": 0.5542168674698795,
+              "light": 0.535819430814524,
+              "rem": 0.10191082802547771,
+              "wake": 0.08163265306122448
+            },
+            "unknownReferenceEpochs": 1
+          },
+          "Bidslab49": {
+            "conditionalAccuracy": 0.48095238095238096,
+            "coveredReferenceEpochs": 840,
+            "macroF1": 0.4225176514381587,
+            "referenceAccuracy": 0.48095238095238096,
+            "referenceEpochs": 840,
+            "stageF1": {
+              "deep": 0.36363636363636365,
+              "light": 0.5814207650273224,
+              "rem": 0.3450134770889488,
+              "wake": 0.4
+            },
+            "unknownReferenceEpochs": 0
+          },
+          "Bidslab51": {
+            "conditionalAccuracy": 0.5335463258785943,
+            "coveredReferenceEpochs": 939,
+            "macroF1": 0.4325264097486261,
+            "referenceAccuracy": 0.5229645093945721,
+            "referenceEpochs": 958,
+            "stageF1": {
+              "deep": 0.4479495268138801,
+              "light": 0.5991820040899796,
+              "rem": 0.5553145336225597,
+              "wake": 0.1276595744680851
+            },
+            "unknownReferenceEpochs": 19
+          },
+          "Bidslab53": {
+            "conditionalAccuracy": 0.61,
+            "coveredReferenceEpochs": 700,
+            "macroF1": 0.49925752951377894,
+            "referenceAccuracy": 0.61,
+            "referenceEpochs": 700,
+            "stageF1": {
+              "deep": 0.43333333333333335,
+              "light": 0.684596577017115,
+              "rem": 0.6006191950464397,
+              "wake": 0.27848101265822783
+            },
+            "unknownReferenceEpochs": 0
+          },
+          "Bidslab56": {
+            "conditionalAccuracy": 0.5369349503858876,
+            "coveredReferenceEpochs": 907,
+            "macroF1": 0.492651978879869,
+            "referenceAccuracy": 0.5369349503858876,
+            "referenceEpochs": 907,
+            "stageF1": {
+              "deep": 0.5863192182410424,
+              "light": 0.5773420479302832,
+              "rem": 0.46548323471400394,
+              "wake": 0.34146341463414637
+            },
+            "unknownReferenceEpochs": 0
+          },
+          "Bidslab64": {
+            "conditionalAccuracy": 0.4788235294117647,
+            "coveredReferenceEpochs": 850,
+            "macroF1": 0.5069639904250214,
+            "referenceAccuracy": 0.4788235294117647,
+            "referenceEpochs": 850,
+            "stageF1": {
+              "deep": 0.7126436781609196,
+              "light": 0.5151148730350665,
+              "rem": 0.2804123711340206,
+              "wake": 0.5196850393700787
+            },
+            "unknownReferenceEpochs": 0
+          },
+          "Bidslab65": {
+            "conditionalAccuracy": 0.41680395387149916,
+            "coveredReferenceEpochs": 607,
+            "macroF1": 0.3517173466376092,
+            "referenceAccuracy": 0.4067524115755627,
+            "referenceEpochs": 622,
+            "stageF1": {
+              "deep": 0.5611510791366906,
+              "light": 0.49337748344370863,
+              "rem": 0.12734082397003746,
+              "wake": 0.225
+            },
+            "unknownReferenceEpochs": 15
+          }
+        },
+        "referenceAccuracy": 0.5141730526002529,
+        "referenceEpochs": 26882,
+        "unknownReferenceEpochs": 870
+      },
+      "shipped": {
+        "conditionalAccuracy": 0.5328472583885128,
+        "confusion": [
+          [
+            927,
+            1393,
+            287,
+            353,
+            0
+          ],
+          [
+            530,
+            8088,
+            1349,
+            2158,
+            0
+          ],
+          [
+            140,
+            2074,
+            2365,
+            239,
+            0
+          ],
+          [
+            188,
+            3671,
+            176,
+            2944,
+            0
+          ]
+        ],
+        "confusionColumns": [
+          "wake",
+          "light",
+          "deep",
+          "rem",
+          "unknown"
+        ],
+        "coveredReferenceEpochs": 26882,
+        "meanParticipantReferenceMacroF1": 0.47598106600063356,
+        "meanParticipantStageF1": {
+          "deep": 0.49125655983818817,
+          "light": 0.576580360339233,
+          "rem": 0.4464019157752175,
+          "wake": 0.3896854280498956
+        },
+        "nights": 30,
+        "participants": 30,
+        "participantsWithReference": 30,
+        "perParticipant": {
+          "Bidslab01": {
+            "conditionalAccuracy": 0.5906976744186047,
+            "coveredReferenceEpochs": 860,
+            "macroF1": 0.4964163258361565,
+            "referenceAccuracy": 0.5906976744186047,
+            "referenceEpochs": 860,
+            "stageF1": {
+              "deep": 0.20242914979757085,
+              "light": 0.7010119595216191,
+              "rem": 0.5170068027210885,
+              "wake": 0.5652173913043478
+            },
+            "unknownReferenceEpochs": 0
+          },
+          "Bidslab02": {
+            "conditionalAccuracy": 0.3664047151277014,
+            "coveredReferenceEpochs": 1018,
+            "macroF1": 0.3247958462457064,
+            "referenceAccuracy": 0.3664047151277014,
+            "referenceEpochs": 1018,
+            "stageF1": {
+              "deep": 0.38235294117647056,
+              "light": 0.45746691871455575,
+              "rem": 0.3488372093023256,
+              "wake": 0.11052631578947368
+            },
+            "unknownReferenceEpochs": 0
+          },
+          "Bidslab06": {
+            "conditionalAccuracy": 0.6074429771908764,
+            "coveredReferenceEpochs": 833,
+            "macroF1": 0.5694520601217212,
+            "referenceAccuracy": 0.6074429771908764,
+            "referenceEpochs": 833,
+            "stageF1": {
+              "deep": 0.567741935483871,
+              "light": 0.6190476190476191,
+              "rem": 0.6624472573839663,
+              "wake": 0.42857142857142855
+            },
+            "unknownReferenceEpochs": 0
+          },
+          "Bidslab07": {
+            "conditionalAccuracy": 0.5806754221388368,
+            "coveredReferenceEpochs": 1066,
+            "macroF1": 0.568665784231254,
+            "referenceAccuracy": 0.5806754221388368,
+            "referenceEpochs": 1066,
+            "stageF1": {
+              "deep": 0.7213114754098361,
+              "light": 0.648228176318064,
+              "rem": 0.25471698113207547,
+              "wake": 0.6504065040650406
+            },
+            "unknownReferenceEpochs": 0
+          },
+          "Bidslab08": {
+            "conditionalAccuracy": 0.6457831325301204,
+            "coveredReferenceEpochs": 830,
+            "macroF1": 0.6390608044343941,
+            "referenceAccuracy": 0.6457831325301204,
+            "referenceEpochs": 830,
+            "stageF1": {
+              "deep": 0.7052631578947368,
+              "light": 0.6581632653061225,
+              "rem": 0.5721271393643031,
+              "wake": 0.6206896551724138
+            },
+            "unknownReferenceEpochs": 0
+          },
+          "Bidslab09": {
+            "conditionalAccuracy": 0.4798206278026906,
+            "coveredReferenceEpochs": 892,
+            "macroF1": 0.45763176694309843,
+            "referenceAccuracy": 0.4798206278026906,
+            "referenceEpochs": 892,
+            "stageF1": {
+              "deep": 0.4852941176470588,
+              "light": 0.562624254473161,
+              "rem": 0.21739130434782608,
+              "wake": 0.5652173913043478
+            },
+            "unknownReferenceEpochs": 0
+          },
+          "Bidslab10": {
+            "conditionalAccuracy": 0.487279843444227,
+            "coveredReferenceEpochs": 1022,
+            "macroF1": 0.4363065938702818,
+            "referenceAccuracy": 0.487279843444227,
+            "referenceEpochs": 1022,
+            "stageF1": {
+              "deep": 0.4709141274238227,
+              "light": 0.5464025026068822,
+              "rem": 0.45694200351493847,
+              "wake": 0.2709677419354839
+            },
+            "unknownReferenceEpochs": 0
+          },
+          "Bidslab11": {
+            "conditionalAccuracy": 0.6962142197599261,
+            "coveredReferenceEpochs": 1083,
+            "macroF1": 0.6368578460774544,
+            "referenceAccuracy": 0.6962142197599261,
+            "referenceEpochs": 1083,
+            "stageF1": {
+              "deep": 0.7387387387387387,
+              "light": 0.6943231441048034,
+              "rem": 0.7272727272727273,
+              "wake": 0.3870967741935484
+            },
+            "unknownReferenceEpochs": 0
+          },
+          "Bidslab14": {
+            "conditionalAccuracy": 0.6442577030812325,
+            "coveredReferenceEpochs": 1071,
+            "macroF1": 0.5268563993562777,
+            "referenceAccuracy": 0.6442577030812325,
+            "referenceEpochs": 1071,
+            "stageF1": {
+              "deep": 0.4575645756457565,
+              "light": 0.7481781376518218,
+              "rem": 0.623608017817372,
+              "wake": 0.27807486631016043
+            },
+            "unknownReferenceEpochs": 0
+          },
+          "Bidslab15": {
+            "conditionalAccuracy": 0.452,
+            "coveredReferenceEpochs": 750,
+            "macroF1": 0.30164071698408895,
+            "referenceAccuracy": 0.452,
+            "referenceEpochs": 750,
+            "stageF1": {
+              "deep": 0.0,
+              "light": 0.596537949400799,
+              "rem": 0.45045045045045046,
+              "wake": 0.1595744680851064
+            },
+            "unknownReferenceEpochs": 0
+          },
+          "Bidslab16": {
+            "conditionalAccuracy": 0.4462809917355372,
+            "coveredReferenceEpochs": 847,
+            "macroF1": 0.4493672643908889,
+            "referenceAccuracy": 0.4462809917355372,
+            "referenceEpochs": 847,
+            "stageF1": {
+              "deep": 0.4495114006514658,
+              "light": 0.4562334217506631,
+              "rem": 0.3063583815028902,
+              "wake": 0.5853658536585366
+            },
+            "unknownReferenceEpochs": 0
+          },
+          "Bidslab18": {
+            "conditionalAccuracy": 0.5325936199722607,
+            "coveredReferenceEpochs": 721,
+            "macroF1": 0.5502628835302191,
+            "referenceAccuracy": 0.5325936199722607,
+            "referenceEpochs": 721,
+            "stageF1": {
+              "deep": 0.6225165562913907,
+              "light": 0.4752475247524752,
+              "rem": 0.5100671140939598,
+              "wake": 0.5932203389830508
+            },
+            "unknownReferenceEpochs": 0
+          },
+          "Bidslab22": {
+            "conditionalAccuracy": 0.6202945990180033,
+            "coveredReferenceEpochs": 611,
+            "macroF1": 0.5611192997427046,
+            "referenceAccuracy": 0.6202945990180033,
+            "referenceEpochs": 611,
+            "stageF1": {
+              "deep": 0.6666666666666666,
+              "light": 0.6015325670498084,
+              "rem": 0.7873015873015873,
+              "wake": 0.1889763779527559
+            },
+            "unknownReferenceEpochs": 0
+          },
+          "Bidslab31": {
+            "conditionalAccuracy": 0.5799492385786802,
+            "coveredReferenceEpochs": 788,
+            "macroF1": 0.5486101883159112,
+            "referenceAccuracy": 0.5799492385786802,
+            "referenceEpochs": 788,
+            "stageF1": {
+              "deep": 0.6441558441558441,
+              "light": 0.5553869499241275,
+              "rem": 0.6377551020408163,
+              "wake": 0.35714285714285715
+            },
+            "unknownReferenceEpochs": 0
+          },
+          "Bidslab32": {
+            "conditionalAccuracy": 0.6595092024539877,
+            "coveredReferenceEpochs": 978,
+            "macroF1": 0.5987449961200746,
+            "referenceAccuracy": 0.6595092024539877,
+            "referenceEpochs": 978,
+            "stageF1": {
+              "deep": 0.7752442996742671,
+              "light": 0.7073643410852714,
+              "rem": 0.5506692160611855,
+              "wake": 0.3617021276595745
+            },
+            "unknownReferenceEpochs": 0
+          },
+          "Bidslab34": {
+            "conditionalAccuracy": 0.594311377245509,
+            "coveredReferenceEpochs": 1336,
+            "macroF1": 0.3265107998207317,
+            "referenceAccuracy": 0.594311377245509,
+            "referenceEpochs": 1336,
+            "stageF1": {
+              "deep": 0.0,
+              "light": 0.7295125870380289,
+              "rem": 0.0,
+              "wake": 0.576530612244898
+            },
+            "unknownReferenceEpochs": 0
+          },
+          "Bidslab35": {
+            "conditionalAccuracy": 0.4846698113207547,
+            "coveredReferenceEpochs": 848,
+            "macroF1": 0.5175093546150826,
+            "referenceAccuracy": 0.4846698113207547,
+            "referenceEpochs": 848,
+            "stageF1": {
+              "deep": 0.5902777777777778,
+              "light": 0.4975,
+              "rem": 0.3784860557768924,
+              "wake": 0.6037735849056604
+            },
+            "unknownReferenceEpochs": 0
+          },
+          "Bidslab36": {
+            "conditionalAccuracy": 0.5161707632600259,
+            "coveredReferenceEpochs": 773,
+            "macroF1": 0.48277013309986927,
+            "referenceAccuracy": 0.5161707632600259,
+            "referenceEpochs": 773,
+            "stageF1": {
+              "deep": 0.5611510791366906,
+              "light": 0.5802469135802469,
+              "rem": 0.3611111111111111,
+              "wake": 0.42857142857142855
+            },
+            "unknownReferenceEpochs": 0
+          },
+          "Bidslab38": {
+            "conditionalAccuracy": 0.6258992805755396,
+            "coveredReferenceEpochs": 695,
+            "macroF1": 0.5597689539177961,
+            "referenceAccuracy": 0.6258992805755396,
+            "referenceEpochs": 695,
+            "stageF1": {
+              "deep": 0.5724381625441696,
+              "light": 0.6212121212121212,
+              "rem": 0.705,
+              "wake": 0.3404255319148936
+            },
+            "unknownReferenceEpochs": 0
+          },
+          "Bidslab40": {
+            "conditionalAccuracy": 0.5288808664259927,
+            "coveredReferenceEpochs": 1108,
+            "macroF1": 0.4846670107372589,
+            "referenceAccuracy": 0.5288808664259927,
+            "referenceEpochs": 1108,
+            "stageF1": {
+              "deep": 0.44768856447688565,
+              "light": 0.5369978858350951,
+              "rem": 0.6274509803921569,
+              "wake": 0.32653061224489793
+            },
+            "unknownReferenceEpochs": 0
+          },
+          "Bidslab42": {
+            "conditionalAccuracy": 0.1950920245398773,
+            "coveredReferenceEpochs": 815,
+            "macroF1": 0.20029624869828921,
+            "referenceAccuracy": 0.1950920245398773,
+            "referenceEpochs": 815,
+            "stageF1": {
+              "deep": 0.12857142857142856,
+              "light": 0.11178247734138973,
+              "rem": 0.3130434782608696,
+              "wake": 0.24778761061946902
+            },
+            "unknownReferenceEpochs": 0
+          },
+          "Bidslab43": {
+            "conditionalAccuracy": 0.546234509056244,
+            "coveredReferenceEpochs": 1049,
+            "macroF1": 0.5195774196411255,
+            "referenceAccuracy": 0.546234509056244,
+            "referenceEpochs": 1049,
+            "stageF1": {
+              "deep": 0.6746031746031746,
+              "light": 0.5097588978185993,
+              "rem": 0.5235772357723577,
+              "wake": 0.37037037037037035
+            },
+            "unknownReferenceEpochs": 0
+          },
+          "Bidslab44": {
+            "conditionalAccuracy": 0.49537037037037035,
+            "coveredReferenceEpochs": 1080,
+            "macroF1": 0.3926837980802484,
+            "referenceAccuracy": 0.49537037037037035,
+            "referenceEpochs": 1080,
+            "stageF1": {
+              "deep": 0.2521489971346705,
+              "light": 0.6145510835913313,
+              "rem": 0.3806818181818182,
+              "wake": 0.32335329341317365
+            },
+            "unknownReferenceEpochs": 0
+          },
+          "Bidslab47": {
+            "conditionalAccuracy": 0.40601503759398494,
+            "coveredReferenceEpochs": 931,
+            "macroF1": 0.3071046541216216,
+            "referenceAccuracy": 0.40601503759398494,
+            "referenceEpochs": 931,
+            "stageF1": {
+              "deep": 0.5492537313432836,
+              "light": 0.5254901960784314,
+              "rem": 0.046357615894039736,
+              "wake": 0.1073170731707317
+            },
+            "unknownReferenceEpochs": 0
+          },
+          "Bidslab49": {
+            "conditionalAccuracy": 0.4738095238095238,
+            "coveredReferenceEpochs": 840,
+            "macroF1": 0.4120569700095551,
+            "referenceAccuracy": 0.4738095238095238,
+            "referenceEpochs": 840,
+            "stageF1": {
+              "deep": 0.32558139534883723,
+              "light": 0.5776330076004343,
+              "rem": 0.3450134770889488,
+              "wake": 0.4
+            },
+            "unknownReferenceEpochs": 0
+          },
+          "Bidslab51": {
+            "conditionalAccuracy": 0.558455114822547,
+            "coveredReferenceEpochs": 958,
+            "macroF1": 0.4974795875047259,
+            "referenceAccuracy": 0.558455114822547,
+            "referenceEpochs": 958,
+            "stageF1": {
+              "deep": 0.4528301886792453,
+              "light": 0.624750499001996,
+              "rem": 0.5714285714285714,
+              "wake": 0.3409090909090909
+            },
+            "unknownReferenceEpochs": 0
+          },
+          "Bidslab53": {
+            "conditionalAccuracy": 0.6171428571428571,
+            "coveredReferenceEpochs": 700,
+            "macroF1": 0.5290241043395089,
+            "referenceAccuracy": 0.6171428571428571,
+            "referenceEpochs": 700,
+            "stageF1": {
+              "deep": 0.43333333333333335,
+              "light": 0.6838235294117647,
+              "rem": 0.6086956521739131,
+              "wake": 0.3902439024390244
+            },
+            "unknownReferenceEpochs": 0
+          },
+          "Bidslab56": {
+            "conditionalAccuracy": 0.5512679162072768,
+            "coveredReferenceEpochs": 907,
+            "macroF1": 0.4912301200316904,
+            "referenceAccuracy": 0.5512679162072768,
+            "referenceEpochs": 907,
+            "stageF1": {
+              "deep": 0.5863192182410424,
+              "light": 0.6064516129032258,
+              "rem": 0.47107438016528924,
+              "wake": 0.3010752688172043
+            },
+            "unknownReferenceEpochs": 0
+          },
+          "Bidslab64": {
+            "conditionalAccuracy": 0.5141176470588236,
+            "coveredReferenceEpochs": 850,
+            "macroF1": 0.526774881408502,
+            "referenceAccuracy": 0.5141176470588236,
+            "referenceEpochs": 850,
+            "stageF1": {
+              "deep": 0.7126436781609196,
+              "light": 0.5532407407407407,
+              "rem": 0.31264367816091954,
+              "wake": 0.5285714285714286
+            },
+            "unknownReferenceEpochs": 0
+          },
+          "Bidslab65": {
+            "conditionalAccuracy": 0.41479099678456594,
+            "coveredReferenceEpochs": 622,
+            "macroF1": 0.3661891677927688,
+            "referenceAccuracy": 0.41479099678456594,
+            "referenceEpochs": 622,
+            "stageF1": {
+              "deep": 0.5611510791366906,
+              "light": 0.4967105263157895,
+              "rem": 0.12454212454212454,
+              "wake": 0.2823529411764706
+            },
+            "unknownReferenceEpochs": 0
+          }
+        },
+        "referenceAccuracy": 0.5328472583885128,
+        "referenceEpochs": 26882,
+        "unknownReferenceEpochs": 0
+      }
+    }
+  },
+  "manifestSHA256": {
+    "previous-holdout": "a95c7ae0ec114a0dfca593cbd269008e4c7cce2146c9cf4e03caf69ab1bb2334",
+    "previous-training": "b8c16d240eb140c7fa435c9b36b586afc9085d987030bef936f491e4c2117dca"
+  },
+  "meanParticipantMacroF1Delta": -0.013354733967708754,
+  "promotion": "not-promoted; fresh-participant and WHOOP-specific validation required",
+  "reference": "BIDSleep1.0.1 Apple Watch sensors; expert-reviewed Dreem2 labels, provided sleep windows, no RR.",
+  "scope": "Retrospective benchmark; both cohorts were previously examined. Not a fresh holdout, WHOOP validation or clinical confidence.",
+  "tunedOnTheseResults": false,
+  "unknownPolicy": "No HR1...300/nonzero finite gravity in 30s cell means unknown. Full-reference F1 counts unknown as false negatives; conditional metrics name their denominator.",
+  "version": "nroop-hierarchical-retrospective-v1"
+}
