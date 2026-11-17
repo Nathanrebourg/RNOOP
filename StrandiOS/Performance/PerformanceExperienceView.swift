@@ -25,6 +25,8 @@ struct PerformanceExperienceView: View {
     @State private var showSettings = false
     @State private var dataRevision = 0
     @State private var showDashboardEditor = false
+    @State private var showSleepPlanner = false
+    @State private var sleepGoalPercent = 100
     @State private var planWorkouts: [WorkoutRow] = []
     @State private var planReady = false
     @State private var stressTimeline: [DaytimeStress.HourPoint] = []
@@ -91,6 +93,9 @@ struct PerformanceExperienceView: View {
         .onReceive(repo.performanceSnapshotCache.$revision) { dataRevision = $0 }
         .sheet(isPresented: $showCalendar) { calendar }
         .sheet(isPresented: $showSettings) { NavigationStack { SettingsView() } }
+        .sheet(isPresented: $showSleepPlanner) {
+            if let snapshot = model.snapshot { sleepPlanner(snapshot) }
+        }
         .sheet(isPresented: $showDashboardEditor) {
             TodayCustomizationSheet(initialDestination: .yourCards, sectionOrderRaw: $sectionOrderRaw,
                 hiddenSectionsRaw: $hiddenSectionsRaw, keyMetricsRaw: $keyMetricsRaw,
@@ -260,7 +265,7 @@ struct PerformanceExperienceView: View {
         let wake = WindDownNudge.wakeMinutes(forWeekday: weekday)
         let need = snapshot.value("sleep_need_min").flatMap { $0.isFinite && $0 > 0 && $0 <= 1440 ? Int($0.rounded()) : nil }
         let bedtime = need.map { (wake - $0 + 1440) % 1440 }
-        return Button { router.openAlarms() } label: {
+        return Button { showSleepPlanner = true } label: {
             PerformancePanel {
                 VStack(alignment: .leading, spacing: NoopMetrics.space2) {
                     Label("Tonight’s sleep", systemImage: "moon").font(StrandFont.headline)
@@ -276,6 +281,41 @@ struct PerformanceExperienceView: View {
                 }
             }
         }.buttonStyle(.plain).foregroundStyle(StrandPalette.textPrimary)
+    }
+
+    private func sleepPlanner(_ snapshot: PerformanceSnapshot) -> some View {
+        let tomorrow = Calendar.current.date(byAdding: .day, value: 1, to: Date()) ?? Date()
+        let wake = WindDownNudge.wakeMinutes(forWeekday: Calendar.current.component(.weekday, from: tomorrow))
+        let need = snapshot.value("sleep_need_min").flatMap { $0.isFinite && $0 > 0 && $0 <= 1440 ? $0 : nil }
+        return NavigationStack {
+            Form {
+                Section("Sleep goal") {
+                    Picker("Sleep goal", selection: $sleepGoalPercent) {
+                        Text("70%").tag(70)
+                        Text("85%").tag(85)
+                        Text("100%").tag(100)
+                    }.pickerStyle(.segmented)
+                    if let need {
+                        let target = Int((need * Double(sleepGoalPercent) / 100).rounded())
+                        let bedtime = (wake - target + 1440) % 1440
+                        LabeledContent("Suggested bedtime", value: clockMinute(bedtime))
+                        LabeledContent("Usual wake", value: clockMinute(wake))
+                        LabeledContent("Sleep goal", value: PerformanceFormat.duration(Double(target)))
+                        Text("Based on your estimated sleep need and usual wake time. This does not set an alarm.")
+                            .font(StrandFont.footnote).foregroundStyle(StrandPalette.textSecondary)
+                    } else {
+                        Text("A sleep need is required to suggest a bedtime.")
+                    }
+                }
+                Section {
+                    Button("Open alarm settings") {
+                        showSleepPlanner = false
+                        router.openAlarms()
+                    }
+                }
+            }.navigationTitle("Tonight’s sleep")
+                .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { showSleepPlanner = false } } }
+        }
     }
 
     private func clockMinute(_ minute: Int) -> String {
@@ -385,6 +425,8 @@ struct PerformanceExperienceView: View {
                 VStack(spacing: 0) {
                     measure("sleep_total_min", snapshot, fallback: snapshot.daily?.totalSleepMin)
                     Divider()
+                    measure("hours_vs_needed_pct", snapshot)
+                    Divider()
                     measure("sleep_consistency", snapshot)
                     Divider()
                     measure("sleep_efficiency", snapshot, fallback: snapshot.daily?.efficiency.map { $0 <= 1 ? $0 * 100 : $0 })
@@ -397,6 +439,11 @@ struct PerformanceExperienceView: View {
             sleepDetail(snapshot)
             trendLink("sleep_total_min")
             trendLink("sleep_consistency")
+            NavigationLink { SleepClockStressLabView(repo: repo).modifier(PerformanceLegacyContextReset()) } label: {
+                Label("Experimental sleep stress research", systemImage: "waveform.path.ecg").font(StrandFont.subhead)
+            }
+            Text("Night activation is an unvalidated local research proxy, not an official WHOOP sleep stress score.")
+                .font(StrandFont.footnote).foregroundStyle(StrandPalette.textSecondary)
             NavigationLink(value: TabRoute.sleep) { Label("Detailed sleep tools", systemImage: "moon.zzz").font(StrandFont.subhead) }
         } else if context.domain == .recovery {
             PerformancePanel {
