@@ -615,14 +615,16 @@ struct PerformanceExperienceView: View {
     }
 
     private func healthContents(_ snapshot: PerformanceSnapshot) -> some View {
-        VStack(alignment: .leading, spacing: NoopMetrics.space4) {
+        let oxygen = PerformanceHomeData.importedOxygen(snapshot.series["spo2_imported"] ?? [], on: day)
+        let availableCount = snapshot.availableVitals.count + (oxygen == nil ? 0 : 1)
+        return VStack(alignment: .leading, spacing: NoopMetrics.space4) {
             Text("Health").font(StrandFont.title1)
             ageSummary(snapshot)
             stressMonitor(snapshot)
             Text("Health Monitor").font(StrandFont.headline)
             PerformancePanel {
                 VStack(alignment: .leading, spacing: NoopMetrics.space2) {
-                    Text("\(snapshot.availableVitals.count) available measurements").font(StrandFont.headline)
+                    Text("\(availableCount) available measurements").font(StrandFont.headline)
                     Text(snapshot.personalVitals.isEmpty ? String(localized: "Learning your personal reference") : String(localized: "\(snapshot.inPersonalRange) in your personal range"))
                         .font(StrandFont.subhead).foregroundStyle(StrandPalette.textSecondary)
                 }
@@ -638,6 +640,13 @@ struct PerformanceExperienceView: View {
                         }.buttonStyle(.plain)
                         Divider()
                     }
+                    NavigationLink(value: TabRoute.health) {
+                        PerformanceMeasureRow(title: String(localized: "Blood O₂"),
+                            value: PerformanceFormat.value("spo2", oxygen?.value),
+                            caption: oxygen == nil ? String(localized: "Not available via Bluetooth") :
+                                [String(localized: "Imported"), String(localized: "Not available via Bluetooth")].joined(separator: " · "),
+                            symbol: "drop")
+                    }.buttonStyle(.plain)
                 }
             }
             PerformanceCoachLink(context: context)

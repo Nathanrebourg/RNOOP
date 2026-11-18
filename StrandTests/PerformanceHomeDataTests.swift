@@ -35,4 +35,15 @@ final class PerformanceHomeDataTests: XCTestCase {
         XCTAssertEqual(latest?.value, 41)
         XCTAssertEqual(latest?.source, "apple")
     }
+
+    func testOxygenCanShowAnImportButNotAComputedOrFutureValue() {
+        let rows = [point("2026-11-15", 98, "my-whoop-noop"), point("2026-11-15", 97, "apple-health"),
+                    point("2026-11-16", 99, "apple-health")]
+        let selected = PerformanceHomeData.importedOxygen(rows, on: "2026-11-15")
+        XCTAssertEqual(selected?.source, "apple-health")
+        XCTAssertEqual(selected?.value, 97)
+        XCTAssertNil(PerformanceHomeData.importedOxygen([rows[0]], on: "2026-11-15"))
+        XCTAssertNil(PerformanceHomeData.importedOxygen([rows[2]], on: "2026-11-15"))
+        XCTAssertNil(PerformanceHomeData.importedOxygen([point("2026-11-15", 105, "apple-health")], on: "2026-11-15"))
+    }
 }

@@ -216,13 +216,22 @@ final class PerformanceSnapshotModel: ObservableObject {
         }
         if scope == .full {
             // Apple steps and VO₂ are not WHOOP-compatible candidates in the generic resolver.
-            for key in ["steps", "vo2max"] {
+            // For oxygen, keep imported readings separate from any computed candidate.
+            for key in ["steps", "vo2max", "spo2"] {
                 let from = key == "vo2max" ? "0000-01-01" : context.lowerBound
                 let apple = await repo.resolvedSeries(key: key, source: Repository.appleHealthSource,
                                                       from: from, to: context.day)
                 result.hadReadErrors = result.hadReadErrors || apple.hadReadErrors
-                result.series[key] = PerformanceHomeData.merged(result.series[key] ?? [], fallback: apple.points,
-                                                                  from: from, through: context.day)
+                let primary = result.series[key] ?? []
+                if key == "spo2" {
+                    let imported = primary.filter { PerformanceHomeData.importedOxygen([$0], on: $0.day) != nil }
+                    let appleImported = apple.points.filter { PerformanceHomeData.importedOxygen([$0], on: $0.day) != nil }
+                    result.series["spo2_imported"] = PerformanceHomeData.merged(imported, fallback: appleImported,
+                                                                                  from: from, through: context.day)
+                } else {
+                    result.series[key] = PerformanceHomeData.merged(primary, fallback: apple.points,
+                                                                    from: from, through: context.day)
+                }
             }
             if let store = await repo.storeHandle() {
                 do {

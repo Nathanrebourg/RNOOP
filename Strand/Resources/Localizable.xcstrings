@@ -1,6 +1,7 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "Not available via Bluetooth": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Not available via Bluetooth"}}, "fr": {"stringUnit": {"state": "translated", "value": "Non disponible via Bluetooth"}}}},
     "counts directly": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "counts directly"}}, "fr": {"stringUnit": {"state": "translated", "value": "compte directement"}}}},
     "step estimate": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "step estimate"}}, "fr": {"stringUnit": {"state": "translated", "value": "estime les pas"}}}},
     "best stager": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "best stager"}}, "fr": {"stringUnit": {"state": "translated", "value": "détaille les phases de sommeil"}}}},

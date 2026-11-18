@@ -104,6 +104,23 @@ final class PerformanceSnapshotTests: XCTestCase {
         XCTAssertLessThanOrEqual(snapshot.availableVitals.count, 5)
     }
 
+    func testImportedOxygenRemainsAvailableWhenAComputedCandidateExists() async throws {
+        let store = try await WhoopStore.inMemory()
+        let repo = Repository(deviceId: Repository.whoopSource)
+        repo.setStoreForTesting(store)
+        let day = "2026-11-15"
+        _ = try await store.upsertMetricSeries([.init(day: day, key: "spo2", value: 98)],
+                                               deviceId: Repository.whoopSource + "-noop")
+        _ = try await store.upsertMetricSeries([.init(day: day, key: "spo2", value: 97)],
+                                               deviceId: Repository.appleHealthSource)
+        let snapshot = await PerformanceSnapshotModel.capture(repo: repo,
+            context: PerformanceContext(day: day, domain: .health)!)
+        let imported = PerformanceHomeData.importedOxygen(snapshot.series["spo2_imported"] ?? [], on: day)
+        XCTAssertEqual(imported?.value, 97)
+        XCTAssertEqual(imported?.source, Repository.appleHealthSource)
+        XCTAssertFalse(snapshot.vitals.contains { $0.key == "spo2" || $0.key == "spo2raw" })
+    }
+
     func testSameDayAcrossScreensReusesSnapshotUntilRepositoryRefreshes() async throws {
         let store = try await WhoopStore.inMemory()
         let repo = Repository(deviceId: Repository.whoopSource)
