@@ -423,10 +423,11 @@ struct PerformanceExperienceView: View {
     private func dashboardMetricRow(_ card: DashboardCard, key: String, snapshot: PerformanceSnapshot) -> some View {
         let age = key == "fitness_age" || key == "vitality" ? agePoint(snapshot, key: key) : nil
         let vo2 = key == "vo2max" ? vo2Point(snapshot) : nil
+        let oxygen = key == "spo2" ? PerformanceHomeData.importedOxygen(snapshot.series["spo2_imported"] ?? [], on: day) : nil
         let formatKey = vo2?.sourceKey == "vo2max_est" ? "vo2max_est" : key
         let value = key == "stress" ? snapshot.stress :
             (key == "fitness_age" || key == "vitality" ? age?.value :
-                (key == "vo2max" ? vo2?.value : snapshot.value(key)))
+                (key == "vo2max" ? vo2?.value : (key == "spo2" ? oxygen?.value : snapshot.value(key))))
         let caption: String
         if key == "fitness_age" || key == "vitality" {
             caption = age.map { PerformanceFormat.date($0.day) } ?? String(localized: "Measurement unavailable")
@@ -435,12 +436,15 @@ struct PerformanceExperienceView: View {
                                          measuredDay: vo2?.day)
         } else if key == "active_kcal" {
             caption = measurementCaption(value, note: String(localized: "Estimate"))
+        } else if key == "spo2" {
+            caption = oxygen == nil ? String(localized: "Not available via Bluetooth") :
+                [String(localized: "Imported"), String(localized: "Not available via Bluetooth")].joined(separator: " · ")
         } else {
             caption = card.subtitle
         }
         let route: TabRoute
         switch key {
-        case "vo2max", "active_kcal": route = .health
+        case "vo2max", "active_kcal", "spo2": route = .health
         case "steps": route = .metricSourced(key: "steps", source: MetricCatalog.combinedStepsSource)
         default: route = .performance(PerformanceContext(day: day, domain: .trend, metric: key)!)
         }
