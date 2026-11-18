@@ -440,6 +440,8 @@ struct PerformanceExperienceView: View {
             caption = measurementCaption(value, note: String(localized: "Estimate"))
         } else if key == "steps" {
             caption = measurementCaption(value, note: steps?.sourceKey == "steps_est" ? String(localized: "Estimate") : nil)
+        } else if key == "resp_rate", snapshot.source(key)?.hasSuffix("-noop") == true {
+            caption = measurementCaption(value, note: String(localized: "Estimate"))
         } else if key == "spo2" {
             caption = oxygen == nil ? String(localized: "Not available via Bluetooth") :
                 [String(localized: "Imported"), String(localized: "Not available via Bluetooth")].joined(separator: " · ")
@@ -692,7 +694,11 @@ struct PerformanceExperienceView: View {
         let skinValue = skin.map { SkinTempDisplay.formatReading(.init(value: $0, kind: .deviation),
                                                                    fahrenheit: temperature == .fahrenheit) } ?? "—"
         // Apple Health respiratory samples are not necessarily nocturnal.
-        let respiratory = snapshot.source("resp_rate") == Repository.appleHealthSource ? nil : snapshot.value("resp_rate")
+        let respiratorySource = snapshot.source("resp_rate")
+        let respiratory = respiratorySource == Repository.appleHealthSource ? nil : snapshot.value("resp_rate")
+        let respiratoryNote = respiratorySource?.hasSuffix("-noop") == true
+            ? [String(localized: "Sleep"), String(localized: "Estimate")].joined(separator: " · ")
+            : String(localized: "Sleep")
         let steps = stepsPoint(snapshot)
         let energy = snapshot.value("active_kcal").flatMap { $0 >= 0 ? $0 : nil }
         let vo2 = vo2Point(snapshot)
@@ -707,7 +713,7 @@ struct PerformanceExperienceView: View {
                     Divider()
                     homeMeasurementRow(title: String(localized: "Respiratory Rate"),
                         value: PerformanceFormat.value("resp_rate", respiratory),
-                        caption: measurementCaption(respiratory, note: String(localized: "Sleep")), symbol: "lungs",
+                        caption: measurementCaption(respiratory, note: respiratoryNote), symbol: "lungs",
                         route: .performance(PerformanceContext(day: day, domain: .trend, metric: "resp_rate")!))
                     Divider()
                     homeMeasurementRow(title: String(localized: "VO₂ Max"), value: vo2Value(vo2?.value),
