@@ -236,6 +236,7 @@ struct PerformanceExperienceView: View {
                 VStack(spacing: NoopMetrics.space3) { healthMonitor(snapshot); stressMonitor(snapshot) }
             }
             ageSummary(snapshot)
+            homeMeasurements(snapshot)
             HStack { Text("My Day").font(StrandFont.title2); Spacer(); Button { router.requestQuickActions() } label: { Image(systemName: "plus").frame(width: PerformanceDesign.controlDiameter, height: PerformanceDesign.controlDiameter) }.accessibilityLabel("Quick actions") }
             PerformancePanel {
                 VStack(alignment: .leading, spacing: NoopMetrics.space2) {
@@ -362,13 +363,19 @@ struct PerformanceExperienceView: View {
                     ForEach(cards) { card in
                         if let key = dashboardMetric(card) {
                             let age = key == "fitness_age" || key == "vitality" ? agePoint(snapshot, key: key) : nil
+                            let vo2 = key == "vo2max" ? vo2Point(snapshot) : nil
+                            let formatKey = vo2?.sourceKey == "vo2max_est" ? "vo2max_est" : key
                             let value = key == "stress" ? snapshot.stress :
-                                (key == "fitness_age" || key == "vitality" ? age?.value : snapshot.value(key))
+                                (key == "fitness_age" || key == "vitality" ? age?.value :
+                                    (key == "vo2max" ? vo2?.value : snapshot.value(key)))
                             let caption = key == "fitness_age" || key == "vitality"
                                 ? (age.map { PerformanceFormat.date($0.day) } ?? String(localized: "Measurement unavailable"))
-                                : card.subtitle
-                            NavigationLink(value: TabRoute.performance(PerformanceContext(day: day, domain: .trend, metric: key)!)) {
-                                PerformanceMeasureRow(title: card.title, value: PerformanceFormat.value(key, value), caption: caption, symbol: card.icon)
+                                : (key == "vo2max" ? measurementCaption(vo2?.value,
+                                    note: formatKey == "vo2max_est" ? String(localized: "Estimate") : nil,
+                                    measuredDay: vo2?.day) : card.subtitle)
+                            let route: TabRoute = key == "vo2max" ? .health : .performance(PerformanceContext(day: day, domain: .trend, metric: key)!)
+                            NavigationLink(value: route) {
+                                PerformanceMeasureRow(title: card.title, value: key == "vo2max" ? vo2Value(value) : PerformanceFormat.value(formatKey, value), caption: caption, symbol: card.icon)
                             }.buttonStyle(.plain)
                             Divider()
                         }
@@ -611,6 +618,70 @@ struct PerformanceExperienceView: View {
 
     private func agePoint(_ snapshot: PerformanceSnapshot, key: String) -> ResolvedMetricPoint? {
         snapshot.series[key]?.last(where: { $0.day <= day })
+    }
+
+    private func homeMeasurements(_ snapshot: PerformanceSnapshot) -> some View {
+        let temperature = UnitPrefs.resolveTemperature(system: UnitSystem(rawValue: unitPreference) ?? .metric,
+                                                       override: temperaturePreference)
+        let skin = snapshot.value("skin_temp_delta")
+        let skinValue = skin.map { SkinTempDisplay.formatReading(.init(value: $0, kind: .deviation),
+                                                                   fahrenheit: temperature == .fahrenheit) } ?? "—"
+        // Apple Health respiratory samples are not necessarily nocturnal.
+        let respiratory = snapshot.source("resp_rate") == Repository.appleHealthSource ? nil : snapshot.value("resp_rate")
+        let steps = snapshot.value("steps").flatMap { $0 >= 0 ? $0 : nil }
+        let energy = snapshot.value("active_kcal").flatMap { $0 >= 0 ? $0 : nil }
+        let vo2 = vo2Point(snapshot)
+        let vo2Key = vo2?.sourceKey == "vo2max_est" ? "vo2max_est" : "vo2max"
+        return VStack(alignment: .leading, spacing: NoopMetrics.space3) {
+            Text("Key Metrics").font(StrandFont.headline)
+            PerformancePanel {
+                VStack(spacing: 0) {
+                    homeMeasurementRow(title: String(localized: "Skin Temperature"), value: skinValue,
+                        caption: measurementCaption(skin, note: String(localized: "vs baseline")), symbol: "thermometer",
+                        route: .performance(PerformanceContext(day: day, domain: .health)!))
+                    Divider()
+                    homeMeasurementRow(title: String(localized: "Respiratory Rate"),
+                        value: PerformanceFormat.value("resp_rate", respiratory),
+                        caption: measurementCaption(respiratory, note: String(localized: "Sleep")), symbol: "lungs",
+                        route: .performance(PerformanceContext(day: day, domain: .trend, metric: "resp_rate")!))
+                    Divider()
+                    homeMeasurementRow(title: String(localized: "VO₂ Max"), value: vo2Value(vo2?.value),
+                        caption: measurementCaption(vo2?.value, note: vo2Key == "vo2max_est" ? String(localized: "Estimate") : nil,
+                                                    measuredDay: vo2?.day), symbol: "figure.run", route: .health)
+                    Divider()
+                    homeMeasurementRow(title: String(localized: "Steps"), value: PerformanceFormat.value("steps", steps),
+                        caption: measurementCaption(steps), symbol: "figure.walk",
+                        route: .performance(PerformanceContext(day: day, domain: .trend, metric: "steps")!))
+                    Divider()
+                    homeMeasurementRow(title: String(localized: "Active Energy"), value: PerformanceFormat.value("active_kcal", energy),
+                        caption: measurementCaption(energy, note: String(localized: "Estimate")), symbol: "flame",
+                        route: .performance(PerformanceContext(day: day, domain: .trend, metric: "active_kcal")!))
+                }
+            }
+        }
+    }
+
+    private func measurementCaption(_ value: Double?, note: String? = nil, measuredDay: String? = nil) -> String {
+        guard value != nil else { return String(localized: "Measurement unavailable") }
+        return [note, PerformanceFormat.date(measuredDay ?? day)].compactMap { $0 }.joined(separator: " · ")
+    }
+
+    private func vo2Point(_ snapshot: PerformanceSnapshot) -> ResolvedMetricPoint? {
+        let points = PerformanceHomeData.merged(snapshot.series["vo2max"] ?? [],
+                                                fallback: snapshot.series["vo2max_est"] ?? [],
+                                                from: "0000-01-01", through: day)
+        return PerformanceHomeData.latest(points.filter { $0.value > 0 }, through: day)
+    }
+
+    private func vo2Value(_ value: Double?) -> String {
+        guard value != nil else { return "—" }
+        return PerformanceFormat.number(value, decimals: 1) + " mL/kg/min"
+    }
+
+    private func homeMeasurementRow(title: String, value: String, caption: String, symbol: String, route: TabRoute) -> some View {
+        NavigationLink(value: route) {
+            PerformanceMeasureRow(title: title, value: value, caption: caption, symbol: symbol)
+        }.buttonStyle(.plain)
     }
 
     private func activitiesContents(_ snapshot: PerformanceSnapshot) -> some View {

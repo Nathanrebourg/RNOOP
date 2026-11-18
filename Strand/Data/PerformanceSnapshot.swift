@@ -192,8 +192,8 @@ final class PerformanceSnapshotModel: ObservableObject {
     static let keys = ["sleep_performance", "sleep_consistency", "sleep_need_min", "sleep_debt_min",
                        "sleep_total_min", "sleep_efficiency", "hours_vs_needed_pct", "recovery", "strain",
                        "hrv", "rhr", "resp_rate", "steps", "steps_est", "hr_zones13_min",
-                       "hr_zones45_min", "strength_min", "stress", "skin_temp",
-                       "fitness_age", "body_age", "vitality", "vo2max"]
+                       "hr_zones45_min", "strength_min", "stress", "skin_temp", "active_kcal",
+                       "fitness_age", "body_age", "vitality", "vo2max", "vo2max_est"]
 
     static func capture(repo: Repository, context: PerformanceContext, scope: Scope = .full) async -> PerformanceSnapshot {
         var result = PerformanceSnapshot(context: context)
@@ -202,15 +202,51 @@ final class PerformanceSnapshotModel: ObservableObject {
             : keys + (context.metric.map { keys.contains($0) ? [] : [$0] } ?? [])
         for key in requestedKeys {
             if Task.isCancelled { return result }
+            // VO₂ readings can be much older than the seven-day dashboard window.
+            let from = scope == .full && (key == "vo2max" || key == "vo2max_est") ? "0000-01-01" : context.lowerBound
             let resolved = await repo.resolvedSeries(key: key, source: Repository.whoopSource,
-                                                     from: context.lowerBound, to: context.day)
+                                                     from: from, to: context.day)
             result.hadReadErrors = result.hadReadErrors || resolved.hadReadErrors
             result.series[key] = resolved.points.compactMap { point in
-                guard context.contains(point.day), let value = displayValue(point.value, key: key,
+                guard point.day >= from, point.day <= context.day, let value = displayValue(point.value, key: key,
                                                                            origin: point.origin, source: point.source) else { return nil }
                 return ResolvedMetricPoint(day: point.day, value: value, source: point.source,
                                            sourceKey: point.sourceKey, origin: point.origin)
             }
+        }
+        if scope == .full {
+            // Apple steps and VO₂ are not WHOOP-compatible candidates in the generic resolver.
+            for key in ["steps", "vo2max"] {
+                let from = key == "vo2max" ? "0000-01-01" : context.lowerBound
+                let apple = await repo.resolvedSeries(key: key, source: Repository.appleHealthSource,
+                                                      from: from, to: context.day)
+                result.hadReadErrors = result.hadReadErrors || apple.hadReadErrors
+                result.series[key] = PerformanceHomeData.merged(result.series[key] ?? [], fallback: apple.points,
+                                                                  from: from, through: context.day)
+            }
+            if let store = await repo.storeHandle() {
+                do {
+                    // Older imports can have daily aggregates without a corresponding metric series.
+                    let rows = try await store.appleDaily(deviceId: Repository.appleHealthSource,
+                                                          from: "0000-01-01", to: context.day)
+                    for key in ["steps", "active_kcal", "vo2max"] {
+                        let points = rows.compactMap { row -> ResolvedMetricPoint? in
+                            let value: Double?
+                            switch key {
+                            case "steps": value = row.steps.map(Double.init)
+                            case "active_kcal": value = row.activeKcal
+                            default: value = row.vo2max
+                            }
+                            guard let value else { return nil }
+                            return ResolvedMetricPoint(day: row.day, value: value, source: Repository.appleHealthSource,
+                                                       sourceKey: key, origin: .daily)
+                        }
+                        let from = key == "vo2max" ? "0000-01-01" : context.lowerBound
+                        result.series[key] = PerformanceHomeData.merged(result.series[key] ?? [], fallback: points,
+                                                                          from: from, through: context.day)
+                    }
+                } catch { result.hadReadErrors = true }
+            } else { result.hadReadErrors = true }
         }
         if Task.isCancelled { return result }
         let historicalDays = repo.days.filter { $0.day <= context.day }
@@ -278,6 +314,25 @@ final class PerformanceSnapshotModel: ObservableObject {
                 guard let value = PerformanceContext.finite(value) else { return nil }
                 return ResolvedMetricPoint(day: row.day, value: value, source: sources[row.day] ?? "local-cache", sourceKey: "skin_temp")
             }.sorted { $0.day < $1.day }
+        }
+        if scope == .full {
+            // The BLE pipeline already banks the nightly deviation; never reinterpret absolute °C as Δ°C.
+            var deviations: [String: ResolvedMetricPoint] = [:]
+            for row in sourceRows.sorted(by: { $0.source.vitalPriority < $1.source.vitalPriority }) {
+                guard context.contains(row.metric.day), deviations[row.metric.day] == nil,
+                      let value = PerformanceContext.finite(row.metric.skinTempDevC),
+                      !VitalBands.isAbsoluteSkinTemp(value) else { continue }
+                let source: String
+                switch row.source {
+                case .whoopImport: source = Repository.whoopSource
+                case .noopComputed: source = Repository.whoopSource + "-noop"
+                case .appleHealth: continue
+                case .localCache: source = "local-cache"
+                }
+                deviations[row.metric.day] = ResolvedMetricPoint(day: row.metric.day, value: value,
+                                                               source: source, sourceKey: "skin_temp")
+            }
+            result.series["skin_temp_delta"] = deviations.values.sorted { $0.day < $1.day }
         }
         // Noon in the local calendar avoids a UTC date drifting to the preceding logical day.
         if scope == .full, let localNoon = localNoon(context.day) {
