@@ -235,6 +235,7 @@ struct PerformanceExperienceView: View {
                 HStack(alignment: .top, spacing: NoopMetrics.space3) { healthMonitor(snapshot); stressMonitor(snapshot) }
                 VStack(spacing: NoopMetrics.space3) { healthMonitor(snapshot); stressMonitor(snapshot) }
             }
+            ageSummary(snapshot)
             HStack { Text("My Day").font(StrandFont.title2); Spacer(); Button { router.requestQuickActions() } label: { Image(systemName: "plus").frame(width: PerformanceDesign.controlDiameter, height: PerformanceDesign.controlDiameter) }.accessibilityLabel("Quick actions") }
             PerformancePanel {
                 VStack(alignment: .leading, spacing: NoopMetrics.space2) {
@@ -360,8 +361,14 @@ struct PerformanceExperienceView: View {
                 VStack(spacing: 0) {
                     ForEach(cards) { card in
                         if let key = dashboardMetric(card) {
+                            let age = key == "fitness_age" || key == "vitality" ? agePoint(snapshot, key: key) : nil
+                            let value = key == "stress" ? snapshot.stress :
+                                (key == "fitness_age" || key == "vitality" ? age?.value : snapshot.value(key))
+                            let caption = key == "fitness_age" || key == "vitality"
+                                ? (age.map { PerformanceFormat.date($0.day) } ?? String(localized: "Measurement unavailable"))
+                                : card.subtitle
                             NavigationLink(value: TabRoute.performance(PerformanceContext(day: day, domain: .trend, metric: key)!)) {
-                                PerformanceMeasureRow(title: card.title, value: PerformanceFormat.value(key, key == "stress" ? snapshot.stress : snapshot.value(key)), caption: card.subtitle, symbol: card.icon)
+                                PerformanceMeasureRow(title: card.title, value: PerformanceFormat.value(key, value), caption: caption, symbol: card.icon)
                             }.buttonStyle(.plain)
                             Divider()
                         }
@@ -591,7 +598,7 @@ struct PerformanceExperienceView: View {
                 Text("On-device approximations, not WHOOP scores. Pace of Aging is not available.")
                     .font(StrandFont.footnote).foregroundStyle(StrandPalette.textSecondary)
                 ForEach(["fitness_age", "body_age", "vitality"], id: \.self) { key in
-                    let point = snapshot.series[key]?.last(where: { $0.day <= day })
+                    let point = agePoint(snapshot, key: key)
                     NavigationLink(value: TabRoute.performance(PerformanceContext(day: day, domain: .trend, metric: key)!)) {
                         PerformanceMeasureRow(title: PerformanceFormat.title(key), value: PerformanceFormat.value(key, point?.value),
                                               caption: point.map { PerformanceFormat.date($0.day) } ?? String(localized: "Measurement unavailable"),
@@ -600,6 +607,10 @@ struct PerformanceExperienceView: View {
                 }
             }
         }
+    }
+
+    private func agePoint(_ snapshot: PerformanceSnapshot, key: String) -> ResolvedMetricPoint? {
+        snapshot.series[key]?.last(where: { $0.day <= day })
     }
 
     private func activitiesContents(_ snapshot: PerformanceSnapshot) -> some View {
