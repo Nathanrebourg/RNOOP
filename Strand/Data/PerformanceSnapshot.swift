@@ -192,7 +192,7 @@ final class PerformanceSnapshotModel: ObservableObject {
     static let keys = ["sleep_performance", "sleep_consistency", "sleep_need_min", "sleep_debt_min",
                        "sleep_total_min", "sleep_efficiency", "hours_vs_needed_pct", "recovery", "strain",
                        "hrv", "rhr", "resp_rate", "steps", "steps_est", "hr_zones13_min",
-                       "hr_zones45_min", "strength_min", "stress", "skin_temp", "active_kcal",
+                       "hr_zones45_min", "strength_min", "stress", "skin_temp", "spo2", "active_kcal",
                        "fitness_age", "body_age", "vitality", "vo2max", "vo2max_est"]
 
     static func capture(repo: Repository, context: PerformanceContext, scope: Scope = .full) async -> PerformanceSnapshot {

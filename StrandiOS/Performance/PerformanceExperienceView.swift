@@ -25,11 +25,16 @@ struct PerformanceExperienceView: View {
     @State private var showSettings = false
     @State private var dataRevision = 0
     @State private var showDashboardEditor = false
+    @State private var dashboardEditorDestination: TodayCustomizationDestination = .yourCards
+    @State private var showCoachLauncher = false
+    @State private var hydrationDisplay: String?
     @State private var showSleepPlanner = false
     @State private var sleepGoalPercent = 100
     @State private var planWorkouts: [WorkoutRow] = []
     @State private var planReady = false
     @State private var stressTimeline: [DaytimeStress.HourPoint] = []
+    @State private var stressActivityMaskedHours = 0
+    @AppStorage(HydrationStore.enabledKey) private var hydrationEnabled = false
     @AppStorage(WeeklyPlanGoals.sleepMinutesKey) private var planSleepMinutes = 480
     @AppStorage(WeeklyPlanGoals.sleepNightsKey) private var planSleepNights = 0
     @AppStorage(WeeklyPlanGoals.workoutDaysKey) private var planWorkoutDays = 0
@@ -97,17 +102,20 @@ struct PerformanceExperienceView: View {
             if let snapshot = model.snapshot { sleepPlanner(snapshot) }
         }
         .sheet(isPresented: $showDashboardEditor) {
-            TodayCustomizationSheet(initialDestination: .yourCards, sectionOrderRaw: $sectionOrderRaw,
+            TodayCustomizationSheet(initialDestination: dashboardEditorDestination, sectionOrderRaw: $sectionOrderRaw,
                 hiddenSectionsRaw: $hiddenSectionsRaw, keyMetricsRaw: $keyMetricsRaw,
                 keyMetricsDetailed: $keyMetricsDetailed, keyMetricsWindowDays: $keyMetricsWindowDays,
                 dashboardCardsRaw: $dashboardCardsRaw, hostedCardsRaw: $hostedCardsRaw)
         }
+        .sheet(isPresented: $showCoachLauncher) { CoachLauncherSheet() }
         .task(id: "stress|\(repo.deviceId)|\(repo.refreshSeq)|\(day)") {
             stressTimeline = []
+            stressActivityMaskedHours = 0
             guard day == today else { return }
             let result = await StressDayCurve.today(repo: repo, personalBaseline: PuffinExperiment.stressPersonalBaselineEnabled)
             guard !Task.isCancelled else { return }
             stressTimeline = result?.result.timeline ?? []
+            stressActivityMaskedHours = result?.result.activityMaskedHours ?? 0
         }
         .task(id: "\(repo.deviceId)|\(repo.refreshSeq)|\(today)") {
             planReady = false
@@ -115,6 +123,19 @@ struct PerformanceExperienceView: View {
             guard !Task.isCancelled else { return }
             planWorkouts = rows
             planReady = true
+        }
+        .task(id: "hydration|\(repo.deviceId)|\(repo.hydrationSeq)|\(hydrationEnabled)|\(profile.sex)|\(day)|\(dataRevision)|\(dashboardCardsRaw)") {
+            hydrationDisplay = nil
+            guard context.domain == .today, day == today, hydrationEnabled,
+                  DashboardCardPrefs.decodeEnabled(dashboardCardsRaw).contains(.hydration),
+                  let store = await repo.storeHandle() else { return }
+            do {
+                let manual = try await store.metricSeries(deviceId: HydrationStore.sourceId, key: HydrationStore.key, from: day, to: day)
+                let imported = try await store.metricSeries(deviceId: HydrationStore.sourceId, key: HydrationStore.importedKey, from: day, to: day)
+                let total = (manual.first?.value ?? 0) + (imported.first?.value ?? 0)
+                guard !Task.isCancelled, total.isFinite, total >= 0 else { return }
+                hydrationDisplay = HydrationGoal.cardValueString(totalML: total, goalML: repo.hydrationGoalML(profileSex: profile.sex))
+            } catch { hydrationDisplay = nil }
         }
     }
 
@@ -257,6 +278,11 @@ struct PerformanceExperienceView: View {
                 JournalReminderCard()
                 weeklyPlan
                 dashboard(snapshot)
+                PerformanceHostedCards(rawSelection: hostedCardsRaw, day: day, revision: dataRevision,
+                    stressTimeline: stressTimeline, stressActivityMaskedHours: stressActivityMaskedHours) {
+                    dashboardEditorDestination = .addedCards
+                    showDashboardEditor = true
+                }
             }
         }
     }
@@ -351,34 +377,21 @@ struct PerformanceExperienceView: View {
     }
 
     private func dashboard(_ snapshot: PerformanceSnapshot) -> some View {
-        let cards = DashboardCardPrefs.decodeEnabled(dashboardCardsRaw).filter { dashboardMetric($0) != nil }
+        let cards = DashboardCardPrefs.decodeEnabled(dashboardCardsRaw).filter { hydrationEnabled || $0 != .hydration }
         return VStack(alignment: .leading, spacing: NoopMetrics.space3) {
             HStack {
                 Text("My dashboard").font(StrandFont.headline)
                 Spacer()
-                Button("Customize") { showDashboardEditor = true }.font(StrandFont.caption)
+                Button("Customize") {
+                    dashboardEditorDestination = .yourCards
+                    showDashboardEditor = true
+                }.font(StrandFont.caption)
             }
             PerformancePanel {
                 VStack(spacing: 0) {
                     ForEach(cards) { card in
-                        if let key = dashboardMetric(card) {
-                            let age = key == "fitness_age" || key == "vitality" ? agePoint(snapshot, key: key) : nil
-                            let vo2 = key == "vo2max" ? vo2Point(snapshot) : nil
-                            let formatKey = vo2?.sourceKey == "vo2max_est" ? "vo2max_est" : key
-                            let value = key == "stress" ? snapshot.stress :
-                                (key == "fitness_age" || key == "vitality" ? age?.value :
-                                    (key == "vo2max" ? vo2?.value : snapshot.value(key)))
-                            let caption = key == "fitness_age" || key == "vitality"
-                                ? (age.map { PerformanceFormat.date($0.day) } ?? String(localized: "Measurement unavailable"))
-                                : (key == "vo2max" ? measurementCaption(vo2?.value,
-                                    note: formatKey == "vo2max_est" ? String(localized: "Estimate") : nil,
-                                    measuredDay: vo2?.day) : card.subtitle)
-                            let route: TabRoute = key == "vo2max" ? .health : .performance(PerformanceContext(day: day, domain: .trend, metric: key)!)
-                            NavigationLink(value: route) {
-                                PerformanceMeasureRow(title: card.title, value: key == "vo2max" ? vo2Value(value) : PerformanceFormat.value(formatKey, value), caption: caption, symbol: card.icon)
-                            }.buttonStyle(.plain)
-                            Divider()
-                        }
+                        dashboardCardRow(card, snapshot: snapshot)
+                        if card != cards.last { Divider() }
                     }
                     if cards.isEmpty { Text("Choose metrics to show here.").font(StrandFont.subhead) }
                 }
@@ -386,20 +399,55 @@ struct PerformanceExperienceView: View {
         }
     }
 
-    private func dashboardMetric(_ card: DashboardCard) -> String? {
-        switch card {
-        case .hrv: "hrv"
-        case .restingHr: "rhr"
-        case .respiratory: "resp_rate"
-        case .steps: "steps"
-        case .stress: "stress"
-        case .fitnessAge: "fitness_age"
-        case .vo2max: "vo2max"
-        case .vitality: "vitality"
-        case .skinTemp: "skin_temp"
-        case .sleep: "sleep_performance"
-        default: nil
+    @ViewBuilder private func dashboardCardRow(_ card: DashboardCard, snapshot: PerformanceSnapshot) -> some View {
+        switch PerformanceDashboardPolicy.destination(for: card) {
+        case .metric(let key):
+            dashboardMetricRow(card, key: key, snapshot: snapshot)
+        case .stepsAverage:
+            RollingStepsAverageCard(day: day)
+        case .hydration:
+            NavigationLink(value: TabRoute.hydration) {
+                PerformanceMeasureRow(title: card.title, value: hydrationDisplay ?? "—", caption: card.subtitle, symbol: card.icon)
+            }.buttonStyle(.plain)
+        case .coupled:
+            NavigationLink(value: TabRoute.coupled) {
+                PerformanceMeasureRow(title: card.title, value: "", caption: card.subtitle, symbol: card.icon)
+            }.buttonStyle(.plain)
+        case .coach:
+            Button { showCoachLauncher = true } label: {
+                PerformanceMeasureRow(title: card.title, value: "", caption: card.subtitle, symbol: card.icon)
+            }.buttonStyle(.plain)
         }
+    }
+
+    private func dashboardMetricRow(_ card: DashboardCard, key: String, snapshot: PerformanceSnapshot) -> some View {
+        let age = key == "fitness_age" || key == "vitality" ? agePoint(snapshot, key: key) : nil
+        let vo2 = key == "vo2max" ? vo2Point(snapshot) : nil
+        let formatKey = vo2?.sourceKey == "vo2max_est" ? "vo2max_est" : key
+        let value = key == "stress" ? snapshot.stress :
+            (key == "fitness_age" || key == "vitality" ? age?.value :
+                (key == "vo2max" ? vo2?.value : snapshot.value(key)))
+        let caption: String
+        if key == "fitness_age" || key == "vitality" {
+            caption = age.map { PerformanceFormat.date($0.day) } ?? String(localized: "Measurement unavailable")
+        } else if key == "vo2max" {
+            caption = measurementCaption(vo2?.value, note: formatKey == "vo2max_est" ? String(localized: "Estimate") : nil,
+                                         measuredDay: vo2?.day)
+        } else if key == "active_kcal" {
+            caption = measurementCaption(value, note: String(localized: "Estimate"))
+        } else {
+            caption = card.subtitle
+        }
+        let route: TabRoute
+        switch key {
+        case "vo2max", "active_kcal": route = .health
+        case "steps": route = .metricSourced(key: "steps", source: MetricCatalog.combinedStepsSource)
+        default: route = .performance(PerformanceContext(day: day, domain: .trend, metric: key)!)
+        }
+        return NavigationLink(value: route) {
+            PerformanceMeasureRow(title: card.title, value: key == "vo2max" ? vo2Value(value) : PerformanceFormat.value(formatKey, value),
+                                  caption: caption, symbol: card.icon)
+        }.buttonStyle(.plain)
     }
 
     private func healthMonitor(_ snapshot: PerformanceSnapshot) -> some View {
