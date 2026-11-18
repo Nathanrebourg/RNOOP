@@ -36,6 +36,16 @@ final class PerformanceHomeDataTests: XCTestCase {
         XCTAssertEqual(latest?.source, "apple")
     }
 
+    func testStepsPreferARealSameDayCountAndUseAnEstimateOnlyAsFallback() {
+        let day = "2026-11-15"
+        let measured = [point(day, 4300, "whoop")]
+        let estimated = [point(day, 4000, "estimate")]
+        XCTAssertEqual(PerformanceHomeData.dailySteps(measured: measured, estimated: estimated, on: day)?.value, 4300)
+        XCTAssertEqual(PerformanceHomeData.dailySteps(measured: [], estimated: estimated, on: day)?.value, 4000)
+        XCTAssertEqual(PerformanceHomeData.dailySteps(measured: [point(day, -1, "bad")], estimated: estimated, on: day)?.value, 4000)
+        XCTAssertNil(PerformanceHomeData.dailySteps(measured: [], estimated: estimated, on: "2026-11-16"))
+    }
+
     func testOxygenCanShowAnImportButNotAComputedOrFutureValue() {
         let rows = [point("2026-11-15", 98, "my-whoop-noop"), point("2026-11-15", 97, "apple-health"),
                     point("2026-11-16", 99, "apple-health")]

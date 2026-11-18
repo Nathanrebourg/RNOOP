@@ -423,11 +423,13 @@ struct PerformanceExperienceView: View {
     private func dashboardMetricRow(_ card: DashboardCard, key: String, snapshot: PerformanceSnapshot) -> some View {
         let age = key == "fitness_age" || key == "vitality" ? agePoint(snapshot, key: key) : nil
         let vo2 = key == "vo2max" ? vo2Point(snapshot) : nil
+        let steps = key == "steps" ? stepsPoint(snapshot) : nil
         let oxygen = key == "spo2" ? PerformanceHomeData.importedOxygen(snapshot.series["spo2_imported"] ?? [], on: day) : nil
         let formatKey = vo2?.sourceKey == "vo2max_est" ? "vo2max_est" : key
         let value = key == "stress" ? snapshot.stress :
             (key == "fitness_age" || key == "vitality" ? age?.value :
-                (key == "vo2max" ? vo2?.value : (key == "spo2" ? oxygen?.value : snapshot.value(key))))
+                (key == "vo2max" ? vo2?.value : (key == "steps" ? steps?.value :
+                    (key == "spo2" ? oxygen?.value : snapshot.value(key)))))
         let caption: String
         if key == "fitness_age" || key == "vitality" {
             caption = age.map { PerformanceFormat.date($0.day) } ?? String(localized: "Measurement unavailable")
@@ -436,6 +438,8 @@ struct PerformanceExperienceView: View {
                                          measuredDay: vo2?.day)
         } else if key == "active_kcal" {
             caption = measurementCaption(value, note: String(localized: "Estimate"))
+        } else if key == "steps" {
+            caption = measurementCaption(value, note: steps?.sourceKey == "steps_est" ? String(localized: "Estimate") : nil)
         } else if key == "spo2" {
             caption = oxygen == nil ? String(localized: "Not available via Bluetooth") :
                 [String(localized: "Imported"), String(localized: "Not available via Bluetooth")].joined(separator: " · ")
@@ -689,7 +693,7 @@ struct PerformanceExperienceView: View {
                                                                    fahrenheit: temperature == .fahrenheit) } ?? "—"
         // Apple Health respiratory samples are not necessarily nocturnal.
         let respiratory = snapshot.source("resp_rate") == Repository.appleHealthSource ? nil : snapshot.value("resp_rate")
-        let steps = snapshot.value("steps").flatMap { $0 >= 0 ? $0 : nil }
+        let steps = stepsPoint(snapshot)
         let energy = snapshot.value("active_kcal").flatMap { $0 >= 0 ? $0 : nil }
         let vo2 = vo2Point(snapshot)
         let vo2Key = vo2?.sourceKey == "vo2max_est" ? "vo2max_est" : "vo2max"
@@ -710,9 +714,9 @@ struct PerformanceExperienceView: View {
                         caption: measurementCaption(vo2?.value, note: vo2Key == "vo2max_est" ? String(localized: "Estimate") : nil,
                                                     measuredDay: vo2?.day), symbol: "figure.run", route: .health)
                     Divider()
-                    homeMeasurementRow(title: String(localized: "Steps"), value: PerformanceFormat.value("steps", steps),
-                        caption: measurementCaption(steps), symbol: "figure.walk",
-                        route: .performance(PerformanceContext(day: day, domain: .trend, metric: "steps")!))
+                    homeMeasurementRow(title: String(localized: "Steps"), value: PerformanceFormat.value("steps", steps?.value),
+                        caption: measurementCaption(steps?.value, note: steps?.sourceKey == "steps_est" ? String(localized: "Estimate") : nil),
+                        symbol: "figure.walk", route: .metricSourced(key: "steps", source: MetricCatalog.combinedStepsSource))
                     Divider()
                     homeMeasurementRow(title: String(localized: "Active Energy"), value: PerformanceFormat.value("active_kcal", energy),
                         caption: measurementCaption(energy, note: String(localized: "Estimate")), symbol: "flame",
@@ -732,6 +736,11 @@ struct PerformanceExperienceView: View {
                                                 fallback: snapshot.series["vo2max_est"] ?? [],
                                                 from: "0000-01-01", through: day)
         return PerformanceHomeData.latest(points.filter { $0.value > 0 }, through: day)
+    }
+
+    private func stepsPoint(_ snapshot: PerformanceSnapshot) -> ResolvedMetricPoint? {
+        PerformanceHomeData.dailySteps(measured: snapshot.series["steps"] ?? [],
+                                       estimated: snapshot.series["steps_est"] ?? [], on: day)
     }
 
     private func vo2Value(_ value: Double?) -> String {

@@ -14,6 +14,11 @@ enum PerformanceHomeData {
         points.filter { $0.day <= through && $0.value.isFinite }.max { $0.day < $1.day }
     }
 
+    static func dailySteps(measured: [ResolvedMetricPoint], estimated: [ResolvedMetricPoint],
+                           on day: String) -> ResolvedMetricPoint? {
+        (measured + estimated).first { $0.day == day && $0.value.isFinite && $0.value >= 0 }
+    }
+
     static func importedOxygen(_ points: [ResolvedMetricPoint], on day: String) -> ResolvedMetricPoint? {
         points.first { point in
             point.day == day && point.value.isFinite && (0...100).contains(point.value)
