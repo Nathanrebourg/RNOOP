@@ -508,6 +508,8 @@ struct PerformanceExperienceView: View {
                     measure("sleep_efficiency", snapshot, fallback: snapshot.daily?.efficiency.map { $0 <= 1 ? $0 * 100 : $0 })
                     Divider()
                     measure("sleep_need_min", snapshot)
+                    Divider()
+                    measure("sleep_debt_min", snapshot)
                 }
             }
             PerformanceFullHistoryLink(key: context.domain.metricKey)
@@ -643,12 +645,12 @@ struct PerformanceExperienceView: View {
                 SleepTimeEditor(bedTs: target.effectiveStartTs, wakeTs: target.endTs,
                                 coverage: min(target.startTs, target.effectiveStartTs)...target.endTs,
                                 onSave: { start, end in
-                    await repo.editSleepTimes(detectedStartTs: target.startTs, oldEndTs: target.endTs,
-                                              storedStagesJSON: target.stagesJSON, newStartTs: start, newEndTs: end)
-                    let age = max(0, Int(Date().timeIntervalSince1970) - min(end, target.endTs)) / 86_400
-                    await intelligence.analyzeRecent(maxDays: max(21, age + 2))
-                    await repo.refresh()
-                })
+                                    await repo.editSleepTimes(detectedStartTs: target.startTs, oldEndTs: target.endTs,
+                                                              storedStagesJSON: target.stagesJSON, newStartTs: start, newEndTs: end)
+                                    let age = max(0, Int(Date().timeIntervalSince1970) - min(end, target.endTs)) / 86_400
+                                    await intelligence.analyzeRecent(maxDays: max(21, age + 2))
+                                    await repo.refresh()
+                                })
             }
             ForEach(snapshot.sleepSessions.filter { !night.mainGroupStarts.contains($0.startTs) },
                     id: \.startTs) { nap in

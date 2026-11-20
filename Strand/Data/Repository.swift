@@ -1793,10 +1793,14 @@ final class Repository: ObservableObject {
         guard motionCovered || allowCardiacOnly else { return nil }
         let hr = (try? await store.hrSamples(deviceId: deviceId, from: lo, to: hi, limit: 200_000)) ?? []
         let rr = (try? await store.rrIntervals(deviceId: deviceId, from: lo, to: hi, limit: 200_000)) ?? []
-        if !motionCovered {
-            let valid = hr.filter { $0.ts >= start && $0.ts < end && (30...220).contains($0.bpm) }
-            let minutes = Set(valid.map { ($0.ts - start) / 60 })
-            guard valid.count >= 5, minutes.count >= max(2, (windowSeconds + 119) / 120) else { return nil }
+        if allowCardiacOnly {
+            let validHR = hr.filter { $0.ts >= start && $0.ts < end && (30...220).contains($0.bpm) }
+            let validRR = rr.filter { $0.ts >= start && $0.ts < end && (300...2_000).contains($0.rrMs) }
+            let hrMinutes = Set(validHR.map { ($0.ts - start) / 60 })
+            let rrMinutes = Set(validRR.map { ($0.ts - start) / 60 })
+            let minimumMinutes = min(max(1, (windowSeconds + 59) / 60), max(2, (windowSeconds + 119) / 120))
+            guard (validHR.count >= 5 && hrMinutes.count >= minimumMinutes)
+                || (validRR.count >= 5 && rrMinutes.count >= minimumMinutes) else { return nil }
         }
         // Same provenance refusal as the nightly scan (`IntelligenceEngine`): an Oura ring's respiration
         // rows are its own per-window RATE stored as instrumentation, not the ~1 Hz raw ADC waveform this
@@ -1869,6 +1873,7 @@ final class Repository: ObservableObject {
         let end = night.endTs
         let owners = rawPhysiologyReadIds(store: store)
         let families = Self.skinTempFamilies(store: store, ids: owners)
+        let activeWhoop5 = (try? await store.isWhoop5RRSource(deviceId: deviceId)) == true
         let session = SleepSession(start: start, end: end, efficiency: night.efficiency ?? 0,
                                    stages: [], restingHR: nil, avgHRV: nil)
         var rhr = night.userEdited ? nil : night.restingHr
@@ -1879,7 +1884,8 @@ final class Repository: ObservableObject {
             if Task.isCancelled { return nil }
             let hr = ((try? await store.hrSamples(deviceId: owner, from: start, to: end, limit: 100_000)) ?? [])
                 .filter { (30...220).contains($0.bpm) }
-            let rr = (try? await store.rrIntervals(deviceId: owner, from: start, to: end, limit: 200_000)) ?? []
+            let rr = (try? await store.rrIntervals(deviceId: owner, from: start, to: end, limit: 200_000,
+                                                  unlabelledAliasOfWhoop5: activeWhoop5 && owner == Self.whoopSource)) ?? []
             let skin = (try? await store.skinTempSamples(deviceId: owner, from: start, to: end, limit: 100_000)) ?? []
             let family = families[owner] ?? .whoop5
             let values = await Task.detached(priority: .utility) {
