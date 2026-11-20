@@ -14,15 +14,17 @@ struct PerformanceTrendView: View {
     @AppStorage(UnitPrefs.temperatureKey) private var temperaturePreference = ""
     @AppStorage(UnitPrefs.skinTempDisplayKey) private var skinPreference = ""
     @AppStorage(UnitPrefs.effortScaleKey) private var effortPreference = EffortScale.whoop.rawValue
+    @State private var metric: String
     @State private var window: Int
     @State private var selectedDate: Date?
     @State private var dataRevision = 0
     init(context: PerformanceContext) {
         initialContext = context
         _window = State(initialValue: context.windowDays)
+        _metric = State(initialValue: context.metric ?? "hrv")
     }
     private var context: PerformanceContext {
-        PerformanceContext(day: initialContext.day, domain: .trend, metric: initialContext.metric, windowDays: window)!
+        PerformanceContext(day: initialContext.day, domain: .trend, metric: metric, windowDays: window)!
     }
     private var key: String { context.metric ?? "hrv" }
     private var descriptor: MetricDescriptor? { PerformanceFormat.metric(key) }
@@ -58,12 +60,22 @@ struct PerformanceTrendView: View {
                 }
                 Text(PerformanceFormat.date(context.day)).font(StrandFont.caption).foregroundStyle(StrandPalette.textSecondary).frame(maxWidth: .infinity)
                 PerformancePanel {
-                    Label(PerformanceFormat.title(key), systemImage: descriptor?.icon ?? "chart.xyaxis.line").font(StrandFont.headline)
+                    Menu {
+                        ForEach(["sleep_performance", "recovery", "strain", "hrv", "rhr", "resp_rate", "stress", "sleep_consistency", "fitness_age", "body_age", "vitality"], id: \.self) { option in
+                            Button(PerformanceFormat.title(option)) { metric = option }
+                        }
+                    } label: {
+                        HStack {
+                            Label(PerformanceFormat.title(key), systemImage: descriptor?.icon ?? "chart.xyaxis.line").font(StrandFont.headline)
+                            Spacer()
+                            Image(systemName: "chevron.up.chevron.down")
+                        }
+                    }
                 }
                 Picker("Period", selection: $window) {
-                    Text("7 days").tag(7)
-                    Text("4 weeks").tag(28)
-                    Text("6 months").tag(180)
+                    Text("1W").tag(7)
+                    Text("1M").tag(28)
+                    Text("6M").tag(180)
                 }.pickerStyle(.segmented)
                 if let snapshot = model.snapshot, snapshot.context == context {
                     if snapshot.hadReadErrors {
@@ -98,6 +110,11 @@ struct PerformanceTrendView: View {
             PerformancePanel { Text("No measurements in this period.").font(StrandFont.body) }
         } else {
             Chart {
+                if let average {
+                    RuleMark(y: .value("Average", chartValue(average)))
+                        .foregroundStyle(StrandPalette.textSecondary.opacity(0.6))
+                        .lineStyle(StrokeStyle(lineWidth: 1, dash: [4, 4]))
+                }
                 ForEach(readings) { point in
                     LineMark(x: .value("Day", point.date), y: .value("Measurement", chartValue(point.value)),
                              series: .value("Recorded segment", String(point.segment)))

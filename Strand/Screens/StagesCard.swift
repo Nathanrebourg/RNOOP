@@ -85,7 +85,10 @@ struct StageDetailView: View {
                 let chartStyle = SleepChartStyle.resolve(sleepChartStyleRaw)
                 switch chartStyle {
                 case .classic:
-                    stageTimelineCard(s, subtitle: subtitle, intervals: intervals, night: night)
+                    NoopCard(tint: StrandPalette.restColor) {
+                        SleepStageTimeline(night: night, intervals: night.realSegments ?? [],
+                                           heartRate: nightHR, days: repo.days)
+                    }
                 case .filled, .garminFilled, .ribbon:
                     steppedHypnogramCard(s, subtitle: subtitle, intervals: intervals, style: chartStyle)
                 }
@@ -138,8 +141,8 @@ struct StageDetailView: View {
         }
         // WHOOP top-chart data (ryanAtriumAi #988): 1-min sleeping-HR buckets for THIS night, reloaded
         // only when the displayed night changes (same `.task(id:)` pattern the other per-night loads use).
-        .task(id: night.session.startTs) {
-            nightHR = await repo.hrBuckets(from: night.session.startTs,
+        .task(id: "\(night.session.effectiveStartTs)-\(night.session.endTs)-\(repo.refreshSeq)") {
+            nightHR = await repo.hrBuckets(from: night.session.effectiveStartTs,
                                            to: night.session.endTs,
                                            bucketSeconds: 60)
         }
@@ -734,4 +737,89 @@ struct StageDetailView: View {
         return String(localized: "\(m / 60)h \(m % 60)m")
     }
 
+}
+
+/// Timeline and nightly HR share the elapsed clock of the recorded stage intervals.
+struct SleepStageTimeline: View {
+    let night: Night
+    let intervals: [SleepInterval]
+    let heartRate: [HRBucket]
+    let days: [DailyMetric]
+    @State private var highlighted: SleepStage?
+
+    private static let clock: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.timeStyle = .short
+        return formatter
+    }()
+
+    var body: some View {
+        let stages: [SleepStage] = [.awake, .rem, .light, .deep]
+        let minutes = [night.stages.awake, night.stages.rem, night.stages.light, night.stages.deep]
+        let percentages = StagePercentages.wholePercentages(minutes)
+        VStack(alignment: .leading, spacing: NoopMetrics.space3) {
+            if let first = intervals.map(\.start).min(), let last = intervals.map(\.end).max(), last > first {
+                Hypnogram(intervals: intervals, height: PerformanceDesign.stageChartHeight,
+                          showsStageAxis: false, nightStart: night.onsetDate, showsTimeAxis: true,
+                          smoothingSeconds: 0, highlightedStage: highlighted)
+            }
+            let origin = intervals.map(\.start).min() ?? 0
+            let end = intervals.map(\.end).max() ?? Double(night.session.endTs - night.session.effectiveStartTs)
+            if end > origin, !heartRate.isEmpty {
+                SleepHRChart(nightHR: heartRate, intervals: intervals, origin: origin, span: end - origin,
+                             night: night, selectedStage: highlighted, timeFormatter: Self.clock)
+                    .frame(height: PerformanceDesign.stageChartHeight)
+            }
+            if let percentages {
+                ForEach(stages.indices, id: \.self) { index in
+                    let stage = stages[index]
+                    Button {
+                        highlighted = highlighted == stage ? nil : stage
+                    } label: {
+                        HStack {
+                            Circle().fill(StrandPalette.sleepStageColor(stage)).frame(width: 8, height: 8)
+                            Text(stage.label)
+                            Spacer()
+                            if let average = averageMinutes(stage) {
+                                Text("30-day avg. \(duration(average))")
+                                    .foregroundStyle(StrandPalette.textSecondary)
+                            }
+                            Text("\(duration(minutes[index])) · \(percentages[index])%")
+                                .monospacedDigit()
+                        }
+                        .font(StrandFont.footnote)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
+        .tint(PerformanceDesign.sleep)
+    }
+
+    private func duration(_ minutes: Double) -> String {
+        let rounded = Int(minutes.rounded())
+        return DateComponentsFormatter.localizedString(from: DateComponents(hour: rounded / 60, minute: rounded % 60),
+                                                        unitsStyle: .abbreviated) ?? "—"
+    }
+
+    private func averageMinutes(_ stage: SleepStage) -> Double? {
+        let wake = Date(timeIntervalSince1970: TimeInterval(night.session.endTs))
+        let day = Repository.localDayKey(wake)
+        guard let lower = Calendar.current.date(byAdding: .day, value: -30, to: wake) else { return nil }
+        let lowerDay = Repository.localDayKey(lower)
+        let values = days.filter { $0.day >= lowerDay && $0.day < day }.compactMap { row -> Double? in
+            switch stage {
+            case .deep: return row.deepMin
+            case .rem: return row.remMin
+            case .light: return row.lightMin
+            case .awake:
+                guard let deep = row.deepMin, let rem = row.remMin, let light = row.lightMin,
+                      let efficiency = row.efficiency, efficiency > 0 else { return nil }
+                let fraction = efficiency > 1 ? efficiency / 100 : efficiency
+                guard fraction <= 1 else { return nil }
+                return (deep + rem + light) * (1 - fraction) / fraction
+            }
+        }.filter { $0.isFinite && $0 >= 0 }
+        return values.isEmpty ? nil : values.reduce(0, +) / Double(values.count)
+    }
 }

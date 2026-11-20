@@ -27,6 +27,15 @@ final class SleepNapDebtTests: XCTestCase {
         XCTAssertEqual(SleepView.napSleepMinutes([night, nap]), 48, accuracy: 1e-9)
     }
 
+    func testUnstagedManualNapContributesEnteredDuration() {
+        let night = session(start: midnight, durationMin: 420, stages: #"{"light":300,"deep":120}"#)
+        let start = midnight + 14 * 60 * 60
+        let nap = CachedSleepSession(startTs: start, endTs: start + 1_800, efficiency: nil,
+                                     restingHr: nil, avgHrv: nil, stagesJSON: nil, userEdited: true)
+        XCTAssertEqual(SleepView.napSleepMinutes([night, nap]), 30)
+        XCTAssertNil(nap.stagesJSON)
+    }
+
     func testBridgedMainNightFragmentsAreNotDoubleCreditedAsNaps() {
         let firstStart = midnight - 60 * 60                 // 23:00
         let secondStart = midnight + 90 * 60                // 01:30, 30-minute gap

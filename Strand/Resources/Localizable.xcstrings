@@ -1,6 +1,14 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "Check that these times do not overlap a recorded sleep period and try again.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Check that these times do not overlap a recorded sleep period and try again."}}, "fr": {"stringUnit": {"state": "translated", "value": "Vérifie que ces horaires ne chevauchent aucune période de sommeil enregistrée, puis réessaie."}}}},
+    "Couldn’t add sleep": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Couldn’t add sleep"}}, "fr": {"stringUnit": {"state": "translated", "value": "Impossible d’ajouter le sommeil"}}}},
+    "Enter when your nap or night started and ended.": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Enter when your nap or night started and ended."}}, "fr": {"stringUnit": {"state": "translated", "value": "Indique quand ta sieste ou ta nuit a commencé et s’est terminée."}}}},
+    "30-day avg. %@": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "30-day avg. %@"}}, "fr": {"stringUnit": {"state": "translated", "value": "Moy. sur 30 j %@"}}}},
+    "Nap": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Nap"}}, "fr": {"stringUnit": {"state": "translated", "value": "Sieste"}}}},
+    "Manual entry": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Manual entry"}}, "fr": {"stringUnit": {"state": "translated", "value": "Saisie manuelle"}}}},
+    "Add sleep": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Add sleep"}}, "fr": {"stringUnit": {"state": "translated", "value": "Ajouter du sommeil"}}}},
+    "Not available via Bluetooth": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Not available via Bluetooth"}}, "fr": {"stringUnit": {"state": "translated", "value": "Non disponible via Bluetooth"}}}},
     "counts directly": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "counts directly"}}, "fr": {"stringUnit": {"state": "translated", "value": "compte directement"}}}},
     "step estimate": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "step estimate"}}, "fr": {"stringUnit": {"state": "translated", "value": "estime les pas"}}}},
     "best stager": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "best stager"}}, "fr": {"stringUnit": {"state": "translated", "value": "détaille les phases de sommeil"}}}},

@@ -183,6 +183,7 @@ struct SleepView: View {
                             .padding(.top, -24)
                             .staggeredAppear(index: 0)
                         alarmsEntry
+                        addSleepEntry
                         // #sleep-layout: the analytical cards render in the user's saved order minus the
                         // hidden set, below the pinned Rest hero. Reordered via the Arrange sheet.
                         ForEach(Array(sleepVisibleSections.enumerated()), id: \.element) { idx, section in
@@ -192,6 +193,7 @@ struct SleepView: View {
                 } else {
                     emptyState
                     alarmsEntry
+                    addSleepEntry
                 }
             }
             // LiquidScoreGauge owns its own count-up animation (same as Home heroes).
@@ -289,27 +291,19 @@ struct SleepView: View {
                     if let snapshot { presentSleepUndo(snapshot, displayStart: edit.bedTs, windowEnd: edit.wakeTs) }
                 })
             }
-            // Manually add a missed nap (#508): same picker, but the chosen window is staged from raw and
-            // stored as its OWN separate session — never folded into main sleep (which would mislabel the
-            // awake daytime gap as light sleep).
-            .sheet(isPresented: $showSleepCustomize) {
-                SleepCustomizationSheet(
-                    sectionOrderRaw: $sleepSectionOrderRaw,
-                    hiddenSectionsRaw: $sleepHiddenSectionsRaw
-                )
-            }
             .sheet(item: $addNap) { seed in
-                SleepTimeEditor(bedTs: seed.bedTs, wakeTs: seed.wakeTs,
-                                title: "Add a nap",
-                                blurb: "Pick when the nap started and ended. NOOP stages it from your data as its own session, separate from the night's sleep.",
-                                bedLabel: "Nap started", wakeLabel: "Nap ended") { startTs, endTs in
-                    await repo.addManualNap(startTs: startTs, endTs: endTs)
-                    // Re-score so the day's aggregates pick up the new session, exactly like an edit.
-                    await intelligence.analyzeRecent()
-                    await repo.refresh()
-                }
+                ManualSleepEntry(end: seed.wakeTs)
             }
         }
+    }
+
+    private var addSleepEntry: some View {
+        Button { addNap = AddNapSeed() } label: {
+            Label("Add sleep", systemImage: "plus.circle.fill")
+                .font(StrandFont.subhead)
+                .foregroundStyle(StrandPalette.restColor)
+        }
+        .buttonStyle(.plain)
     }
 
     /// A direct route to the one alarm screen, available even before a night is recorded.
@@ -695,7 +689,10 @@ struct SleepView: View {
                     subtitle: String(localized: "\(durationText(Double(session.endTs - session.startTs) / 60.0)) in bed"),
                     height: NoopMetrics.chartHeight,
                     tint: StrandPalette.restColor,
-                    chart: { noStagePlaceholder }
+                    chart: {
+                        if session.userEdited { Text("Manual entry").font(StrandFont.footnote) }
+                        else { noStagePlaceholder }
+                    }
                 )
                 napSection(stub)
             }
@@ -720,8 +717,9 @@ struct SleepView: View {
         let naps = night.sourceBlocks
             .filter { !groupStarts.contains($0.startTs) }
             .sorted { $0.effectiveStartTs < $1.effectiveStartTs }
-        let mainMin = night.stages.total
-        let napMin = naps.reduce(0.0) { $0 + Double($1.endTs - $1.effectiveStartTs) / 60.0 }
+        let mainMin = night.sourceBlocks.filter { groupStarts.contains($0.startTs) }
+            .reduce(0.0) { $0 + SleepView.creditedMinutes($1) }
+        let napMin = naps.reduce(0.0) { $0 + SleepView.creditedMinutes($1) }
         NoopCard(padding: NoopMetrics.cardInnerPadding, tint: StrandPalette.restColor) {
             VStack(alignment: .leading, spacing: NoopMetrics.cardInnerSpacing) {
                 HStack {
@@ -793,8 +791,10 @@ struct SleepView: View {
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 1) {
                 Text(napWindowText(nap)).font(StrandFont.body).foregroundStyle(StrandPalette.textPrimary)
-                Text(durationText(Double(nap.endTs - nap.effectiveStartTs) / 60.0))
-                    .strandOverline()
+                Text(durationText(SleepView.creditedMinutes(nap))).strandOverline()
+                if nap.userEdited && nap.stagesJSON == nil {
+                    Text("Manual entry").strandOverline()
+                }
             }
             Spacer(minLength: 8)
             // C1 — "why this is a nap" explainer: the nap-row nudge that everything other than the chosen
@@ -866,7 +866,10 @@ struct SleepView: View {
                 let chartStyle = SleepChartStyle.resolve(sleepChartStyleRaw)
                 switch chartStyle {
                 case .classic:
-                    stageTimelineCard(s, subtitle: subtitle, intervals: intervals, night: night)
+                    NoopCard(tint: StrandPalette.restColor) {
+                        SleepStageTimeline(night: night, intervals: night.realSegments ?? [],
+                                           heartRate: nightHR, days: repo.days)
+                    }
                 case .filled, .garminFilled, .ribbon:
                     steppedHypnogramCard(s, subtitle: subtitle, intervals: intervals, night: night,
                                          style: chartStyle)
@@ -924,8 +927,8 @@ struct SleepView: View {
         }
         // WHOOP top-chart data (ryanAtriumAi #988): 1-min sleeping-HR buckets for THIS night, reloaded
         // only when the displayed night changes (same `.task(id:)` pattern the other per-night loads use).
-        .task(id: night.session.startTs) {
-            nightHR = await repo.hrBuckets(from: night.session.startTs,
+        .task(id: "\(night.session.effectiveStartTs)-\(night.session.endTs)-\(repo.refreshSeq)") {
+            nightHR = await repo.hrBuckets(from: night.session.effectiveStartTs,
                                            to: night.session.endTs,
                                            bucketSeconds: 60)
         }
@@ -1852,11 +1855,16 @@ struct SleepView: View {
         return idx.map { sessions[$0] }.sorted { $0.effectiveStartTs < $1.effectiveStartTs }
     }
 
+    static func creditedMinutes(_ session: CachedSleepSession) -> Double {
+        if session.userEdited && session.stagesJSON == nil {
+            return Double(max(0, session.endTs - session.effectiveStartTs)) / 60
+        }
+        return decodedAsleepMinutes(session.stagesJSON, effectiveStartTs: session.effectiveStartTs)
+    }
+
     /// Actual asleep minutes in blocks outside a day's canonical main-night group. The Repository's
     /// all-session union has already removed cross-namespace duplicates; this helper only applies the
-    /// same main-vs-nap classification the hero uses and decodes persisted stages. A stage-less nap
-    /// contributes nothing rather than substituting its in-bed window. Mirrors Android
-    /// `napSleepMinutesByDay`.
+    /// same main-vs-nap classification the hero uses. Unstaged manual entries credit the confirmed span.
     static func napSleepMinutes(_ sessions: [CachedSleepSession],
                                 habitualMidsleepSec: Int? = nil) -> Double {
         let mainStarts = Set(mainNightGroup(sessions, habitualMidsleepSec: habitualMidsleepSec)
@@ -1864,7 +1872,7 @@ struct SleepView: View {
         return sessions
             .filter { !mainStarts.contains($0.startTs) }
             .reduce(0) { total, nap in
-                total + decodedAsleepMinutes(nap.stagesJSON, effectiveStartTs: nap.effectiveStartTs)
+                total + creditedMinutes(nap)
             }
     }
 
@@ -2006,7 +2014,8 @@ struct SleepView: View {
         guard let main = mainNightSession(blocks, habitualMidsleepSec: habitualMidsleepSec) ?? blocks.first
         else { return nil }
         return CachedSleepSession(startTs: main.effectiveStartTs, endTs: main.endTs,
-                                  efficiency: nil, restingHr: nil, avgHrv: nil, stagesJSON: nil)
+                                  efficiency: nil, restingHr: nil, avgHrv: nil, stagesJSON: nil,
+                                  userEdited: main.userEdited && main.stagesJSON == nil)
     }
 
     /// Header above the hypnogram with ◀/▶ to browse past nights. ◀ goes older (increasing offset),
@@ -2706,26 +2715,44 @@ private struct WakeEdit: Identifiable {
     var id: Int { detectedStartTs }
 }
 
-/// Seeds the "Add nap" picker (#508). A nap is short, so seed a 30-minute window anchored to the night's
-/// wake (a natural place to look for a missed afternoon nap), clamped to never start before the night's
-/// onset. The identity is the seed start so `.sheet(item:)` presents once per request.
 private struct AddNapSeed: Identifiable {
-    let bedTs: Int
     let wakeTs: Int
-    var id: Int { bedTs }
-    init(forNight night: Night) {
-        // Anchor an hour after the night's wake; a 30-min default window the user adjusts.
-        let anchor = night.session.endTs + 3_600
-        self.bedTs = anchor
-        self.wakeTs = anchor + 30 * 60
+    var id: Int { wakeTs }
+
+    init(forNight night: Night? = nil) {
+        let now = Int(Date().timeIntervalSince1970)
+        wakeTs = min(now, night.map { $0.session.endTs + 5_400 } ?? now)
+    }
+}
+
+struct ManualSleepEntry: View {
+    @EnvironmentObject private var repo: Repository
+    @EnvironmentObject private var intelligence: IntelligenceEngine
+
+    var end = Int(Date().timeIntervalSince1970)
+
+    var body: some View {
+        SleepTimeEditor(bedTs: end - 1_800, wakeTs: end,
+                        title: "Add sleep",
+                        blurb: "Enter when your nap or night started and ended.",
+                        bedLabel: "Start", wakeLabel: "End",
+                        saveEntry: { start, end in
+                            guard await repo.addManualNap(startTs: start, endTs: end) else { return false }
+                            let age = max(0, Int(Date().timeIntervalSince1970) - end) / 86_400
+                            await intelligence.analyzeRecent(maxDays: max(21, age + 2))
+                            await repo.refresh()
+                            return true
+                        })
     }
 }
 
 /// A small sheet to hand-correct a night's bed (onset) and wake (end) instants. Seeds both pickers with
 /// the current values, including each calendar date. Hands the chosen unix-second (bed, wake) back via
 /// `onSave`. Pure presentation + a single async save — persistence lives in the repo.
-private struct SleepTimeEditor: View {
+struct SleepTimeEditor: View {
     let onSave: (Int, Int) async -> Void
+    let saveEntry: ((Int, Int) async -> Bool)?
+    @State private var entryFailed = false
     /// Optional destructive delete (#68). Non-nil for an existing main-sleep / nap edit (the editor then
     /// shows a "Delete this sleep" button gated behind a confirmation); nil for the "Add a nap" sheet,
     /// which has nothing to delete yet.
@@ -2769,9 +2796,11 @@ private struct SleepTimeEditor: View {
          deleteLabel: LocalizedStringKey = "Delete this sleep",
          coverage: ClosedRange<Int>? = nil,
          suppressesReDetection: Bool = true,
-         onSave: @escaping (Int, Int) async -> Void,
-         onDelete: (() async -> Void)? = nil) {
+         onSave: @escaping (Int, Int) async -> Void = { _, _ in },
+         onDelete: (() async -> Void)? = nil,
+         saveEntry: ((Int, Int) async -> Bool)? = nil) {
         self.onSave = onSave
+        self.saveEntry = saveEntry
         self.onDelete = onDelete
         self.title = title; self.blurb = blurb
         self.bedLabel = bedLabel; self.wakeLabel = wakeLabel
@@ -2798,7 +2827,15 @@ private struct SleepTimeEditor: View {
     private func commit(start: Int, end: Int) {
         saving = true
         Task {
-            await onSave(start, end)
+            if let saveEntry {
+                guard await saveEntry(start, end) else {
+                    saving = false
+                    entryFailed = true
+                    return
+                }
+            } else {
+                await onSave(start, end)
+            }
             dismiss()
         }
     }
@@ -2871,6 +2908,11 @@ private struct SleepTimeEditor: View {
             }
         }
         .padding(NoopMetrics.screenPadding)
+        .alert("Couldn’t add sleep", isPresented: $entryFailed) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text("Check that these times do not overlap a recorded sleep period and try again.")
+        }
         .frame(minWidth: 360)
         .background(NoopChromeSurface())
         // #940 guard 1: a time-only roll that lands the bed in the future, or at/after the night's

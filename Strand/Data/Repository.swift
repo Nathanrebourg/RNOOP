@@ -1600,8 +1600,10 @@ final class Repository: ObservableObject {
         // a sync has imported this window , the latter then self-heals on the next post-sync
         // `analyzeRecent` (see `selfHealEditedStages`), which re-derives the real stages once raw lands.
         let stagesJSON = await restageFromRaw(start: safeStartTs, end: safeEndTs)
-            ?? SleepWindowReclip.reclip(stagesJSON: storedStagesJSON, sessionStart: detectedStartTs,
+            ?? storedStagesJSON.flatMap {
+                SleepWindowReclip.reclip(stagesJSON: $0, sessionStart: detectedStartTs,
                                         oldEnd: oldEndTs, newStart: safeStartTs, newEnd: safeEndTs)
+            }
         // Apply to the source that actually OWNS this block, resolved against every namespace the Sleep
         // tab can display (computed precedence preserved by ordering). Stop at the first source that
         // matched, so a coincidental same-startTs row in another namespace never takes a second edit —
@@ -1751,49 +1753,27 @@ final class Repository: ObservableObject {
                                                            from: dismissedSleepSpans)
     }
 
-    /// Manually ADD a missed sleep session , typically a daytime NAP the detector didn't pick up (#508).
-    /// Stages it from the raw streams over `[startTs, endTs]` (exactly the editing path's `restageFromRaw`),
-    /// falling back to a single "awake" block when the strap has no dense data there yet , the post-sync
-    /// self-heal then swaps in real stages once the raw lands. Written under the COMPUTED source as its OWN
-    /// separate session row with `userEdited = 1`, so the recompute overlap guard preserves it and it is
-    /// NEVER folded into the night's main sleep (which would mislabel awake daytime as light sleep). Purely
-    /// additive , `insertManualSleepSession` no-ops if a session already exists at that exact onset.
-    func addManualNap(startTs: Int, endTs: Int) async {
-        // #940 belt-and-braces (same rule as editSleepTimes): a manually-added session can't end in
-        // the future or invert; a future nap would otherwise own the tab's newest day as an
-        // all-awake phantom exactly like the bad edit did. The clamped end is used verbatim.
+    /// Stores confirmed sleep bounds even when the wearable cannot stage the interval.
+    @discardableResult
+    func addManualNap(startTs: Int, endTs: Int) async -> Bool {
         guard let store = await ensureStore(),
               let window = SleepEditGuard.clampedEditWindow(
-                  start: startTs, end: endTs, now: Int(Date().timeIntervalSince1970)) else { return }
-        let (safeStartTs, safeEndTs) = window
-        // Stage from raw over the chosen window; fall back to a single awake block when the strap has no
-        // dense data there yet (the self-heal re-stages once raw arrives). A nap's efficiency is the asleep
-        // fraction of the staged window; nil for the fallback (no real stages yet).
-        let stagesJSON = await restageFromRaw(start: safeStartTs, end: safeEndTs)
-            ?? AnalyticsEngine.encodeStages([StageSegment(start: safeStartTs, end: safeEndTs, stage: "wake")])
-        let efficiency = sleepEfficiency(fromStagesJSON: stagesJSON)
-        _ = try? await store.insertManualSleepSession(
-            deviceId: computedDeviceId, startTs: safeStartTs, endTs: safeEndTs,
-            efficiency: efficiency, stagesJSON: stagesJSON)
+                  start: startTs, end: endTs, now: Int(Date().timeIntervalSince1970)) else { return false }
+        let (start, end) = window
+        let owner = computedDeviceId
+        let stages = await restageFromRaw(start: start, end: end, allowCardiacOnly: true)
+        guard owner == computedDeviceId else { return false }
+        let existing = await allSleepSessions(days: max(3, (Int(Date().timeIntervalSince1970) - start) / 86_400 + 3))
+        guard owner == computedDeviceId,
+              !existing.contains(where: { $0.effectiveStartTs < end && start < $0.endTs }) else { return false }
+        let minutes = SleepStageTotals.minutes(fromStagesJSON: stages)
+        let efficiency = minutes.map { $0.asleep / $0.inBed }
+        let inserted = (try? await store.insertManualSleepSession(
+            deviceId: owner, startTs: start, endTs: end,
+            efficiency: efficiency, stagesJSON: stages)) ?? 0
+        guard inserted > 0 else { return false }
         await refresh()
-    }
-
-    /// Asleep fraction (light+deep+rem ÷ total in-bed) of a segment-array `stagesJSON`, or nil when the
-    /// JSON is the fallback awake-only block / unparseable. Used to seed a manually-added nap's efficiency
-    /// so its hypnogram footer reads sensibly before the next recompute re-derives it. (#508)
-    private func sleepEfficiency(fromStagesJSON json: String?) -> Double? {
-        guard let json, let data = json.data(using: .utf8),
-              let arr = (try? JSONSerialization.jsonObject(with: data)) as? [[String: Any]] else { return nil }
-        var asleep = 0.0, total = 0.0
-        for seg in arr {
-            guard let s = (seg["start"] as? NSNumber)?.intValue,
-                  let e = (seg["end"] as? NSNumber)?.intValue,
-                  let stage = seg["stage"] as? String, e > s else { continue }
-            let dur = Double(e - s)
-            total += dur
-            if stage != "wake" && stage != "awake" { asleep += dur }
-        }
-        return total > 0 && asleep > 0 ? asleep / total : nil
+        return true
     }
 
     /// Re-derive stages from the raw streams for `[start, end]` (read under the strap `deviceId`),
@@ -1803,15 +1783,25 @@ final class Repository: ObservableObject {
     /// Extracted from `editSleepTimes` so the post-sync self-heal reuses the exact density gate +
     /// staging. Stages OFF the main actor , Repository is `@MainActor` and a multi-hour window is tens of
     /// thousands of samples, which would otherwise freeze the UI.
-    private func restageFromRaw(start: Int, end: Int) async -> String? {
+    private func restageFromRaw(start: Int, end: Int, allowCardiacOnly: Bool = false) async -> String? {
         guard let store = await ensureStore() else { return nil }
         let lo = start - 3_600, hi = end + 3_600
         let grav = (try? await store.gravitySamples(deviceId: deviceId, from: lo, to: hi, limit: 200_000)) ?? []
         let inWindowGravity = grav.lazy.filter { $0.ts >= start && $0.ts <= end }.count
         let windowSeconds = max(1, end - start)
-        guard inWindowGravity >= max(20, windowSeconds / 120) else { return nil }
+        let motionCovered = inWindowGravity >= max(20, windowSeconds / 120)
+        guard motionCovered || allowCardiacOnly else { return nil }
         let hr = (try? await store.hrSamples(deviceId: deviceId, from: lo, to: hi, limit: 200_000)) ?? []
         let rr = (try? await store.rrIntervals(deviceId: deviceId, from: lo, to: hi, limit: 200_000)) ?? []
+        if allowCardiacOnly {
+            let validHR = hr.filter { $0.ts >= start && $0.ts < end && (30...220).contains($0.bpm) }
+            let validRR = rr.filter { $0.ts >= start && $0.ts < end && (300...2_000).contains($0.rrMs) }
+            let hrMinutes = Set(validHR.map { ($0.ts - start) / 60 })
+            let rrMinutes = Set(validRR.map { ($0.ts - start) / 60 })
+            let minimumMinutes = min(max(1, (windowSeconds + 59) / 60), max(2, (windowSeconds + 119) / 120))
+            guard (validHR.count >= 5 && hrMinutes.count >= minimumMinutes)
+                || (validRR.count >= 5 && rrMinutes.count >= minimumMinutes) else { return nil }
+        }
         // Same provenance refusal as the nightly scan (`IntelligenceEngine`): an Oura ring's respiration
         // rows are its own per-window RATE stored as instrumentation, not the ~1 Hz raw ADC waveform this
         // stager reads, so they never reach a re-stage either. See `OuraRespScale.forScoring`.
@@ -1832,7 +1822,7 @@ final class Repository: ObservableObject {
         // (V7 Pillar 3b)
         let useV2 = PuffinExperiment.experimentalSleepV2Enabled
         let segs = await Task.detached(priority: .utility) {
-            let staged = useV2
+            let staged = (useV2 || !motionCovered)
                 ? SleepStagerV2.stageSession(start: start, end: end, grav: grav, hr: hr, rr: rr, resp: resp)
                 : SleepStager.stageSession(start: start, end: end, grav: grav, hr: hr, rr: rr, resp: resp)
             // #364 follow-up: motion-aware wake refinement post-pass, same toggle-shaped no-op when off
@@ -1865,7 +1855,8 @@ final class Repository: ObservableObject {
         for row in edited {
             // Re-derive over the LOCKED corrected window (effective onset → wake). Skip when the raw
             // isn't dense yet, or when the result already matches what's stored (steady state , no write).
-            guard let newJSON = await restageFromRaw(start: row.effectiveStartTs, end: row.endTs),
+            guard let newJSON = await restageFromRaw(start: row.effectiveStartTs, end: row.endTs,
+                                                        allowCardiacOnly: row.stagesJSON == nil),
                   newJSON != row.stagesJSON else { continue }
             let n = (try? await store.updateSleepStages(deviceId: computedDeviceId,
                                                         detectedStartTs: row.startTs,
@@ -1873,6 +1864,46 @@ final class Repository: ObservableObject {
             if n > 0 { healed = true }
         }
         return healed ? await editedRows() : edited
+    }
+
+    /// Fills missing dashboard vitals from the selected main sleep window.
+    func performanceNightVitals(_ night: CachedSleepSession, day: String) async -> DailyMetric? {
+        guard let store = await ensureStore() else { return nil }
+        let start = night.effectiveStartTs
+        let end = night.endTs
+        let owners = rawPhysiologyReadIds(store: store)
+        let families = Self.skinTempFamilies(store: store, ids: owners)
+        let activeWhoop5 = (try? await store.isWhoop5RRSource(deviceId: deviceId)) == true
+        let session = SleepSession(start: start, end: end, efficiency: night.efficiency ?? 0,
+                                   stages: [], restingHR: nil, avgHRV: nil)
+        var rhr = night.userEdited ? nil : night.restingHr
+        var hrv = night.userEdited ? nil : night.avgHrv
+        var respiratory: Double?
+        var temperature: Double?
+        for owner in owners {
+            if Task.isCancelled { return nil }
+            let hr = ((try? await store.hrSamples(deviceId: owner, from: start, to: end, limit: 100_000)) ?? [])
+                .filter { (30...220).contains($0.bpm) }
+            let rr = (try? await store.rrIntervals(deviceId: owner, from: start, to: end, limit: 200_000,
+                                                  unlabelledAliasOfWhoop5: activeWhoop5 && owner == Self.whoopSource)) ?? []
+            let skin = (try? await store.skinTempSamples(deviceId: owner, from: start, to: end, limit: 100_000)) ?? []
+            let family = families[owner] ?? .whoop5
+            let values = await Task.detached(priority: .utility) {
+                (SleepStager.sessionRestingHR(start: start, end: end, hr: hr),
+                 SleepStager.sessionAvgHRV(start: start, end: end, rr: rr),
+                 SleepStager.respRateFromRR(rr, start: start, end: end),
+                 AnalyticsEngine.wornNightlySkinTempC([session], hr: hr, skinTemp: skin, family: family))
+            }.value
+            rhr = rhr ?? values.0
+            hrv = hrv ?? values.1
+            if respiratory == nil && values.2.isFinite { respiratory = values.2 }
+            temperature = temperature ?? values.3
+            if rhr != nil && hrv != nil && respiratory != nil && temperature != nil { break }
+        }
+        return DailyMetric(day: day, totalSleepMin: nil, efficiency: nil, deepMin: nil, remMin: nil,
+                           lightMin: nil, disturbances: nil, restingHr: rhr, avgHrv: hrv,
+                           recovery: nil, strain: nil, exerciseCount: nil,
+                           respRateBpm: respiratory, skinTempC: temperature)
     }
 
     // MARK: - Metric explorer reads (generic substrate)
