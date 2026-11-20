@@ -10,6 +10,7 @@ struct PerformanceExperienceView: View {
     let initialContext: PerformanceContext
     var isRoot = false
     @EnvironmentObject private var repo: Repository
+    @EnvironmentObject private var intelligence: IntelligenceEngine
     @EnvironmentObject private var profile: ProfileStore
     @EnvironmentObject private var live: LiveState
     @EnvironmentObject private var router: NavRouter
@@ -28,6 +29,9 @@ struct PerformanceExperienceView: View {
     @State private var dashboardEditorDestination: TodayCustomizationDestination = .yourCards
     @State private var showCoachLauncher = false
     @State private var hydrationDisplay: String?
+    @State private var showManualSleep = false
+    @State private var editingSleep: SleepEditSelection?
+    @State private var nightHeartRate: [HRBucket] = []
     @State private var showSleepPlanner = false
     @State private var sleepGoalPercent = 100
     @State private var planWorkouts: [WorkoutRow] = []
@@ -508,6 +512,14 @@ struct PerformanceExperienceView: View {
             }
             PerformanceFullHistoryLink(key: context.domain.metricKey)
             PerformanceCoachLink(context: context)
+            Button { showManualSleep = true } label: {
+                Label("Add sleep", systemImage: "plus.circle")
+                    .foregroundStyle(PerformanceDesign.sleep)
+            }
+            .sheet(isPresented: $showManualSleep) {
+                ManualSleepEntry(end: min(Int(Date().timeIntervalSince1970),
+                    Int((PerformanceSnapshotModel.localNoon(day) ?? Date()).timeIntervalSince1970)))
+            }
             sleepDetail(snapshot)
             trendLink("sleep_total_min")
             trendLink("sleep_consistency")
@@ -592,13 +604,66 @@ struct PerformanceExperienceView: View {
         }.buttonStyle(.plain)
     }
 
+    private struct SleepEditSelection: Identifiable {
+        let session: CachedSleepSession
+        var id: Int { session.startTs }
+    }
+
     @ViewBuilder private func sleepDetail(_ snapshot: PerformanceSnapshot) -> some View {
         if let night = snapshot.night {
-            Text("My night").font(StrandFont.title2).padding(.top, NoopMetrics.space2)
+            HStack {
+                Text("My night").font(StrandFont.title2)
+                Spacer()
+                if let target = night.editTarget {
+                    Button { editingSleep = SleepEditSelection(session: target) } label: {
+                        Label("Edit sleep times", systemImage: "pencil")
+                    }
+                    .font(StrandFont.subhead)
+                    .foregroundStyle(PerformanceDesign.sleep)
+                }
+            }
             PerformancePanel {
-                StageDetailView(night: night, intervals: night.intervals)
+                VStack(alignment: .leading, spacing: NoopMetrics.space3) {
+                    Text("\(night.onsetText) – \(night.wakeText)").font(StrandFont.subhead)
+                    if night.session.userEdited && night.session.stagesJSON == nil {
+                        Text("Manual entry").font(StrandFont.footnote)
+                    }
+                    SleepStageTimeline(night: night, intervals: night.realSegments ?? [],
+                                       heartRate: nightHeartRate, days: repo.days)
+                }
+            }
+            .task(id: "\(night.session.effectiveStartTs)-\(night.session.endTs)-\(repo.refreshSeq)") {
+                nightHeartRate = []
+                let readings = await repo.hrBuckets(from: night.session.effectiveStartTs,
+                                                     to: night.session.endTs, bucketSeconds: 60)
+                if !Task.isCancelled { nightHeartRate = readings }
+            }
+            .sheet(item: $editingSleep) { selection in
+                let target = selection.session
+                SleepTimeEditor(bedTs: target.effectiveStartTs, wakeTs: target.endTs,
+                                coverage: min(target.startTs, target.effectiveStartTs)...target.endTs,
+                                onSave: { start, end in
+                    await repo.editSleepTimes(detectedStartTs: target.startTs, oldEndTs: target.endTs,
+                                              storedStagesJSON: target.stagesJSON, newStartTs: start, newEndTs: end)
+                    let age = max(0, Int(Date().timeIntervalSince1970) - min(end, target.endTs)) / 86_400
+                    await intelligence.analyzeRecent(maxDays: max(21, age + 2))
+                    await repo.refresh()
+                })
+            }
+            ForEach(snapshot.sleepSessions.filter { !night.mainGroupStarts.contains($0.startTs) },
+                    id: \.startTs) { nap in
+                PerformancePanel { napMeasure(nap) }
             }
         }
+    }
+
+    private func napMeasure(_ nap: CachedSleepSession) -> some View {
+        let window = "\(PerformanceFormat.clock(nap.effectiveStartTs)) – \(PerformanceFormat.clock(nap.endTs))"
+        let caption = nap.userEdited && nap.stagesJSON == nil
+            ? [window, String(localized: "Manual entry")].joined(separator: " · ") : window
+        return PerformanceMeasureRow(title: String(localized: "Nap"),
+                                     value: PerformanceFormat.duration(SleepView.creditedMinutes(nap)),
+                                     caption: caption, symbol: "powersleep")
     }
 
     private func activityList(_ snapshot: PerformanceSnapshot, includeSleep: Bool) -> some View {
@@ -607,9 +672,18 @@ struct PerformanceExperienceView: View {
                 Text("Today’s Activities").font(StrandFont.overline)
                 if includeSleep, let night = snapshot.night {
                     NavigationLink(value: TabRoute.performance(PerformanceContext(day: day, domain: .sleep)!)) {
-                        PerformanceMeasureRow(title: String(localized: "Sleep"), value: PerformanceFormat.duration(night.stages.asleep),
+                        PerformanceMeasureRow(title: String(localized: "Sleep"), value: PerformanceFormat.duration(night.stages.asleep > 0
+                                                  ? night.stages.asleep : SleepView.creditedMinutes(night.session)),
                                               caption: "\(PerformanceFormat.clock(night.session.effectiveStartTs)) – \(PerformanceFormat.clock(night.session.endTs))", symbol: "moon")
                     }.buttonStyle(.plain)
+                }
+                if includeSleep, let night = snapshot.night {
+                    ForEach(snapshot.sleepSessions.filter { !night.mainGroupStarts.contains($0.startTs) },
+                            id: \.startTs) { nap in
+                        NavigationLink(value: TabRoute.performance(PerformanceContext(day: day, domain: .sleep)!)) {
+                            napMeasure(nap)
+                        }.buttonStyle(.plain)
+                    }
                 }
                 ForEach(Array(snapshot.workouts.enumerated()), id: \.offset) { _, row in
                     NavigationLink(value: TabRoute.performanceWorkout(start: row.startTs, source: row.source)) {
@@ -644,8 +718,8 @@ struct PerformanceExperienceView: View {
                     ForEach(snapshot.vitals) { vital in
                         NavigationLink(value: TabRoute.performance(PerformanceContext(day: day, domain: .trend, metric: vital.key)!)) {
                             PerformanceMeasureRow(title: vital.label,
-                                                  value: vital.day == day ? PerformanceFormat.value(PerformanceContext.canonicalMetric(vital.key), vital.value) : "—",
-                                                  caption: vital.day != day || vital.value == nil ? String(localized: "Measurement unavailable") : (vital.banding.basis == .personal ? String(localized: "Compared with your personal reference") : String(localized: "Personal reference not established")),
+                                                  value: vital.day == day ? (vital.formattedValue ?? "—") : "—",
+                                                  caption: healthVitalCaption(vital, snapshot: snapshot),
                                                   symbol: vital.banding.basis == .personal && vital.day == day ? (vital.banding.band == .inRange ? "checkmark.circle.fill" : "exclamationmark.circle.fill") : "circle.dashed")
                         }.buttonStyle(.plain)
                         Divider()
@@ -663,6 +737,14 @@ struct PerformanceExperienceView: View {
             NavigationLink { LongitudinalTrendsView(repo: repo).modifier(PerformanceLegacyContextReset()) } label: { Label("Long-term trends", systemImage: "chart.line.uptrend.xyaxis").font(StrandFont.subhead) }
             NavigationLink(value: TabRoute.health) { Label("All health tools", systemImage: "heart.text.square").font(StrandFont.subhead) }
         }
+    }
+
+    private func healthVitalCaption(_ vital: BodyVitalReading, snapshot: PerformanceSnapshot) -> String {
+        guard vital.day == day, vital.value != nil else { return String(localized: "Measurement unavailable") }
+        if vital.key == "resp", vital.source == .noopComputed || snapshot.source("resp_rate")?.hasSuffix("-noop") == true {
+            return [String(localized: "Estimate"), vital.stateCaption].joined(separator: " · ")
+        }
+        return vital.stateCaption
     }
 
     private func ageSummary(_ snapshot: PerformanceSnapshot) -> some View {

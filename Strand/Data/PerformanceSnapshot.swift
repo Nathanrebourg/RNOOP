@@ -10,6 +10,7 @@ struct PerformanceSnapshot {
     var series: [String: [ResolvedMetricPoint]] = [:]
     var workouts: [WorkoutRow] = []
     var night: Night?
+    var sleepSessions: [CachedSleepSession] = []
     var vitals: [BodyVitalReading] = []
     var stress: Double?
     var hadReadErrors = false
@@ -37,7 +38,7 @@ struct PerformanceSnapshot {
     /// A capture depends on the date, window and metric, but not on the screen that displays it.
     func forContext(_ newContext: PerformanceContext) -> PerformanceSnapshot {
         PerformanceSnapshot(context: newContext, daily: daily, series: series, workouts: workouts,
-                            night: night, vitals: vitals, stress: stress, hadReadErrors: hadReadErrors)
+                            night: night, sleepSessions: sleepSessions, vitals: vitals, stress: stress, hadReadErrors: hadReadErrors)
     }
 }
 
@@ -281,6 +282,7 @@ final class PerformanceSnapshotModel: ObservableObject {
             result.series["stress"] = stressPoints.values.sorted { $0.day < $1.day }
         }
         if Task.isCancelled { return result }
+        var nightlyVitals: DailyMetric?
         if scope == .full {
             let rows = await repo.workoutRows(days: workoutLookbackDays(day: context.day, now: Date()))
             if Task.isCancelled { return result }
@@ -289,9 +291,10 @@ final class PerformanceSnapshotModel: ObservableObject {
             }.sorted { $0.startTs < $1.startTs }
             let sessions = await repo.allSleepSessions(days: 4000)
             if Task.isCancelled { return result }
-            let groups = SleepModel.navDays(navSessions: sessions.filter {
+            result.sleepSessions = sessions.filter {
                 Repository.localDayKey(Date(timeIntervalSince1970: TimeInterval($0.endTs))) == context.day
-            })
+            }
+            let groups = SleepModel.navDays(navSessions: result.sleepSessions)
             let historicalSessions = sessions.filter { Repository.localDayKey(Date(timeIntervalSince1970: TimeInterval($0.endTs))) < context.day }
             let offset = TimeZone.current.secondsFromGMT(for: localNoon(context.day) ?? Date())
             let blocks = historicalSessions.compactMap { session -> SleepStageTotals.HistoryBlock? in
@@ -303,15 +306,39 @@ final class PerformanceSnapshotModel: ObservableObject {
             let habitual = SleepStageTotals.habitualMidsleepSec(blocks, offsetSec: offset)
             result.night = SleepModel.decodedNight(at: 0, navDays: groups, habitualMidsleepSec: habitual,
                                                   motionByStart: [:])
+            if result.night == nil, let main = SleepView.stubDaySession(result.sleepSessions,
+                                                                       habitualMidsleepSec: habitual) {
+                result.night = Night(session: main, stages: Stages(awake: 0, light: 0, deep: 0, rem: 0),
+                                     sourceBlocks: result.sleepSessions, habitualMidsleepSec: habitual)
+            }
+            let main = SleepView.mainNightGroup(result.sleepSessions, habitualMidsleepSec: habitual)
+            if let primary = main.max(by: { $0.endTs - $0.effectiveStartTs < $1.endTs - $1.effectiveStartTs }) {
+                nightlyVitals = await repo.performanceNightVitals(primary, day: context.day)
+            }
+            await addDailyMeasurements(to: &result, repo: repo, sessions: sessions, habitual: habitual)
         }
         if scope == .trend, context.metric != "skin_temp" { return result }
-        let sourceRows = repo.vitalMetricRows.filter { $0.metric.day <= context.day }
+        var sourceRows = repo.vitalMetricRows.filter { $0.metric.day <= context.day }
+        if let daily = result.daily {
+            sourceRows.append(SourcedDailyMetric(metric: daily, source: .localCache))
+        }
+        if let nightlyVitals {
+            sourceRows.append(SourcedDailyMetric(metric: nightlyVitals, source: .localCache))
+            for (key, value) in [("rhr", nightlyVitals.restingHr.map(Double.init)),
+                                 ("hrv", nightlyVitals.avgHrv), ("resp_rate", nightlyVitals.respRateBpm)] {
+                addFallback(value, key: key, to: &result)
+            }
+        }
         let preferredSkin = SkinTempDisplay.Kind(rawValue: UserDefaults.standard.string(forKey: UnitPrefs.skinTempDisplayKey) ?? "") ?? .absolute
         let temperature = UnitPrefs.resolveTemperature(system: UnitSystem(rawValue: UserDefaults.standard.string(forKey: UnitPrefs.systemKey) ?? "") ?? .metric,
                                                        override: UserDefaults.standard.string(forKey: UnitPrefs.temperatureKey) ?? "")
         if scope == .full || context.metric == "skin_temp" {
             // Match the explorer's single-scale policy after restricting every input to this window.
             let temperatureDays = historicalDays.filter { context.contains($0.day) }
+                + (nightlyVitals.map { row in
+                    historicalDays.contains { $0.day == row.day && ($0.skinTempC != nil || $0.skinTempDevC != nil) }
+                        ? [] : [row]
+                } ?? [])
             let anyAbsolute = temperatureDays.contains { $0.skinTempC != nil || $0.skinTempDevC.map(VitalBands.isAbsoluteSkinTemp) == true }
             let anyDeviation = temperatureDays.contains { $0.skinTempDevC.map { !VitalBands.isAbsoluteSkinTemp($0) } == true }
             let leadsAbsolute = preferredSkin == .absolute ? anyAbsolute : (!anyDeviation && anyAbsolute)
@@ -349,6 +376,86 @@ final class PerformanceSnapshotModel: ObservableObject {
                 .filter { $0.key != "spo2raw" && $0.key != "spo2" }
         }
         return result
+    }
+
+    private static func addFallback(_ value: Double?, key: String,
+                                    to result: inout PerformanceSnapshot, replace: Bool = false) {
+        guard let value = PerformanceContext.finite(value), replace || result.value(key) == nil else { return }
+        let day = result.context.day
+        var points = result.series[key] ?? []
+        points.removeAll { $0.day == day }
+        points.append(ResolvedMetricPoint(day: day, value: value, source: Repository.whoopSource + "-noop",
+                                          sourceKey: key, origin: .daily))
+        result.series[key] = points.sorted { $0.day < $1.day }
+    }
+
+    private static func addDailyMeasurements(to result: inout PerformanceSnapshot, repo: Repository,
+                                             sessions: [CachedSleepSession], habitual: Int?) async {
+        let day = result.context.day
+        let total = result.sleepSessions.reduce(0.0) { $0 + SleepView.creditedMinutes($1) }
+        if total > 0 {
+            addFallback(total, key: "sleep_total_min", to: &result, replace: result.sleepSessions.count > 1
+                        || result.sleepSessions.contains { $0.userEdited })
+        }
+        let lower = localNoon(day).flatMap { Calendar.current.date(byAdding: .day, value: -45, to: $0) }
+        let groups = SleepModel.navDays(navSessions: sessions.filter { session in
+            let wake = Date(timeIntervalSince1970: TimeInterval(session.endTs))
+            return Repository.localDayKey(wake) <= day && (lower.map { wake >= $0 } ?? true)
+        }).reversed()
+        let nighttime = groups.compactMap { group in
+            SleepView.mainNightGroup(group, habitualMidsleepSec: habitual).first
+        }
+        let history: [(day: String, totalSleepMin: Double?)] = groups.compactMap { group in
+            guard let first = group.first else { return nil }
+            let wakeDay = Repository.localDayKey(Date(timeIntervalSince1970: TimeInterval(first.endTs)))
+            let asleep = group.reduce(0.0) { $0 + SleepView.creditedMinutes($1) }
+            return (wakeDay, asleep > 0 ? asleep : nil)
+        }
+        let prior = history.filter { $0.day < day }
+        let recordedHours = nighttime.compactMap { session -> Double? in
+            guard Repository.localDayKey(Date(timeIntervalSince1970: TimeInterval(session.endTs))) < day else { return nil }
+            let minutes = SleepView.creditedMinutes(session)
+            return minutes > 0 ? minutes / 60 : nil
+        }
+        let baseNeed = AnalyticsEngine.Rest.personalizedNeedHours(nightlyHours: recordedHours, age: nil)
+        if result.value("sleep_total_min") != nil || !recordedHours.isEmpty {
+            let priorDebt = SleepDebt.ledger(series: prior, needHours: baseNeed).magnitudeMin
+            addFallback(baseNeed * 60 + priorDebt, key: "sleep_need_min", to: &result)
+        }
+        if let asleep = result.value("sleep_total_min"), let need = result.value("sleep_need_min"), need > 0 {
+            let ratio = asleep / need * 100
+            addFallback(ratio, key: "hours_vs_needed_pct", to: &result,
+                        replace: result.sleepSessions.count > 1 || result.sleepSessions.contains { $0.userEdited })
+            if result.night?.stages.asleep == 0,
+               result.sleepSessions.contains(where: { $0.userEdited && $0.stagesJSON == nil }) {
+                addFallback(min(100, ratio), key: "sleep_performance", to: &result)
+            }
+        }
+        if history.last?.day == day, history.last?.totalSleepMin != nil {
+            addFallback(SleepDebt.ledger(series: history, needHours: baseNeed).magnitudeMin,
+                        key: "sleep_debt_min", to: &result)
+        }
+        if nighttime.last.map({ Repository.localDayKey(Date(timeIntervalSince1970: TimeInterval($0.endTs))) }) == day {
+            addFallback(SleepModel.consistencySeries(days: [], sleeps: Array(nighttime.suffix(14)),
+                                                     importedSleep: [:]).latest,
+                        key: "sleep_consistency", to: &result)
+        }
+        if (result.value("hr_zones13_min") == nil || result.value("hr_zones45_min") == nil),
+           let noon = localNoon(day), let profile = repo.strainProfile,
+           let range = Calendar.current.dateInterval(of: .day, for: noon) {
+            let start = Int(range.start.timeIntervalSince1970)
+            let end = min(Int(range.end.timeIntervalSince1970), Int(Date().timeIntervalSince1970))
+            let samples = await repo.hrSamples(from: start, to: end, limit: 100_000)
+            let valid = samples.filter { $0.ts >= start && $0.ts < end && (30...220).contains($0.bpm) }
+            if valid.count > 1, profile.hrMax.isFinite, profile.hrMax > 0 {
+                let zones = HRZones.zones(maxHR: profile.hrMax)
+                let time = HRZones.timeInZone(valid, zoneSet: zones)
+                addFallback((1...3).reduce(0.0) { $0 + time.seconds(inZone: $1) } / 60,
+                            key: "hr_zones13_min", to: &result)
+                addFallback((4...5).reduce(0.0) { $0 + time.seconds(inZone: $1) } / 60,
+                            key: "hr_zones45_min", to: &result)
+            }
+        }
     }
 
     /// Daily efficiency can be stored either as a fraction or an imported percentage.

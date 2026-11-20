@@ -28,9 +28,16 @@ struct SleepHRChart: View {
 
     var body: some View {
         let nightStartTs = night.onsetDate.timeIntervalSince1970
-        let buckets = nightHR.filter {
+        let raw = nightHR.filter {
             let rel = TimeInterval($0.ts) - nightStartTs
             return rel >= origin - 60 && rel <= origin + span + 60
+        }
+        let buckets = raw.indices.map { index in
+            let center = raw[index]
+            let lo = max(0, index - 1), hi = min(raw.count - 1, index + 1)
+            let nearby = raw[lo...hi].filter { abs($0.ts - center.ts) <= 60 && ($0.conf >= 0.3) == (center.conf >= 0.3) }
+            let mean = nearby.reduce(0.0) { $0 + $1.bpm } / Double(nearby.count)
+            return HRBucket(ts: center.ts, bpm: mean, minBpm: center.minBpm, maxBpm: center.maxBpm, conf: center.conf)
         }
         if buckets.count >= 2 {
             let bpms = buckets.map(\.bpm)

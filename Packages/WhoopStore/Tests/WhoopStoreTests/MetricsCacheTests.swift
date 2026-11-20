@@ -372,6 +372,20 @@ final class MetricsCacheTests: XCTestCase {
         XCTAssertEqual(rows[0].efficiency, 0.8)
     }
 
+    func testUnstagedManualEntryRejectsOverlapsButAcceptsAdjacentSessions() async throws {
+        let store = try await WhoopStore.inMemory()
+        let first = try await store.insertManualSleepSession(
+            deviceId: "devA", startTs: 1_000, endTs: 2_000, efficiency: nil, stagesJSON: nil)
+        let overlap = try await store.insertManualSleepSession(
+            deviceId: "devA", startTs: 1_500, endTs: 2_500, efficiency: nil, stagesJSON: nil)
+        let adjacent = try await store.insertManualSleepSession(
+            deviceId: "devA", startTs: 2_000, endTs: 3_000, efficiency: nil, stagesJSON: nil)
+        XCTAssertEqual([first, overlap, adjacent], [1, 0, 1])
+        let rows = try await store.sleepSessions(deviceId: "devA", from: 0, to: 4_000, limit: 10)
+        XCTAssertEqual(rows.count, 2)
+        XCTAssertTrue(rows.allSatisfy { $0.userEdited && $0.stagesJSON == nil && $0.efficiency == nil })
+    }
+
     /// Adding a nap leaves the night's main sleep untouched — they are two distinct rows (the nap is
     /// NEVER folded into main sleep, which is the #508 bug).
     func testInsertManualNapDoesNotAlterMainSleep() async throws {
