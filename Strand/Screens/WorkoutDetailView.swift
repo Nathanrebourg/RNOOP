@@ -74,6 +74,20 @@ struct WorkoutDetailView: View {
     private struct StepReadout { let count: Int; let fromStrap: Bool }
     @State private var steps: StepReadout?
 
+    private var effortTint: Color {
+        #if os(iOS)
+        if recordedSamples != nil { return PerformanceDesign.effort }
+        #endif
+        return StrandPalette.effortColor
+    }
+
+    private var workoutBackground: AnyView? {
+        #if os(iOS)
+        if recordedSamples != nil { return AnyView(PerformanceBackground()) }
+        #endif
+        return liquidScaffoldSky()
+    }
+
     var body: some View {
         ScreenScaffold(title: "\(WorkoutSource.displaySport(row.sport))",
                        subtitle: "\(dateLabel(row.startTs))",
@@ -86,7 +100,7 @@ struct WorkoutDetailView: View {
                        // and every other liquid screen. Fixed and full-bleed; it does not scroll. This
                        // screen is presented in a sheet wrapped in a NavigationStack by WorkoutsView, so it
                        // needs no extra macOS NavigationStack of its own.
-                       topBackground: liquidScaffoldSky()) {
+                       topBackground: workoutBackground) {
             headerCard
             if let strain = row.strain {
                 effortCard(strain: strain)
@@ -123,8 +137,13 @@ struct WorkoutDetailView: View {
         let points: [TrendPoint]
         let zoneSet = profile.hrZoneSet
         if let recordedSamples, !recordedSamples.isEmpty {
-            points = recordedSamples.map {
-                TrendPoint(date: Date(timeIntervalSince1970: TimeInterval($0.ts)), value: Double($0.bpm))
+            var previous: Int?
+            var segment = 0
+            points = recordedSamples.map { sample in
+                if let previous, sample.ts - previous > 10 { segment += 1 }
+                previous = sample.ts
+                return TrendPoint(date: Date(timeIntervalSince1970: TimeInterval(sample.ts)),
+                                  value: Double(sample.bpm), segment: String(segment))
             }
         } else {
             let buckets = await repo.workoutHrBuckets(from: row.startTs, to: row.endTs, source: row.source)
@@ -239,13 +258,13 @@ struct WorkoutDetailView: View {
     // MARK: - Header
 
     private var headerCard: some View {
-        NoopCard(tint: StrandPalette.effortColor) {
+        NoopCard(tint: effortTint) {
             HStack(alignment: .center, spacing: 14) {
                 Image(systemName: sportSymbol(row.sport))
                     .font(.system(size: 22, weight: .semibold))
-                    .foregroundStyle(StrandPalette.effortColor)
+                    .foregroundStyle(effortTint)
                     .frame(width: 44, height: 44)
-                    .background(StrandPalette.effortColor.opacity(0.14),
+                    .background(effortTint.opacity(0.14),
                                 in: RoundedRectangle(cornerRadius: 12, style: .continuous))
                     .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 3) {
@@ -271,7 +290,7 @@ struct WorkoutDetailView: View {
             StatTile(label: "Duration",
                      value: durationLabel(row.durationS),
                      caption: String(localized: "active"),
-                     accent: StrandPalette.effortColor)
+                     accent: effortTint)
             StatTile(label: "Avg HR",
                      value: row.avgHr.map { "\($0)" } ?? "–",
                      caption: row.avgHr != nil ? "bpm" : nil,
@@ -312,7 +331,7 @@ struct WorkoutDetailView: View {
             VStack(alignment: .leading, spacing: NoopMetrics.gap) {
                 SectionHeader("Route", overline: routeOriginLabel,
                               trailing: distanceLabel(row.distanceM))
-                NoopCard(padding: 0, tint: StrandPalette.effortColor) {
+                NoopCard(padding: 0, tint: effortTint) {
                     VStack(alignment: .leading, spacing: 0) {
                         WorkoutRouteMap(points: route)
                             .frame(height: 220)
@@ -439,11 +458,12 @@ struct WorkoutDetailView: View {
                     title: "HEART RATE",
                     subtitle: String(localized: "Beats per minute across the session"),
                     trailing: row.avgHr.map { String(localized: "avg \($0)") },
-                    tint: StrandPalette.effortColor
+                    tint: effortTint
                 ) {
                     TrendChart(
                         points: hrPoints,
-                        gradient: StrandPalette.effortGradient,
+                        gradient: recordedSamples == nil
+                            ? StrandPalette.effortGradient : Gradient(colors: [effortTint, effortTint]),
                         valueRange: lo...hi,
                         showsArea: true,
                         valueFormat: { String(localized: "\(Int($0.rounded())) bpm") },
@@ -495,7 +515,7 @@ struct WorkoutDetailView: View {
                 SectionHeader("HR Zones",
                               overline: zonesFromImport ? "Whoop import" : "From strap HR",
                               trailing: String(localized: "\(Int(total.rounded()))m in zone"))
-                NoopCard(tint: StrandPalette.effortColor) {
+                NoopCard(tint: effortTint) {
                     VStack(alignment: .leading, spacing: 12) {
                         GeometryReader { geo in
                             HStack(spacing: 2) {
@@ -567,12 +587,12 @@ struct WorkoutDetailView: View {
         let effortLabel = String(localized: "Effort \(UnitFormatter.effortDisplay(strain, scale: effortScale))")
         return VStack(alignment: .leading, spacing: NoopMetrics.gap) {
             SectionHeader("Effort", overline: "This session")
-            NoopCard(tint: StrandPalette.effortColor) {
+            NoopCard(tint: effortTint) {
                 HStack(alignment: .center, spacing: 18) {
                     ZStack {
                         // Static (posed) vessel — a compact liquid gauge inside a card, so it costs a single
                         // cached frame rather than a live canvas (same call as Trends' pip vessels).
-                        LiquidVessel(value: fraction, tint: StrandPalette.effortColor, animated: false)
+                        LiquidVessel(value: fraction, tint: effortTint, animated: false)
                             .frame(width: 88, height: 88)
                         VStack(spacing: 0) {
                             // The session's Effort contribution ticks up to its value — the NOOP signature.
