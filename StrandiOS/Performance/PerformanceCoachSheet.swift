@@ -154,7 +154,7 @@ struct PerformanceCoachSheet: View {
 
     private var introduction: some View {
         VStack(alignment: .leading, spacing: NoopMetrics.space3) {
-            Text("Ask NROOP anything").font(StrandFont.title2)
+            Text(String(localized: "Ask NROOP anything")).font(StrandFont.title2)
             Text("This conversation keeps the screen, day and period you are viewing. No request is sent until you ask a question.")
                 .font(StrandFont.subhead).foregroundStyle(StrandPalette.textSecondary)
             if !engine.isConfigured {
@@ -203,7 +203,7 @@ struct PerformanceCoachSheet: View {
     private var composer: some View {
         VStack(spacing: NoopMetrics.space2) {
             HStack(alignment: .bottom, spacing: NoopMetrics.space2) {
-                TextField("Ask NROOP anything…", text: $draft, axis: .vertical)
+                TextField(String(localized: "Ask NROOP anything…"), text: $draft, axis: .vertical)
                     .font(StrandFont.body).lineLimit(1...5).focused($inputFocused)
                     .disabled(!engine.isConfigured || engine.sending || !enabled)
                 Button { send(draft) } label: {
@@ -216,7 +216,9 @@ struct PerformanceCoachSheet: View {
             }
             .padding(NoopMetrics.space3)
             .background(PerformanceDesign.coach.opacity(0.08), in: RoundedRectangle(cornerRadius: PerformanceDesign.panelRadius))
-            Text(settings.dataConsent ? "Only a dated text summary is shared with your configured provider." : "Measurement sharing is off.")
+            Text(settings.dataConsent
+                 ? String(localized: "Only a dated text summary is shared with your configured provider.")
+                 : String(localized: "Measurement sharing is off."))
                 .font(StrandFont.footnote).foregroundStyle(StrandPalette.textSecondary).multilineTextAlignment(.center)
         }.padding(NoopMetrics.space4)
     }

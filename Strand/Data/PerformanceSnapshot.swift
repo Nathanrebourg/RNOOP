@@ -11,6 +11,8 @@ struct PerformanceSnapshot {
     var workouts: [WorkoutRow] = []
     var night: Night?
     var sleepSessions: [CachedSleepSession] = []
+    var sleepWeek: [SleepScheduleDay] = []
+    var recommendedSleepNeed: Double?
     var vitals: [BodyVitalReading] = []
     var stress: Double?
     var hadReadErrors = false
@@ -38,7 +40,8 @@ struct PerformanceSnapshot {
     /// A capture depends on the date, window and metric, but not on the screen that displays it.
     func forContext(_ newContext: PerformanceContext) -> PerformanceSnapshot {
         PerformanceSnapshot(context: newContext, daily: daily, series: series, workouts: workouts,
-                            night: night, sleepSessions: sleepSessions, vitals: vitals, stress: stress, hadReadErrors: hadReadErrors)
+                            night: night, sleepSessions: sleepSessions, sleepWeek: sleepWeek,
+                            recommendedSleepNeed: recommendedSleepNeed, vitals: vitals, stress: stress, hadReadErrors: hadReadErrors)
     }
 }
 
@@ -311,6 +314,27 @@ final class PerformanceSnapshotModel: ObservableObject {
                 result.night = Night(session: main, stages: Stages(awake: 0, light: 0, deep: 0, rem: 0),
                                      sourceBlocks: result.sleepSessions, habitualMidsleepSec: habitual)
             }
+            if let date = localNoon(context.day) {
+                let calendar = Calendar.current
+                let dates = (0..<7).reversed().compactMap { calendar.date(byAdding: .day, value: -$0, to: date) }
+                if let first = dates.first {
+                    let startDay = Repository.localDayKey(first)
+                    let recent = sessions.filter {
+                        let wakeDay = Repository.localDayKey(Date(timeIntervalSince1970: TimeInterval($0.endTs)))
+                        return wakeDay >= startDay && wakeDay <= context.day
+                    }
+                    let byDay = Dictionary(grouping: recent) {
+                        Repository.localDayKey(Date(timeIntervalSince1970: TimeInterval($0.endTs)))
+                    }
+                    result.sleepWeek = dates.map { date in
+                        let group = SleepView.mainNightGroup(byDay[Repository.localDayKey(date)] ?? [],
+                                                             habitualMidsleepSec: habitual)
+                        return SleepScheduleDay(date: date,
+                                                onset: group.isEmpty ? nil : SleepModel.nightOnsetTs(group),
+                                                wake: group.last?.endTs)
+                    }
+                }
+            }
             let main = SleepView.mainNightGroup(result.sleepSessions, habitualMidsleepSec: habitual)
             if let primary = main.max(by: { $0.endTs - $0.effectiveStartTs < $1.endTs - $1.effectiveStartTs }) {
                 nightlyVitals = await repo.performanceNightVitals(primary, day: context.day)
@@ -418,9 +442,13 @@ final class PerformanceSnapshotModel: ObservableObject {
             return minutes > 0 ? minutes / 60 : nil
         }
         let baseNeed = AnalyticsEngine.Rest.personalizedNeedHours(nightlyHours: recordedHours, age: nil)
+        result.recommendedSleepNeed = result.value("sleep_need_min")
         if result.value("sleep_total_min") != nil || !recordedHours.isEmpty {
             let priorDebt = SleepDebt.ledger(series: prior, needHours: baseNeed).magnitudeMin
             addFallback(baseNeed * 60 + priorDebt, key: "sleep_need_min", to: &result)
+            if recordedHours.count >= AnalyticsEngine.Rest.minNeedNights {
+                result.recommendedSleepNeed = result.value("sleep_need_min")
+            }
         }
         if let asleep = result.value("sleep_total_min"), let need = result.value("sleep_need_min"), need > 0 {
             let ratio = asleep / need * 100

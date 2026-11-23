@@ -59,9 +59,9 @@ struct PerformanceHostedCards: View {
                 VStack(alignment: .leading, spacing: NoopMetrics.space3) {
                     Text("Stress through the day").font(StrandFont.headline)
                     if stressTimeline.contains(where: { $0.level != nil }) {
-                        DaytimeLoadLine(hours: stressTimeline).frame(height: PerformanceDesign.stageChartHeight)
+                        DaytimeLoadLine(hours: stressTimeline)
                     } else {
-                        Text("Calibrating").font(StrandFont.subhead).foregroundStyle(StrandPalette.textSecondary)
+                        Text("No hourly stress measurements available.").font(StrandFont.subhead).foregroundStyle(StrandPalette.textSecondary)
                     }
                     if let caption = stressActivityMaskedHoursCaption(stressActivityMaskedHours) {
                         Text(caption).font(StrandFont.footnote).foregroundStyle(StrandPalette.textSecondary)

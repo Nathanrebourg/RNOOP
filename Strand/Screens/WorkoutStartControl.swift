@@ -51,7 +51,7 @@ struct WorkoutStartControl: View {
             Button(action: openWorkout) {
                 HStack(spacing: NoopMetrics.space1) {
                     Image(systemName: "stopwatch")
-                    Text(model.activeWorkout == nil ? LocalizedStringKey("Start workout")
+                    Text(model.activeWorkout == nil ? LocalizedStringKey("Start an activity")
                                                     : LocalizedStringKey("View active workout"))
                         .font(StrandFont.overline).lineLimit(1).minimumScaleFactor(0.7)
                 }

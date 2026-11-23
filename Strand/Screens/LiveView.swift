@@ -100,6 +100,8 @@ struct LiveView: View {
     /// Live workout mode (#238) — presents the full in-exercise screen while a manual workout is
     /// active. Auto-opens when a workout begins; closing just hides it (the workout keeps recording).
     @State private var showLiveWorkout = false
+    @State private var finishedWorkout: AppModel.FinishedWorkout?
+    @State private var workoutSaveFailed = false
     @State private var showStartSport = false
     @State private var confirmingEndWorkout = false
 
@@ -190,13 +192,27 @@ struct LiveView: View {
                 .environmentObject(model)
                 .environmentObject(live)
         }
-        .alert("End this workout?", isPresented: $confirmingEndWorkout) {
+        .alert(String(localized: "End this workout?"), isPresented: $confirmingEndWorkout) {
             Button("Cancel", role: .cancel) { }
             Button("End workout", role: .destructive) {
-                model.endWorkout()
+                Task {
+                    do {
+                        finishedWorkout = try await model.endWorkout()
+                    } catch {
+                        workoutSaveFailed = true
+                    }
+                }
             }
         } message: {
-            Text("This stops recording and saves what's captured so far. It can't be resumed.")
+            Text(String(localized: "This stops recording and saves what's captured so far. It can't be resumed."))
+        }
+        .sheet(item: $finishedWorkout) { workout in
+            NavigationStack {
+                WorkoutDetailView(row: workout.row, recordedSamples: workout.samples)
+            }
+        }
+        .alert("Workout could not be saved", isPresented: $workoutSaveFailed) {
+            Button("OK", role: .cancel) {}
         }
     }
 

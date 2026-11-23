@@ -159,7 +159,7 @@ struct PerformanceCoachLink: View {
                 HStack(spacing: NoopMetrics.space3) {
                     PerformanceCoachSymbol()
                     VStack(alignment: .leading, spacing: NoopMetrics.space1) {
-                        Text("Discuss with Coach").font(StrandFont.subhead)
+                        Text(String(localized: "Discuss with Coach")).font(StrandFont.subhead)
                         Text(PerformanceFormat.date(context.day)).font(StrandFont.footnote).foregroundStyle(StrandPalette.textSecondary)
                     }
                     Spacer()

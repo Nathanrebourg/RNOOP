@@ -16,6 +16,7 @@ import StrandDesign
 // NoopCard, NoopMetrics / StrandPalette / StrandFont tokens, matching the other Today cards.
 
 struct JournalReminderCard: View {
+    var showsBehaviorInsights = false
 
     @EnvironmentObject var repo: Repository
     @EnvironmentObject var router: NavRouter
@@ -46,6 +47,7 @@ struct JournalReminderCard: View {
         let keys = Self.dayKeys()
         let todayKey = keys.last ?? ""
         let todayLogged = logged.contains(todayKey)
+        let title = showsBehaviorInsights ? String(localized: "My journal") : String(localized: "Journal")
         // A recent PAST day with no entry — surfaces the tap-a-bar-to-backfill interaction once today is
         // done (#656). Accent while anything is actionable; calm secondary once fully caught up.
         let hasMissed = keys.contains { $0 != todayKey && !logged.contains($0) }
@@ -63,7 +65,7 @@ struct JournalReminderCard: View {
                         .font(.system(size: 18))
                         .foregroundStyle(StrandPalette.accent)
                         .accessibilityHidden(true)
-                    Text(String(localized: "Journal"))
+                    Text(title)
                         .font(StrandFont.headline)
                         .foregroundStyle(StrandPalette.textPrimary)
                     Spacer()
@@ -76,7 +78,7 @@ struct JournalReminderCard: View {
                 .onTapGesture { router.openJournal() }
                 .accessibilityElement(children: .combine)
                 .accessibilityAddTraits(.isButton)
-                .accessibilityLabel(Text(String(localized: "Journal")))
+                .accessibilityLabel(Text(title))
                 .accessibilityHint(Text(String(localized: "Open journal")))
                 // The last-N-days strip: one equal-width bar per day, each its own tap target. Filled =
                 // logged; today is ringed. Tapping a bar deep-links the journal to that day (#656).
@@ -89,20 +91,37 @@ struct JournalReminderCard: View {
                             .frame(maxWidth: .infinity)
                             .frame(height: 22)                    // taller invisible tap target
                             .overlay {
-                                RoundedRectangle(cornerRadius: 3)
-                                    .fill(isLogged ? StrandPalette.accent : StrandPalette.textTertiary.opacity(0.22))
-                                    .frame(height: 10)
-                                    .overlay {
-                                        if off == 0, !isLogged {
-                                            RoundedRectangle(cornerRadius: 3)
-                                                .strokeBorder(StrandPalette.accent, lineWidth: 1)
+                                if showsBehaviorInsights {
+                                    Circle()
+                                        .fill(isLogged ? StrandPalette.accent : StrandPalette.surfaceInset)
+                                        .overlay {
+                                            if off == 0 {
+                                                Circle().strokeBorder(StrandPalette.accent, lineWidth: 1)
+                                            }
                                         }
-                                    }
+                                        .frame(width: NoopMetrics.space3, height: NoopMetrics.space3)
+                                } else {
+                                    RoundedRectangle(cornerRadius: 3)
+                                        .fill(isLogged ? StrandPalette.accent : StrandPalette.textTertiary.opacity(0.22))
+                                        .frame(height: 10)
+                                        .overlay {
+                                            if off == 0, !isLogged {
+                                                RoundedRectangle(cornerRadius: 3)
+                                                    .strokeBorder(StrandPalette.accent, lineWidth: 1)
+                                            }
+                                        }
+                                }
                             }
                             .contentShape(Rectangle())
                             .onTapGesture { router.openJournal(day: off) }
                             .accessibilityAddTraits(.isButton)
                             .accessibilityLabel(Self.barLabel(off))
+                    }
+                }
+                if showsBehaviorInsights {
+                    NavigationLink(value: TabRoute.behaviorInsights) {
+                        Label("Behaviors and recovery", systemImage: "chart.bar.xaxis")
+                            .font(StrandFont.subhead)
                     }
                 }
                 Text(subtitle)

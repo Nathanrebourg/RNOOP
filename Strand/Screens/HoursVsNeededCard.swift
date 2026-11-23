@@ -16,9 +16,69 @@ import WhoopStore
 /// personal typical from the shared [SleepModel], as a single full-width StatTile with its sparkline and
 /// vs-typical caption — the same presentation the Night-detail grid uses for this metric.
 struct HoursVsNeededCard: View {
-    let model: SleepModel
+    private let model: SleepModel?
+    private var slept: Double?
+    private var needed: Double?
+    private var debt: Double?
+    private var recentEffort: String?
+
+    init(model: SleepModel) { self.model = model }
+
+    init(slept: Double?, needed: Double?, debt: Double?, recentEffort: String?) {
+        model = nil
+        self.slept = slept
+        self.needed = needed
+        self.debt = debt
+        self.recentEffort = recentEffort
+    }
 
     var body: some View {
+        if let model {
+            summary(model)
+        } else {
+            comparison
+        }
+    }
+
+    private var comparison: some View {
+        let scale = max(1, max(slept ?? 0, needed ?? 0))
+        return VStack(alignment: .leading, spacing: NoopMetrics.space3) {
+            Text("Hours vs Needed").font(StrandFont.headline)
+            durationRow(String(localized: "Slept"), minutes: slept, scale: scale, tint: PerformanceDesign.sleep)
+            durationRow(String(localized: "Sleep need"), minutes: needed, scale: scale, tint: StrandPalette.textSecondary)
+            if let debt {
+                LabeledContent(String(localized: "Sleep debt"), value: duration(debt))
+                    .font(StrandFont.footnote)
+            }
+            if let recentEffort {
+                LabeledContent(String(localized: "Effort on the previous day"), value: recentEffort)
+                    .font(StrandFont.footnote)
+            }
+        }
+    }
+
+    private func durationRow(_ title: String, minutes: Double?, scale: Double, tint: Color) -> some View {
+        VStack(alignment: .leading, spacing: NoopMetrics.space1) {
+            LabeledContent(title, value: minutes.map(duration) ?? "—").font(StrandFont.subhead)
+            if let minutes {
+                GeometryReader { geometry in
+                    Capsule().fill(StrandPalette.surfaceInset)
+                        .overlay(alignment: .leading) {
+                            Capsule().fill(tint).frame(width: geometry.size.width * CGFloat(max(0, minutes) / scale))
+                        }
+                }
+                .frame(height: NoopMetrics.space2)
+                .accessibilityHidden(true)
+            }
+        }
+    }
+
+    private func duration(_ minutes: Double) -> String {
+        let rounded = Int(minutes.rounded())
+        return String(localized: "\(rounded / 60)h \(rounded % 60)m")
+    }
+
+    private func summary(_ model: SleepModel) -> some View {
         // The metric (latest %, typical mean, history series) is computed ONCE in the model build and
         // read here — the same memoized result the Night-detail grid reads for its tile.
         let need = model.hoursVsNeeded
