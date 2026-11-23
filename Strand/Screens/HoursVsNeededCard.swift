@@ -83,7 +83,7 @@ struct HoursVsNeededCard: View {
         // read here — the same memoized result the Night-detail grid reads for its tile.
         let need = model.hoursVsNeeded
 
-        VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+        return VStack(alignment: .leading, spacing: NoopMetrics.gap) {
             SectionHeader("Hours vs Needed", overline: "Sleep")
             // Verbatim of the NightDetailCard "Hours vs Needed" tile so the hosted value matches the
             // Sleep-tab tile exactly; stretched to the card's full width as a single-metric summary.
