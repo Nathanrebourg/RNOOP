@@ -257,9 +257,18 @@ struct PerformanceExperienceView: View {
             layout {
                 ForEach([PerformanceContext.Domain.sleep, .recovery, .effort], id: \.self) { domain in
                     NavigationLink(value: TabRoute.performance(PerformanceContext(day: day, domain: domain)!)) {
+                        let current = snapshot.value(domain.metricKey)
+                        // WHOOP keeps the last computed cycle visible until the new one is scored.
+                        let carried = current == nil && day == today ? snapshot.latestPrior(domain.metricKey) : nil
                         VStack(spacing: NoopMetrics.space2) {
-                            DatedPerformanceScoreRing(domain: domain, value: snapshot.value(domain.metricKey))
+                            DatedPerformanceScoreRing(domain: domain, value: current ?? carried?.value)
+                                .opacity(carried == nil ? 1 : 0.6)
                             Text(domain.title.uppercased()).font(StrandFont.overline).tracking(PerformanceDesign.labelTracking)
+                            if let carried {
+                                Text(carriedDayLabel(carried.day))
+                                    .font(StrandFont.caption).foregroundStyle(StrandPalette.textSecondary)
+                                    .lineLimit(1).minimumScaleFactor(0.75)
+                            }
                         }.frame(maxWidth: .infinity).foregroundStyle(StrandPalette.textPrimary)
                     }.buttonStyle(.plain)
                 }
@@ -294,6 +303,13 @@ struct PerformanceExperienceView: View {
                 }
             }
         }
+    }
+
+    /// "Yesterday" for the previous day, otherwise a short weekday/date of the carried score.
+    private func carriedDayLabel(_ key: String) -> String {
+        if key == context.shiftedDay(by: -1) { return String(localized: "Yesterday") }
+        guard let date = PerformanceContext.date(key) else { return key }
+        return date.formatted(.dateTime.weekday(.abbreviated).day().month(.abbreviated).locale(AppLanguage.activeLocale))
     }
 
     private func dailyOutlook(_ snapshot: PerformanceSnapshot) -> String {

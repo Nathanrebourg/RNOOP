@@ -21,6 +21,12 @@ struct PerformanceSnapshot {
         PerformanceContext.finite(series[key]?.first(where: { $0.day == context.day })?.value)
     }
 
+    /// Latest real point strictly before the snapshot day (within the loaded window). Used only to
+    /// carry a labelled prior score on Today while the current cycle is not scored yet, never as today's value.
+    func latestPrior(_ key: String) -> ResolvedMetricPoint? {
+        series[key]?.last(where: { $0.day < context.day && PerformanceContext.finite($0.value) != nil })
+    }
+
     func source(_ key: String) -> String? {
         series[key]?.first(where: { $0.day == context.day })?.source
     }
