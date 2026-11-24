@@ -232,9 +232,15 @@ public enum ConnectionReadout {
         // correlation path - so the only evidence is how the strap DATED its banked records. Saying "RTC
         // reads 1970/71" there claimed a reading we never took, in the one readout a reporter quotes when
         // asking why nothing syncs. Report the evidence we actually have.
-        if let n = strapNewestUnix {
+        // NROOP: `strapNewestUnix == 0` is NOT a 1970 record. `LiveState.setStrapFirmwareLayout` banks a
+        // firmware-only snapshot with a 0 placeholder as soon as history frames are decoded, and a 5/MG never
+        // sends GET_DATA_RANGE, so that placeholder is all it ever has. Reading it as "records dated 1970/71"
+        // reported a clock fault on a strap whose history was syncing normally. Only a real (> 0) range
+        // reply is evidence about how the strap dated its records; `rtcWarning` already applied this rule.
+        if let n = strapNewestUnix, n > 0 {
             return n < ConnectionTrace.rtcEpochCeilingUnix ? "no (records dated 1970/71)" : "yes"
         }
+        if strapNewestUnix == 0 { return "not reported by this strap (history is decoding)" }
         return "no (waiting for the strap clock)"
     }
 
