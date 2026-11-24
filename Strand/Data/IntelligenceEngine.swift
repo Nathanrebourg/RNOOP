@@ -1218,9 +1218,12 @@ final class IntelligenceEngine: ObservableObject {
                 // this resolves to `deviceId` (active strap, has data → priority 0), so nothing changes; with
                 // multiple sources the day is scored from exactly one (active strap > other live straps >
                 // imports, or a locked override). Falls back to `deviceId` if the registry is unreadable.
-                let owner = await Self.resolveDayOwner(day: day, from: from, to: to, store: store,
-                                                       devices: regDevices, activeId: regActiveId,
-                                                       registry: registry, fallbackDeviceId: ownerFallbackId)
+                let resolvedOwner = await Self.resolveDayOwnerExplained(day: day, from: from, to: to, store: store,
+                                                                        devices: regDevices, activeId: regActiveId,
+                                                                        registry: registry, fallbackDeviceId: ownerFallbackId)
+                let owner = resolvedOwner.owner
+                // NROOP: always log TODAY's coverage-based owner choice (counts + ids only), no test mode needed.
+                if offset == 0, let line = resolvedOwner.line { skippedDayLines.append(line) }
 
                 // ── #1005 BATTERY: per-day reuse (see `dayScanCache`) ───────────────────────────────
                 // Reuse this night's already-scored `DayScan` when its scored inputs are provably unchanged
@@ -3178,6 +3181,18 @@ final class IntelligenceEngine: ObservableObject {
                                             devices: [PairedDevice], activeId: String,
                                             registry: DeviceRegistryStore,
                                             fallbackDeviceId: String) async -> String {
+        await resolveDayOwnerExplained(day: day, from: from, to: to, store: store, devices: devices,
+                                       activeId: activeId, registry: registry,
+                                       fallbackDeviceId: fallbackDeviceId).owner
+    }
+
+    /// `resolveDayOwner` plus, when several live WHOOP rows competed on coverage, the one-line account of
+    /// that choice (picked id + each row's HR count in the window). The line is a value, not a sink, so the
+    /// detached scan loop can carry it with its other per-pass lines.
+    nonisolated static func resolveDayOwnerExplained(day: String, from: Int, to: Int, store: WhoopStore,
+                                                     devices: [PairedDevice], activeId: String,
+                                                     registry: DeviceRegistryStore,
+                                                     fallbackDeviceId: String) async -> (owner: String, line: String?) {
         // A locked override wins outright and skips the presence checks entirely. Timed because it runs on
         // EVERY call, ahead of any presence probe, and the first cut of this instrumentation counted only
         // the probe: that reported the cheap half of owner resolution while a warm pass still had seconds
@@ -3186,10 +3201,10 @@ final class IntelligenceEngine: ObservableObject {
         let lockedOwner = (try? registry.dayOwner(day))?.deviceId
         StoreProbeRecorder.record(.dayOwner, nanos: DispatchTime.now().uptimeNanoseconds &- lockedStarted)
         if let lockedOwner {
-            return lockedOwner
+            return (lockedOwner, nil)
         }
         // No registry rows (shouldn't happen , v15 seeds one , but be safe): keep the legacy id.
-        guard !devices.isEmpty else { return fallbackDeviceId }
+        guard !devices.isEmpty else { return (fallbackDeviceId, nil) }
 
         // #970: the default single-WHOOP install has exactly one device that IS the fallback id, so
         // the owner is a foregone conclusion — the resolver returns that id whether or not it has data in
@@ -3199,7 +3214,7 @@ final class IntelligenceEngine: ObservableObject {
         // guard is deliberately `== fallbackDeviceId`: a lone IMPORT device whose id differs would NOT be
         // byte-identical (no-data -> fallback, not its own id), so it must still take the probe path.
         if devices.count == 1, devices[0].id == fallbackDeviceId {
-            return fallbackDeviceId
+            return (fallbackDeviceId, nil)
         }
 
         // Probe in PRIORITY ORDER and stop at the first candidate that has data.
@@ -3235,10 +3250,27 @@ final class IntelligenceEngine: ObservableObject {
         // index makes the order total and matches Kotlin exactly.
         .enumerated().sorted { ($0.element.priority, $0.offset) < ($1.element.priority, $1.offset) }
         .map(\.element)
-        for c in ranked {
-            if (try? await store.hasHrInWindow(deviceId: c.id, from: from, to: to)) == true { return c.id }
+        // NROOP: several live WHOOP rows (the registry's active WHOOP row and the WHOOP row the connected
+        // strap is attributed to, #1881) compete on HR COVERAGE in this window, not on "any row at all".
+        // Restricted to WHOOP rows at priority 0/1, so a user-chosen non-WHOOP active source (Apple Watch,
+        // a ring) and the import/activity-file ordering behave exactly as before.
+        let whoopIds = Set(devices.filter(SourceIdentity.isWhoop).map(\.id))
+        let liveWhoops = ranked.filter { $0.priority <= 1 && whoopIds.contains($0.id) }
+        if liveWhoops.count > 1, ranked.first.map({ whoopIds.contains($0.id) }) ?? false {
+            var counts: [(deviceId: String, hrRows: Int)] = []
+            for c in liveWhoops {
+                let n = (try? await store.hrFingerprint(deviceId: c.id, from: from, to: to).count) ?? 0
+                counts.append((c.id, n))
+            }
+            if let best = DayOwnerResolver.mostCovered(counts) {
+                return (best, "dayOwner coverage day=\(day) picked=\(best) "
+                              + counts.map { "\($0.deviceId)=\($0.hrRows)" }.joined(separator: " "))
+            }
         }
-        return fallbackDeviceId
+        for c in ranked {
+            if (try? await store.hasHrInWindow(deviceId: c.id, from: from, to: to)) == true { return (c.id, nil) }
+        }
+        return (fallbackDeviceId, nil)
     }
 
     /// The strap family that wrote `owner`'s skin-temp rows (#938), so the nightly funnel converts the raw

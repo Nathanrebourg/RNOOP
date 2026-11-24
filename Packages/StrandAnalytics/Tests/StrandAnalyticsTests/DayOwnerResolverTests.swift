@@ -43,4 +43,15 @@ final class DayOwnerResolverTests: XCTestCase {
             DayOwnerResolver.resolve(day: "2026-06-15", lockedOwner: nil, candidates: candidates)
         )
     }
+
+    /// NROOP: two live WHOOP rows, the active one holding only stray lookback rows (Nov 2026 log:
+    /// 34 223 rows from the previous days, none today) and the attributed strap holding today.
+    func testMostCoveredLiveWhoopWins() {
+        XCTAssertEqual(DayOwnerResolver.mostCovered([("whoop-x", 34_223), ("my-whoop", 85_000)]), "my-whoop")
+        XCTAssertEqual(DayOwnerResolver.mostCovered([("whoop-x", 90_000), ("my-whoop", 85_000)]), "whoop-x")
+        XCTAssertEqual(DayOwnerResolver.mostCovered([("whoop-x", 7), ("my-whoop", 7)]), "whoop-x")
+        XCTAssertNil(DayOwnerResolver.mostCovered([("whoop-x", 0), ("my-whoop", 0)]))
+        XCTAssertNil(DayOwnerResolver.mostCovered([]))
+    }
 }
+

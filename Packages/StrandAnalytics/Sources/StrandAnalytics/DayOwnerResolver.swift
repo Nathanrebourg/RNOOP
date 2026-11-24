@@ -17,4 +17,18 @@ public enum DayOwnerResolver {
         if let locked = lockedOwner { return locked }
         return candidates.filter { $0.hasData }.sorted { $0.priority < $1.priority }.first?.deviceId
     }
+
+    /// NROOP: among several LIVE straps that are all WHOOPs (the active row plus other WHOOP rows), the one
+    /// holding the MOST HR rows in the read window owns the day. Still exactly one owner (invariant I2, no
+    /// merge). The first-with-any-data probe let a WHOOP row holding a few stray rows in the window's
+    /// 30 h lookback (the active registry row, while the connected strap is attributed to another WHOOP
+    /// row by #1881) own a day whose samples all live under the other row, so that day read hr=0.
+    /// `counts` is in priority order; ties keep the earlier (higher-priority) one. nil when none has rows.
+    public static func mostCovered(_ counts: [(deviceId: String, hrRows: Int)]) -> String? {
+        var best: (deviceId: String, hrRows: Int)? = nil
+        for c in counts where c.hrRows > 0 {
+            if best == nil || c.hrRows > best!.hrRows { best = c }
+        }
+        return best?.deviceId
+    }
 }
