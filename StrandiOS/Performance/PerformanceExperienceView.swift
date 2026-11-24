@@ -14,6 +14,7 @@ struct PerformanceExperienceView: View {
     @EnvironmentObject private var profile: ProfileStore
     @EnvironmentObject private var live: LiveState
     @EnvironmentObject private var router: NavRouter
+    @EnvironmentObject private var ble: BLEManager
     @Environment(\.dismiss) private var dismiss
     @Environment(\.dynamicTypeSize) private var typeSize
     @StateObject private var model = PerformanceSnapshotModel()
@@ -93,7 +94,11 @@ struct PerformanceExperienceView: View {
         }
         .background(PerformanceBackground())
         .toolbar(.hidden, for: .navigationBar)
-        .refreshable { await repo.refresh() }
+        // Like the classic Today pull-to-sync: a pull asks the strap for its stored history, not just a UI reload.
+        .refreshable {
+            if live.historyReady { ble.syncNow() }
+            await repo.refresh()
+        }
         .task(id: loadID) {
             router.performanceContext = context
             await model.load(repo: repo, context: context)
@@ -273,6 +278,9 @@ struct PerformanceExperienceView: View {
                     }.buttonStyle(.plain)
                 }
             }
+            if day == today, [PerformanceContext.Domain.sleep, .recovery, .effort].contains(where: { snapshot.value($0.metricKey) == nil }) {
+                unscoredTodayStatus(snapshot)
+            }
             ViewThatFits(in: .horizontal) {
                 HStack(alignment: .top, spacing: NoopMetrics.space3) { healthMonitor(snapshot); stressMonitor(snapshot) }
                 VStack(spacing: NoopMetrics.space3) { healthMonitor(snapshot); stressMonitor(snapshot) }
@@ -301,6 +309,47 @@ struct PerformanceExperienceView: View {
                     dashboardEditorDestination = .addedCards
                     showDashboardEditor = true
                 }
+            }
+        }
+    }
+
+    /// Why today's cycle has no score yet, read from real state only, plus a manual sync + re-score.
+    private func unscoredTodayStatus(_ snapshot: PerformanceSnapshot) -> some View {
+        let reason: String
+        if intelligence.computing {
+            reason = String(localized: "Calculating today's scores…")
+        } else if live.backfilling {
+            reason = String(localized: "Syncing last night from the strap…")
+        } else if snapshot.night != nil || !snapshot.sleepSessions.isEmpty {
+            reason = String(localized: "Night detected, today's scores are not calculated yet.")
+        } else if !live.connected {
+            reason = String(localized: "Strap not connected: last night is not synced yet.")
+        } else if let last = live.lastSyncedAt {
+            let time = Date(timeIntervalSince1970: last).formatted(.dateTime.hour().minute().locale(AppLanguage.activeLocale))
+            reason = String(localized: "No sleep detected for last night (last strap sync \(time)).")
+        } else {
+            reason = String(localized: "Last night is not synced yet.")
+        }
+        return PerformancePanel {
+            VStack(alignment: .leading, spacing: NoopMetrics.space2) {
+                Label(reason, systemImage: "info.circle")
+                    .font(StrandFont.footnote).foregroundStyle(StrandPalette.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                if let note = intelligence.note, !note.isEmpty {
+                    Text(note).font(StrandFont.caption).foregroundStyle(StrandPalette.textTertiary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                Button {
+                    Task {
+                        if live.historyReady { ble.syncNow() }
+                        await intelligence.analyzeRecent(triggerLabel: "today-recalculate")
+                        await repo.refresh()
+                    }
+                } label: {
+                    Label(intelligence.computing ? String(localized: "Calculating today's scores…") : String(localized: "Recalculate today"),
+                          systemImage: "arrow.clockwise").font(StrandFont.subhead)
+                }
+                .disabled(intelligence.computing)
             }
         }
     }
