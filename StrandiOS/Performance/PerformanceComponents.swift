@@ -182,6 +182,35 @@ struct PerformanceMeasureRow: View {
     }
 }
 
+/// WHOOP-style activity card: coloured score/duration tile, sport icon, name and times.
+struct PerformanceActivityCard: View {
+    let badge: String
+    let badgeColor: Color
+    let symbol: String
+    let title: String
+    let times: String
+    var body: some View {
+        HStack(spacing: NoopMetrics.space3) {
+            Text(badge).font(StrandFont.headline).monospacedDigit().minimumScaleFactor(0.6).lineLimit(1)
+                .foregroundStyle(.white)
+                .frame(width: 64, height: 44)
+                .background(badgeColor, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+            Image(systemName: symbol).font(StrandFont.headline).foregroundStyle(badgeColor)
+                .frame(width: NoopMetrics.space6)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title.uppercased()).font(StrandFont.subhead).foregroundStyle(StrandPalette.textPrimary)
+                    .lineLimit(1).minimumScaleFactor(0.75)
+                Text(times).font(StrandFont.footnote).monospacedDigit().foregroundStyle(StrandPalette.textSecondary)
+            }
+            Spacer(minLength: NoopMetrics.space2)
+            Image(systemName: "chevron.right").font(StrandFont.footnote).foregroundStyle(StrandPalette.textSecondary)
+        }
+        .padding(NoopMetrics.space3)
+        .background(PerformanceDesign.panelTop, in: RoundedRectangle(cornerRadius: PerformanceDesign.panelRadius, style: .continuous))
+        .contentShape(Rectangle())
+    }
+}
+
 struct PerformanceCoachSymbol: View {
     var body: some View {
         ZStack(alignment: .topTrailing) {
