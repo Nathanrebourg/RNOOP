@@ -643,7 +643,10 @@ struct PerformanceExperienceView: View {
         }
         return NavigationLink(value: route) {
             PerformanceMeasureRow(title: card.title, value: key == "vo2max" ? vo2Value(value) : PerformanceFormat.value(formatKey, value),
-                                  caption: caption, symbol: card.icon)
+                                  caption: caption, symbol: card.icon,
+                                  baseline: snapshot.baselines[key].map { String(localized: "30-day avg \(PerformanceFormat.value(key, $0))") },
+                                  direction: Self.direction(value, snapshot.baselines[key]),
+                                  spark: weekPoints(snapshot, key: key).map(\.value))
         }.buttonStyle(.plain)
     }
 
@@ -762,6 +765,8 @@ struct PerformanceExperienceView: View {
                 }
             }
             recoveryBars(snapshot)
+            weekChart(String(localized: "HRV · 7 days"), key: "hrv", snapshot: snapshot, color: PerformanceDesign.recoveryHigh, bars: false)
+            weekChart(String(localized: "Resting heart rate · 7 days"), key: "rhr", snapshot: snapshot, color: PerformanceDesign.recoveryLow, bars: false)
             PerformanceFullHistoryLink(key: context.domain.metricKey)
             PerformanceCoachLink(context: context)
             Text("These measurements provide context; they are not a percentage breakdown of the recovery score.")
@@ -781,11 +786,93 @@ struct PerformanceExperienceView: View {
                     measure("strength_min", snapshot)
                 }
             }
+            weekChart(String(localized: "Effort · 7 days"), key: "strain", snapshot: snapshot, color: PerformanceDesign.effort, bars: true)
+            zonesWeekChart(snapshot)
+            weekChart(String(localized: "Steps · 7 days"), key: (snapshot.series["steps"] ?? []).isEmpty ? "steps_est" : "steps",
+                      snapshot: snapshot, color: PerformanceDesign.effort, bars: true)
             PerformanceFullHistoryLink(key: context.domain.metricKey)
             PerformanceCoachLink(context: context)
             activityList(snapshot, includeSleep: false)
             trendLink("strain")
             if day == today { WorkoutStartControl() }
+        }
+    }
+
+    /// Real points of the visible 7-day window only (missing days stay empty).
+    private struct WeekPoint: Identifiable {
+        let date: Date
+        let value: Double
+        var id: Date { date }
+    }
+
+    private func weekPoints(_ snapshot: PerformanceSnapshot, key: String) -> [WeekPoint] {
+        (snapshot.series[key] ?? []).compactMap { point -> WeekPoint? in
+            guard context.contains(point.day), point.value.isFinite,
+                  let date = PerformanceSnapshotModel.localNoon(point.day) else { return nil }
+            return WeekPoint(date: date, value: key == "strain"
+                ? UnitFormatter.effortValue(point.value, scale: PerformanceFormat.effortScale) : point.value)
+        }
+    }
+
+    @ViewBuilder private func weekChart(_ title: String, key: String, snapshot: PerformanceSnapshot, color: Color, bars: Bool) -> some View {
+        let points = weekPoints(snapshot, key: key)
+        if !points.isEmpty {
+            NavigationLink(value: TabRoute.performance(PerformanceContext(day: day, domain: .trend, metric: key)!)) {
+                PerformancePanel {
+                    VStack(alignment: .leading, spacing: NoopMetrics.space2) {
+                        HStack {
+                            Text(title).font(StrandFont.headline)
+                            Spacer()
+                            Image(systemName: "chevron.right").font(StrandFont.footnote).foregroundStyle(StrandPalette.textSecondary)
+                        }
+                        Chart(points) { point in
+                            if bars {
+                                BarMark(x: .value("Day", point.date, unit: .day), y: .value(title, point.value))
+                                    .foregroundStyle(color)
+                            } else {
+                                LineMark(x: .value("Day", point.date, unit: .day), y: .value(title, point.value))
+                                    .foregroundStyle(color)
+                                    .lineStyle(StrokeStyle(lineWidth: PerformanceDesign.chartStroke))
+                                PointMark(x: .value("Day", point.date, unit: .day), y: .value(title, point.value))
+                                    .foregroundStyle(color)
+                            }
+                        }
+                        .chartXAxis { AxisMarks(values: .stride(by: .day)) { _ in AxisValueLabel(format: .dateTime.weekday(.narrow)) } }
+                        .chartYScale(domain: .automatic(includesZero: bars))
+                        .frame(height: PerformanceDesign.compactChartHeight)
+                    }
+                }
+            }.buttonStyle(.plain).foregroundStyle(StrandPalette.textPrimary)
+        }
+    }
+
+    private struct ZoneBar: Identifiable {
+        let date: Date
+        let band: String
+        let minutes: Double
+        var id: String { band + String(date.timeIntervalSince1970) }
+    }
+
+    @ViewBuilder private func zonesWeekChart(_ snapshot: PerformanceSnapshot) -> some View {
+        let low = String(localized: "Zones 1–3")
+        let high = String(localized: "Zones 4–5")
+        let bars = weekPoints(snapshot, key: "hr_zones13_min").map { ZoneBar(date: $0.date, band: low, minutes: $0.value) }
+            + weekPoints(snapshot, key: "hr_zones45_min").map { ZoneBar(date: $0.date, band: high, minutes: $0.value) }
+        if !bars.isEmpty {
+            PerformancePanel {
+                VStack(alignment: .leading, spacing: NoopMetrics.space2) {
+                    Text("Heart rate zones · 7 days").font(StrandFont.headline)
+                    Chart(bars) { bar in
+                        BarMark(x: .value("Day", bar.date, unit: .day), y: .value("Minutes", bar.minutes))
+                            .foregroundStyle(by: .value("Zones", bar.band))
+                    }
+                    .chartForegroundStyleScale([low: PerformanceDesign.recoveryHigh, high: PerformanceDesign.recoveryMedium])
+                    .chartXAxis { AxisMarks(values: .stride(by: .day)) { _ in AxisValueLabel(format: .dateTime.weekday(.narrow)) } }
+                    .frame(height: PerformanceDesign.compactChartHeight)
+                    Text("Minutes per day, from your strap's heart rate.")
+                        .font(StrandFont.footnote).foregroundStyle(StrandPalette.textSecondary)
+                }
+            }
         }
     }
 

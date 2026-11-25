@@ -1,5 +1,6 @@
 #if os(iOS)
 import SwiftUI
+import Charts
 import StrandDesign
 import WhoopStore
 import StrandAnalytics
@@ -150,6 +151,8 @@ struct PerformanceMeasureRow: View {
     var direction = 0
     /// Optional WHOOP-style band pill (Poor / Sufficient / Optimal).
     var badge: PerformanceBand? = nil
+    /// Optional 7-day sparkline of real daily values (oldest first).
+    var spark: [Double] = []
     var body: some View {
         HStack(spacing: NoopMetrics.space3) {
             Image(systemName: symbol).font(StrandFont.subhead).foregroundStyle(PerformanceDesign.sleep).frame(width: NoopMetrics.space6)
@@ -164,6 +167,17 @@ struct PerformanceMeasureRow: View {
                 if let caption { Text(caption).font(StrandFont.footnote).foregroundStyle(StrandPalette.textSecondary).fixedSize(horizontal: false, vertical: true) }
             }
             Spacer(minLength: NoopMetrics.space2)
+            if spark.count >= 2 {
+                Chart(Array(spark.enumerated()), id: \.offset) { item in
+                    LineMark(x: .value("Day", item.offset), y: .value("Value", item.element))
+                        .foregroundStyle(PerformanceDesign.sleep)
+                        .interpolationMethod(.monotone)
+                }
+                .chartXAxis(.hidden).chartYAxis(.hidden)
+                .chartYScale(domain: .automatic(includesZero: false))
+                .frame(width: 56, height: 24)
+                .accessibilityHidden(true)
+            }
             VStack(alignment: .trailing, spacing: 2) {
                 Text(value).font(StrandFont.title2).foregroundStyle(StrandPalette.textPrimary).monospacedDigit().minimumScaleFactor(0.7)
                 if let baseline {
