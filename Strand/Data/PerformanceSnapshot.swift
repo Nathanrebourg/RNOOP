@@ -16,6 +16,8 @@ struct PerformanceSnapshot {
     var vitals: [BodyVitalReading] = []
     var stress: Double?
     var hadReadErrors = false
+    /// Mean of the 30 days BEFORE the snapshot day (real stored points only, at least 4 days).
+    var baselines: [String: Double] = [:]
 
     func value(_ key: String) -> Double? {
         PerformanceContext.finite(series[key]?.first(where: { $0.day == context.day })?.value)
@@ -47,7 +49,8 @@ struct PerformanceSnapshot {
     func forContext(_ newContext: PerformanceContext) -> PerformanceSnapshot {
         PerformanceSnapshot(context: newContext, daily: daily, series: series, workouts: workouts,
                             night: night, sleepSessions: sleepSessions, sleepWeek: sleepWeek,
-                            recommendedSleepNeed: recommendedSleepNeed, vitals: vitals, stress: stress, hadReadErrors: hadReadErrors)
+                            recommendedSleepNeed: recommendedSleepNeed, vitals: vitals, stress: stress, hadReadErrors: hadReadErrors,
+                            baselines: baselines)
     }
 }
 
@@ -205,6 +208,10 @@ final class PerformanceSnapshotModel: ObservableObject {
                        "hr_zones45_min", "strength_min", "stress", "skin_temp", "spo2", "active_kcal",
                        "fitness_age", "body_age", "vitality", "vo2max", "vo2max_est"]
 
+    static let baselineKeys = ["hrv", "rhr", "resp_rate", "sleep_performance", "recovery", "strain",
+                               "sleep_total_min", "sleep_efficiency", "sleep_consistency", "hours_vs_needed_pct",
+                               "steps_est", "hr_zones13_min", "hr_zones45_min", "strength_min"]
+
     static func capture(repo: Repository, context: PerformanceContext, scope: Scope = .full) async -> PerformanceSnapshot {
         var result = PerformanceSnapshot(context: context)
         result.daily = repo.days.first { $0.day == context.day }
@@ -213,7 +220,9 @@ final class PerformanceSnapshotModel: ObservableObject {
         for key in requestedKeys {
             if Task.isCancelled { return result }
             // VO₂ readings can be much older than the seven-day dashboard window.
-            let from = scope == .full && (key == "vo2max" || key == "vo2max_est") ? "0000-01-01" : context.lowerBound
+            // A trend also reads the period before it, for the "vs previous period" change and typical range.
+            let from = scope == .trend ? context.shiftedDay(by: 1 - 2 * context.windowDays)
+                : (key == "vo2max" || key == "vo2max_est") ? "0000-01-01" : context.lowerBound
             let resolved = await repo.resolvedSeries(key: key, source: Repository.whoopSource,
                                                      from: from, to: context.day)
             result.hadReadErrors = result.hadReadErrors || resolved.hadReadErrors
@@ -225,6 +234,19 @@ final class PerformanceSnapshotModel: ObservableObject {
             }
         }
         if scope == .full {
+            // WHOOP compares each measurement with the last 30 days. Only real stored points count.
+            let baselineFrom = context.shiftedDay(by: -30)
+            let baselineTo = context.shiftedDay(by: -1)
+            for key in baselineKeys {
+                if Task.isCancelled { return result }
+                let resolved = await repo.resolvedSeries(key: key, source: Repository.whoopSource,
+                                                         from: baselineFrom, to: baselineTo)
+                let values = resolved.points.compactMap { point -> Double? in
+                    guard point.day >= baselineFrom, point.day <= baselineTo else { return nil }
+                    return displayValue(point.value, key: key, origin: point.origin, source: point.source)
+                }
+                if values.count >= 4 { result.baselines[key] = values.reduce(0, +) / Double(values.count) }
+            }
             // Apple steps and VO₂ are not WHOOP-compatible candidates in the generic resolver.
             // For oxygen, keep imported readings separate from any computed candidate.
             for key in ["steps", "vo2max", "spo2"] {

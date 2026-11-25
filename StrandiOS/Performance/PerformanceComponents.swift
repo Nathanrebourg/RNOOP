@@ -117,20 +117,66 @@ struct DatedPerformanceScoreRing: View {
     }
 }
 
+/// WHOOP's sleep bands: Optimal at 85 % and above, Sufficient from 70 %, Poor below.
+enum PerformanceBand {
+    case poor, sufficient, optimal
+    init?(percent: Double?) {
+        guard let percent, percent.isFinite else { return nil }
+        self = percent >= 85 ? .optimal : percent >= 70 ? .sufficient : .poor
+    }
+    var title: String {
+        switch self {
+        case .poor: String(localized: "Poor")
+        case .sufficient: String(localized: "Sufficient")
+        case .optimal: String(localized: "Optimal")
+        }
+    }
+    var color: Color {
+        switch self {
+        case .poor: PerformanceDesign.recoveryLow
+        case .sufficient: PerformanceDesign.recoveryMedium
+        case .optimal: PerformanceDesign.recoveryHigh
+        }
+    }
+}
+
 struct PerformanceMeasureRow: View {
     let title: String
     let value: String
     var caption: String? = nil
     var symbol = "waveform.path.ecg"
+    /// Optional "30-day average" read-out under the value, with the direction of today vs that average.
+    var baseline: String? = nil
+    var direction = 0
+    /// Optional WHOOP-style band pill (Poor / Sufficient / Optimal).
+    var badge: PerformanceBand? = nil
     var body: some View {
         HStack(spacing: NoopMetrics.space3) {
             Image(systemName: symbol).font(StrandFont.subhead).foregroundStyle(PerformanceDesign.sleep).frame(width: NoopMetrics.space6)
             VStack(alignment: .leading, spacing: NoopMetrics.space1) {
                 Text(title).font(StrandFont.subhead).foregroundStyle(StrandPalette.textPrimary)
+                if let badge {
+                    Text(badge.title).font(StrandFont.overline)
+                        .padding(.horizontal, NoopMetrics.space2).padding(.vertical, 2)
+                        .foregroundStyle(badge.color)
+                        .background(badge.color.opacity(0.15), in: Capsule())
+                }
                 if let caption { Text(caption).font(StrandFont.footnote).foregroundStyle(StrandPalette.textSecondary).fixedSize(horizontal: false, vertical: true) }
             }
             Spacer(minLength: NoopMetrics.space2)
-            Text(value).font(StrandFont.title2).foregroundStyle(StrandPalette.textPrimary).monospacedDigit().minimumScaleFactor(0.7)
+            VStack(alignment: .trailing, spacing: 2) {
+                Text(value).font(StrandFont.title2).foregroundStyle(StrandPalette.textPrimary).monospacedDigit().minimumScaleFactor(0.7)
+                if let baseline {
+                    HStack(spacing: 2) {
+                        if direction != 0 {
+                            Image(systemName: direction > 0 ? "arrowtriangle.up.fill" : "arrowtriangle.down.fill")
+                        }
+                        Text(baseline).monospacedDigit()
+                    }
+                    .font(StrandFont.footnote).foregroundStyle(StrandPalette.textSecondary)
+                    .lineLimit(1).minimumScaleFactor(0.7)
+                }
+            }
             Image(systemName: "chevron.right").font(StrandFont.footnote).foregroundStyle(StrandPalette.textSecondary)
         }.padding(.vertical, NoopMetrics.space3).contentShape(Rectangle())
     }
