@@ -408,7 +408,7 @@ struct RootTabView: View {
                     withAnimation(Self.sheetEase) { quickAction = picked }
                 }
             }
-            .presentationDetents([.height(344)])
+            .presentationDetents([.height(410)])
             .presentationDragIndicator(.hidden)
         case .live:
             quickScreen(LiveView())
@@ -418,6 +418,8 @@ struct RootTabView: View {
             quickScreen(InsightsView())
         case .breathe:
             quickScreen(BreathingView())
+        case .sleep:
+            ManualSleepEntry()
         }
     }
 
@@ -734,7 +736,7 @@ private struct MoreIndexRowLabel: View {
 /// The destinations the centre FAB can present. `.menu` is the action sheet itself; the rest
 /// route to existing screens. `Identifiable` so it drives `.sheet(item:)`.
 private enum QuickAction: Int, Identifiable {
-    case menu, live, workout, journal, breathe
+    case menu, live, workout, journal, breathe, sleep
     var id: Int { rawValue }
 }
 
@@ -765,6 +767,7 @@ private struct QuickActionSheet: View {
                 row("Live HR", icon: "waveform.path.ecg", tint: StrandPalette.metricRose) { onPick(.live) }
                 row("Start workout", icon: "figure.run", tint: StrandPalette.effortColor) { onPick(.workout) }
                 row("Log journal", icon: "square.and.pencil", tint: StrandPalette.accent) { onPick(.journal) }
+                row("Add sleep", icon: "moon.zzz", tint: StrandPalette.restColor) { onPick(.sleep) }
                 row("Breathe", icon: "wind", tint: StrandPalette.restColor) { onPick(.breathe) }
             }
             .padding(.horizontal, 16)

@@ -1306,11 +1306,12 @@ public enum AnalyticsEngine {
                                      restorativeSeconds: Double,
                                      needHours: Double,
                                      consistency: Double?,
-                                     deepSeconds: Double? = nil) -> Double {
+                                     deepSeconds: Double? = nil,
+                                     durationCreditSeconds: Double = 0) -> Double {
             func clamp01(_ x: Double) -> Double { max(0.0, min(1.0, x)) }
 
             let needSeconds = max(needHours, 0.1) * 3600.0
-            let durationScore = clamp01(tstSeconds / needSeconds)
+            let durationScore = clamp01((tstSeconds + durationCreditSeconds) / needSeconds)
             let efficiencyScore = clamp01(efficiency)
             // Deep-adequacy factor in [deepFloorFactor, 1]: 1.0 once deep ≥ target share, ramping
             // down to the floor as deep → 0. nil deep (unknown split) ⇒ 1.0 (no adjustment).
@@ -1337,7 +1338,7 @@ public enum AnalyticsEngine {
         /// Single source of truth so the persisted `sleep_performance` series and the Charge
         /// "Rest quality" term agree. `consistency` is the caller's regularity signal (nil → neutral).
         public static func composite(daily d: DailyMetric, needHours: Double = defaultNeedHours,
-                                     consistency: Double? = nil) -> Double? {
+                                     consistency: Double? = nil, durationCreditMin: Double = 0) -> Double? {
             guard let tstMin = d.totalSleepMin, tstMin > 0, let eff = d.efficiency else { return nil }
             let tstSec = tstMin * 60.0
             let deepSec = (d.deepMin ?? 0) * 60.0
@@ -1345,7 +1346,7 @@ public enum AnalyticsEngine {
             return composite(tstSeconds: tstSec, inBedSeconds: tstSec / max(eff, 0.01),
                              efficiency: eff, restorativeSeconds: restorativeSec,
                              needHours: needHours, consistency: consistency,
-                             deepSeconds: deepSec)
+                             deepSeconds: deepSec, durationCreditSeconds: durationCreditMin * 60)
         }
     }
 
@@ -1375,7 +1376,7 @@ public enum AnalyticsEngine {
     /// shared `skinTempCelsius(raw:family:)` (WhoopProtocol) picks the right scale; `family` defaults
     /// to `.whoop5` so every existing 5/MG + pure-function caller is byte-identical. All values
     /// APPROXIMATE.
-    static func wornNightlySkinTempC(_ sessions: [SleepSession],
+    public static func wornNightlySkinTempC(_ sessions: [SleepSession],
                                      hr: [HRSample],
                                      skinTemp: [SkinTempSample],
                                      family: DeviceFamily = .whoop5,

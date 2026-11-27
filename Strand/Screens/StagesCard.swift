@@ -85,7 +85,10 @@ struct StageDetailView: View {
                 let chartStyle = SleepChartStyle.resolve(sleepChartStyleRaw)
                 switch chartStyle {
                 case .classic:
-                    stageTimelineCard(s, subtitle: subtitle, intervals: intervals, night: night)
+                    NoopCard(tint: StrandPalette.restColor) {
+                        SleepStageTimeline(night: night, intervals: night.realSegments ?? [],
+                                           heartRate: nightHR, days: repo.days)
+                    }
                 case .filled, .garminFilled, .ribbon:
                     steppedHypnogramCard(s, subtitle: subtitle, intervals: intervals, style: chartStyle)
                 }
@@ -138,8 +141,8 @@ struct StageDetailView: View {
         }
         // WHOOP top-chart data (ryanAtriumAi #988): 1-min sleeping-HR buckets for THIS night, reloaded
         // only when the displayed night changes (same `.task(id:)` pattern the other per-night loads use).
-        .task(id: night.session.startTs) {
-            nightHR = await repo.hrBuckets(from: night.session.startTs,
+        .task(id: "\(night.session.effectiveStartTs)-\(night.session.endTs)-\(repo.refreshSeq)") {
+            nightHR = await repo.hrBuckets(from: night.session.effectiveStartTs,
                                            to: night.session.endTs,
                                            bucketSeconds: 60)
         }
@@ -735,3 +738,143 @@ struct StageDetailView: View {
     }
 
 }
+
+#if os(iOS)
+/// Recorded heart rate and stage totals for the selected night.
+struct SleepStageTimeline: View {
+    let night: Night
+    let intervals: [SleepInterval]
+    let heartRate: [HRBucket]
+    let days: [DailyMetric]
+    @State private var highlighted: SleepStage?
+
+    private var history: [DailyMetric] {
+        let wake = Date(timeIntervalSince1970: TimeInterval(night.session.endTs))
+        let day = Repository.localDayKey(wake)
+        guard let lower = Calendar.current.date(byAdding: .day, value: -30, to: wake) else { return [] }
+        let lowerDay = Repository.localDayKey(lower)
+        return days.filter { $0.day >= lowerDay && $0.day < day }
+    }
+
+    var body: some View {
+        let stages: [SleepStage] = [.awake, .light, .deep, .rem]
+        let minutes = [night.stages.awake, night.stages.light, night.stages.deep, night.stages.rem]
+        let span = Double(night.session.endTs - night.session.effectiveStartTs)
+        let clock = AppClock.hourMinuteFormatter()
+        let baseline = history
+        VStack(alignment: .leading, spacing: NoopMetrics.space3) {
+            if span > 0 {
+                Text("Sleeping heart rate").font(StrandFont.overline)
+                SleepHRChart(nightHR: heartRate, intervals: intervals, origin: 0, span: span,
+                             night: night, selectedStage: highlighted, timeFormatter: clock)
+                    .frame(height: PerformanceDesign.stageChartHeight)
+                HStack {
+                    Text(clock.string(from: night.onsetDate))
+                    Spacer()
+                    Text(clock.string(from: night.onsetDate.addingTimeInterval(span / 2)))
+                    Spacer()
+                    Text(clock.string(from: night.onsetDate.addingTimeInterval(span)))
+                }
+                .font(StrandFont.footnote)
+                .foregroundStyle(StrandPalette.textSecondary)
+            }
+            if let percentages = StagePercentages.wholePercentages(minutes) {
+                let typicalShares = stages.map { stage in
+                    mean(baseline.compactMap { typicalShare(stage, row: $0) })
+                }
+                ForEach(stages.indices, id: \.self) { index in
+                    stageRow(stages[index], minutes: minutes[index], percent: percentages[index], typical: typicalShares[index])
+                }
+                if typicalShares.contains(where: { $0 != nil }) {
+                    HStack(spacing: NoopMetrics.space2) {
+                        Rectangle().fill(StrandPalette.textPrimary)
+                            .frame(width: NoopMetrics.hairlineWidth, height: NoopMetrics.space2)
+                        Text("Typical share · 30-day average")
+                    }
+                    .font(StrandFont.footnote)
+                    .foregroundStyle(StrandPalette.textSecondary)
+                }
+
+                Divider()
+                let restorative = night.stages.deep + night.stages.rem
+                let average = mean(baseline.compactMap { row in
+                    guard let deep = row.deepMin, let rem = row.remMin else { return nil }
+                    return deep + rem
+                })
+                HStack {
+                    VStack(alignment: .leading, spacing: NoopMetrics.space1) {
+                        Text("Restorative sleep").font(StrandFont.headline)
+                        Text("Deep + REM").font(StrandFont.footnote)
+                    }
+                    Spacer()
+                    VStack(alignment: .trailing, spacing: NoopMetrics.space1) {
+                        Text(PerformanceFormat.duration(restorative)).font(StrandFont.headline)
+                        if let average {
+                            Text(String(localized: "30-day avg. \(PerformanceFormat.duration(average))"))
+                                .font(StrandFont.footnote)
+                        }
+                    }
+                }
+            } else {
+                Text("Sleep stages unavailable").font(StrandFont.footnote)
+            }
+        }
+        .tint(PerformanceDesign.sleep)
+    }
+
+    private func stageRow(_ stage: SleepStage, minutes: Double, percent: Int, typical: Double?) -> some View {
+        let color = StrandPalette.sleepStageColor(stage)
+        return Button {
+            highlighted = highlighted == stage ? nil : stage
+        } label: {
+            VStack(alignment: .leading, spacing: NoopMetrics.space1) {
+                HStack(spacing: NoopMetrics.space2) {
+                    Circle().fill(color).frame(width: NoopMetrics.space2, height: NoopMetrics.space2)
+                    Text(stage.label)
+                    Text(Double(percent) / 100, format: .percent).foregroundStyle(color)
+                    Spacer()
+                    Text(PerformanceFormat.duration(minutes)).monospacedDigit()
+                }
+                GeometryReader { geometry in
+                    ZStack(alignment: .leading) {
+                        Capsule().fill(StrandPalette.surfaceInset)
+                        Capsule().fill(color.opacity(highlighted == nil || highlighted == stage ? 1 : 0.45))
+                            .frame(width: geometry.size.width * CGFloat(percent) / 100)
+                        if let typical {
+                            Rectangle().fill(StrandPalette.textPrimary)
+                                .frame(width: 2)
+                                .offset(x: max(0, geometry.size.width - 2) * CGFloat(typical))
+                        }
+                    }
+                }
+                .frame(height: NoopMetrics.space2)
+            }
+            .font(StrandFont.footnote)
+        }
+        .buttonStyle(.plain)
+        .accessibilityValue(typical.map {
+            String(localized: "Typical share \($0.formatted(.percent.precision(.fractionLength(0))))")
+        } ?? "")
+    }
+
+    private func typicalShare(_ stage: SleepStage, row: DailyMetric) -> Double? {
+        guard let deep = row.deepMin, let rem = row.remMin, let light = row.lightMin,
+              let efficiency = row.efficiency, efficiency.isFinite, efficiency > 0 else { return nil }
+        let fraction = efficiency > 1 ? efficiency / 100 : efficiency
+        let asleep = deep + rem + light
+        guard fraction <= 1, asleep.isFinite, asleep > 0, min(deep, min(rem, light)) >= 0 else { return nil }
+        switch stage {
+        case .awake: return 1 - fraction
+        case .light: return light / asleep * fraction
+        case .deep: return deep / asleep * fraction
+        case .rem: return rem / asleep * fraction
+        }
+    }
+
+    private func mean(_ values: [Double]) -> Double? {
+        let usable = values.filter { $0.isFinite && $0 >= 0 }
+        guard !usable.isEmpty else { return nil }
+        return usable.reduce(0, +) / Double(usable.count)
+    }
+}
+#endif

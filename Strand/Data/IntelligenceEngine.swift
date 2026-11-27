@@ -434,6 +434,54 @@ final class IntelligenceEngine: ObservableObject {
         return parts.isEmpty ? nil : parts.joined(separator: "\n")
     }
 
+    /// NROOP: local "MM-dd HH:mm" for a unix time under a fixed offset (diagnostics only).
+    nonisolated static func diagClock(_ ts: Int, offsetSec: Int) -> String {
+        let local = ts + offsetSec
+        let sod = ((local % 86_400) + 86_400) % 86_400
+        let day = AnalyticsEngine.dayString(ts, offsetSec: offsetSec)
+        return String(format: "%@ %02d:%02d", String(day.dropFirst(5)), sod / 3600, (sod % 3600) / 60)
+    }
+
+    /// NROOP: `gate run=N spanS=S KEPT|DROPPED gate=NAME ...` lines (candidate sleep runs only) reduced to
+    /// `cand=<n> gates=[run0:DROPPED:minSleepMin/22m, run1:KEPT:accepted/412m]`. Sparse-bridge bookkeeping
+    /// lines are not candidates and are skipped.
+    nonisolated static func sleepGateSummary(_ lines: [String]) -> (cand: Int, text: String) {
+        let known: Set<String> = ["minSleepMin", "maxMainSleepSpanS", "hrConfirm", "offWrist",
+                                  "daytimeGuard", "morningStillness", "accepted"]
+        var parts: [String] = []
+        for line in lines {
+            let tokens = line.split(separator: " ").map(String.init)
+            guard let runTok = tokens.first(where: { $0.hasPrefix("run=") }), let run = Int(runTok.dropFirst(4)), run >= 0,
+                  let gateTok = tokens.first(where: { $0.hasPrefix("gate=") }) else { continue }
+            let gate = String(gateTok.dropFirst(5))
+            guard known.contains(gate) else { continue }
+            let verdict = tokens.contains("DROPPED") ? "DROPPED" : "KEPT"
+            let span = tokens.first(where: { $0.hasPrefix("spanS=") }).flatMap { Int($0.dropFirst(6)) }.map { "\($0 / 60)m" } ?? "?"
+            parts.append("run\(run):\(verdict):\(gate)/\(span)")
+        }
+        return (parts.count, "[" + parts.joined(separator: ", ") + "]")
+    }
+
+    /// NROOP: the always-on, today-only account of what the sleep detector was given and decided.
+    /// Grep `sleep-detect today`. Counts, ids and times only.
+    nonisolated static func sleepDetectTodayLine(day: String, owner: String, windowFrom: Int, windowTo: Int,
+                                                 tzOffset: Int,
+                                                 perId: [(id: String, count: Int, first: Int?, last: Int?)],
+                                                 ownerHr: Int, grav: Int, gateLines: [String],
+                                                 nightMinutes: Double?, mergedIds: [String] = []) -> String {
+        let ids = perId.map { e -> String in
+            let span = (e.first != nil && e.last != nil)
+                ? " first=\(diagClock(e.first!, offsetSec: tzOffset)) last=\(diagClock(e.last!, offsetSec: tzOffset))" : ""
+            return "\(e.id) hr=\(e.count)\(span)"
+        }.joined(separator: "; ")
+        let gates = sleepGateSummary(gateLines)
+        let night = nightMinutes.map { "\(Int($0.rounded()))min" } ?? "none"
+        return "sleep-detect today day=\(day) owner=\(owner) "
+            + "window=\(diagClock(windowFrom, offsetSec: tzOffset))..\(diagClock(windowTo, offsetSec: tzOffset)) "
+            + "ids[\(ids)] ownerHr=\(ownerHr) grav=\(grav) cand=\(gates.cand) gates=\(gates.text) "
+            + "merged=[\(mergedIds.joined(separator: ","))] night=\(night)"
+    }
+
     nonisolated static func sleepDetectNoNightLogLine(day: String, hrCount: Int, rrCount: Int,
                                                       respCount: Int, gravCount: Int, stepCount: Int,
                                                       providedCount: Int, providedEndingOnDay: Int,
@@ -1187,6 +1235,10 @@ final class IntelligenceEngine: ObservableObject {
             let hrWindow = SlidingStreamWindow<HRSample>(tsOf: { $0.ts }, limit: StreamReadCap.hr) { o, f, t in
                 try? await store.hrSamples(deviceId: o, from: f, to: t, limit: StreamReadCap.hr)
             }
+            // NROOP: ids the strap's samples may be banked under besides the day's owner (see `SiblingStreamMerge`).
+            let siblingStoreIds = (try? await store.hrDeviceIds()) ?? []
+            let siblingRegWhoop = regDevices.filter(SourceIdentity.isWhoop).map(\.id)
+            let siblingRegOther = regDevices.filter { !SourceIdentity.isWhoop($0) }.map(\.id)
             let activeWhoop5RR = (try? await store.isWhoop5RRSource(deviceId: regActiveId)) ?? true
             let rrWindow = SlidingStreamWindow<RRInterval>(tsOf: { $0.ts }, limit: StreamReadCap.rr) { o, f, t in
                 try? await store.rrIntervals(deviceId: o, from: f, to: t, limit: StreamReadCap.rr,
@@ -1218,9 +1270,12 @@ final class IntelligenceEngine: ObservableObject {
                 // this resolves to `deviceId` (active strap, has data → priority 0), so nothing changes; with
                 // multiple sources the day is scored from exactly one (active strap > other live straps >
                 // imports, or a locked override). Falls back to `deviceId` if the registry is unreadable.
-                let owner = await Self.resolveDayOwner(day: day, from: from, to: to, store: store,
-                                                       devices: regDevices, activeId: regActiveId,
-                                                       registry: registry, fallbackDeviceId: ownerFallbackId)
+                let resolvedOwner = await Self.resolveDayOwnerExplained(day: day, from: from, to: to, store: store,
+                                                                        devices: regDevices, activeId: regActiveId,
+                                                                        registry: registry, fallbackDeviceId: ownerFallbackId)
+                let owner = resolvedOwner.owner
+                // NROOP: always log TODAY's coverage-based owner choice (counts + ids only), no test mode needed.
+                if offset == 0, let line = resolvedOwner.line { skippedDayLines.append(line) }
 
                 // ── #1005 BATTERY: per-day reuse (see `dayScanCache`) ───────────────────────────────
                 // Reuse this night's already-scored `DayScan` when its scored inputs are provably unchanged
@@ -1237,10 +1292,22 @@ final class IntelligenceEngine: ObservableObject {
                 // per-device raw anchor — so its anchor slot stays nil. Pass-global inputs (profile/
                 // baselines1/toggles) already dropped the whole cache above on change. A miss falls straight
                 // through to the identical full path.
+                // NROOP: sibling ids holding raw HR for this window (the strap banked part of the night under
+                // another id than the owner's). Counts only; folded into the day-cache key below.
+                var siblingsWithData: [(id: String, count: Int, maxTs: Int)] = []
+                for sid in SiblingStreamMerge.candidateIds(owner: owner, registeredWhoop: siblingRegWhoop,
+                                                           registeredOther: siblingRegOther,
+                                                           storeIds: siblingStoreIds,
+                                                           legacyIds: [Repository.whoopSource, ownerFallbackId]) {
+                    if let fp = try? await store.hrFingerprint(deviceId: sid, from: from, to: to), fp.count > 0 {
+                        siblingsWithData.append((sid, fp.count, fp.maxTs))
+                    }
+                }
+                let siblingKey = siblingsWithData.map { "\($0.id):\($0.count):\($0.maxTs)" }.joined(separator: ",")
                 var dayCacheKey: String? = nil
                 // The newest opt-in sleep/stress comparisons read history or completed windows and are never cached.
                 // Bypass only this day's reuse so activation/history updates cannot serve a stale report.
-                if dayCacheEligible, !((sleepTraceActive || hrvTraceActive || effortCadenceActive || recoveryLabActive) && dayStart == nowLocalMidnight),
+                if dayCacheEligible, dayStart != nowLocalMidnight,   // NROOP: today is always re-scored so its sleep-detect diagnostic is emitted
                    let ownerFamily = DeviceFamily.forRegistryDevice(
                         model: regDevices.first(where: { $0.id == owner })?.model,
                         brand: regDevices.first(where: { $0.id == owner })?.brand) {
@@ -1270,7 +1337,7 @@ final class IntelligenceEngine: ObservableObject {
                             // watermark gate above, never this one. Both reads are index-only aggregates
                             // over the same `(deviceId, ts)` keys; a miss costs the 7 full stream reads
                             // this gate exists to skip.
-                            streams: streamFp + "|rrAlias5=\(activeWhoop5RR && owner == Repository.whoopSource)",
+                            streams: streamFp + "|rrAlias5=\(activeWhoop5RR && owner == Repository.whoopSource)|sib=\(siblingKey)",
                             // #1575: `hrvTraceActive &&` matters. With the HRV trace OFF no detail
                             // line is ever produced, so the flag describes nothing — but it would still
                             // flip at midnight and invalidate yesterday, charging EVERY user an extra
@@ -1302,7 +1369,17 @@ final class IntelligenceEngine: ObservableObject {
                 // what decides whether narrowing the read windows is worth building at all. Measured, not
                 // guessed, for the same reason the day-cache duration is.
                 let tPrep0 = Date()
-                let hr = await hrWindow.rows(owner: owner, from: from, to: to)
+                let hrOwn = await hrWindow.rows(owner: owner, from: from, to: to)
+                // NROOP: top the owner's streams up from sibling ids, only for minutes the owner has no HR in.
+                var siblingHr: [[HRSample]] = []
+                for sib in siblingsWithData {
+                    siblingHr.append((try? await store.hrSamples(deviceId: sib.id, from: from, to: to,
+                                                                 limit: StreamReadCap.hr)) ?? [])
+                }
+                let siblingCovered = siblingsWithData.isEmpty ? Set<Int>()
+                    : SiblingStreamMerge.coveredMinutes(ownerHrTs: hrOwn.map { $0.ts })
+                let hr = siblingsWithData.isEmpty ? hrOwn
+                    : SiblingStreamMerge.fill(owner: hrOwn, siblings: siblingHr, covered: siblingCovered, ts: { $0.ts })
                 guard hr.count >= IntelligenceEngine.minHrSamples else {
                     // This day still paid for its read; count it, or the tally under-reports exactly the
                     // sparse-history installs where reads dominate most.
@@ -1312,7 +1389,15 @@ final class IntelligenceEngine: ObservableObject {
                 }
                 let strictWhoop5RR = (try? await store.isWhoop5RRSource(deviceId: owner,
                     unlabelledAliasOfWhoop5: activeWhoop5RR && owner == Repository.whoopSource)) ?? true
-                let rr = await rrWindow.rows(owner: owner, from: from, to: to, allowReuse: !strictWhoop5RR)
+                let rrOwn = await rrWindow.rows(owner: owner, from: from, to: to, allowReuse: !strictWhoop5RR)
+                var siblingRr: [[RRInterval]] = []
+                for sib in siblingsWithData {
+                    siblingRr.append((try? await store.rrIntervals(deviceId: sib.id, from: from, to: to,
+                        limit: StreamReadCap.rr,
+                        unlabelledAliasOfWhoop5: activeWhoop5RR && sib.id == Repository.whoopSource)) ?? [])
+                }
+                let rr = siblingsWithData.isEmpty ? rrOwn
+                    : SiblingStreamMerge.fill(owner: rrOwn, siblings: siblingRr, covered: siblingCovered, ts: { $0.ts })
                 // `forScoring` drops an Oura ring's respiration rows: those are the ring's OWN per-window
                 // RATE (0x6A, milli-bpm, ~1 row per 5 min), stored as instrumentation, while the stager
                 // reads this stream as a ~1 Hz raw ADC waveform. Refusing by provenance keeps the
@@ -1326,14 +1411,40 @@ final class IntelligenceEngine: ObservableObject {
                 // `analyzeDay` as what they are: the device's OWN measured respiratory rate, which
                 // becomes the night's `respRateBpm` instead of the RSA estimate. A WHOOP owner gets the
                 // rows in the first list and nothing in the second, so its night is unchanged.
-                let respRows = (try? await store.respSamples(deviceId: owner, from: from, to: to,
-                                                             limit: 200_000)) ?? []
+                let respRowsOwn = (try? await store.respSamples(deviceId: owner, from: from, to: to,
+                                                                limit: 200_000)) ?? []
+                var siblingResp: [[RespSample]] = []
+                for sib in siblingsWithData {
+                    siblingResp.append((try? await store.respSamples(deviceId: sib.id, from: from, to: to,
+                                                                     limit: 200_000)) ?? [])
+                }
+                let respRows = siblingsWithData.isEmpty ? respRowsOwn
+                    : SiblingStreamMerge.fill(owner: respRowsOwn, siblings: siblingResp, covered: siblingCovered, ts: { $0.ts })
                 let resp = OuraRespScale.forScoring(respRows, deviceId: owner)
                 let vendorResp = OuraRespScale.forVendorRate(respRows, deviceId: owner)
-                let grav = (try? await store.gravitySamples(deviceId: owner, from: from, to: to,
-                                                            limit: StreamReadCap.gravity)) ?? []
+                let gravOwn = (try? await store.gravitySamples(deviceId: owner, from: from, to: to,
+                                                               limit: StreamReadCap.gravity)) ?? []
+                var siblingGrav: [[GravitySample]] = []
+                for sib in siblingsWithData {
+                    siblingGrav.append((try? await store.gravitySamples(deviceId: sib.id, from: from, to: to,
+                                                                        limit: StreamReadCap.gravity)) ?? [])
+                }
+                let grav = siblingsWithData.isEmpty ? gravOwn
+                    : SiblingStreamMerge.fill(owner: gravOwn, siblings: siblingGrav, covered: siblingCovered, ts: { $0.ts })
                 let steps = (try? await store.stepSamples(deviceId: owner, from: from, to: to, limit: 200_000)) ?? []
-                let skin = (try? await store.skinTempSamples(deviceId: owner, from: from, to: to, limit: StreamReadCap.skin)) ?? []
+                let skinOwn = (try? await store.skinTempSamples(deviceId: owner, from: from, to: to, limit: StreamReadCap.skin)) ?? []
+                var siblingSkin: [[SkinTempSample]] = []
+                for sib in siblingsWithData {
+                    siblingSkin.append((try? await store.skinTempSamples(deviceId: sib.id, from: from, to: to,
+                                                                         limit: StreamReadCap.skin)) ?? [])
+                }
+                let skin = siblingsWithData.isEmpty ? skinOwn
+                    : SiblingStreamMerge.fill(owner: skinOwn, siblings: siblingSkin, covered: siblingCovered, ts: { $0.ts })
+                if !siblingsWithData.isEmpty, offset == 0 || offset == 1 {
+                    skippedDayLines.append("sleep-detect merge day=\(day) owner=\(owner) hrOwn=\(hrOwn.count) "
+                        + siblingsWithData.map { "+\($0.id)=\($0.count)" }.joined(separator: " ")
+                        + " hrMerged=\(hr.count)")
+                }
                 // #93: WHOOP 4.0 raw SpO2 PPG samples for the night; analyzeDay banks the nightly red/IR ADC
                 // means on the DailyMetric. Empty on a 5/MG (no v24 spo2 channels) → the raw means stay nil.
                 let spo2 = (try? await store.spo2Samples(deviceId: owner, from: from, to: to, limit: 200_000)) ?? []
@@ -1471,7 +1582,15 @@ final class IntelligenceEngine: ObservableObject {
                         gravity: grav, wristOff: wristOff, bandSleepState: bandSleepState,
                         useSleepStagerV2: useSleepStagerV2))
                 }
-                let traceSink: ((String) -> Void)? = sleepTraceActive ? { sleepTrace.append($0) } : nil
+                // NROOP: for TODAY only, always collect the detector's per-candidate gate verdicts (no test mode)
+                // so the `sleep-detect today` line can say which gate rejected each candidate night.
+                var todayGateLines: [String] = []
+                let isTodayScan = dayStart == nowLocalMidnight
+                let traceSink: ((String) -> Void)? = (sleepTraceActive || isTodayScan)
+                    ? { line in
+                        if sleepTraceActive { sleepTrace.append(line) }
+                        if isTodayScan, line.hasPrefix("gate run=") { todayGateLines.append(line) }
+                    } : nil
                 // HRV mode (#141): a per-day collector for the nightly per-window RMSSD + summary; nil = default.
                 var hrvTrace: [String] = []
                 if hrvTraceActive && dayStart == nowLocalMidnight {
@@ -1576,6 +1695,23 @@ final class IntelligenceEngine: ObservableObject {
                                                         ? { strainDiagLines.append($0) } : nil,
                                                      recipeSource: owner,recipeWindowStart:dayMid,recipeWindowEnd:dayEnd+1)
                 dayScoreSeconds += Date().timeIntervalSince(tScore0)
+                if isTodayScan {
+                    var ids: [String] = []
+                    for id in [owner] + regDevices.filter(SourceIdentity.isWhoop).map(\.id) + siblingStoreIds + [ownerFallbackId]
+                    where !ids.contains(id) { ids.append(id) }
+                    var perId: [(id: String, count: Int, first: Int?, last: Int?)] = []
+                    for id in ids {
+                        let fp = (try? await store.hrFingerprint(deviceId: id, from: from, to: to)) ?? (count: 0, maxTs: 0)
+                        let first = fp.count > 0
+                            ? ((try? await store.hrSamples(deviceId: id, from: from, to: to, limit: 1))?.first?.ts) : nil
+                        perId.append((id, fp.count, first, fp.count > 0 ? fp.maxTs : nil))
+                    }
+                    strainDiagLines.append(Self.sleepDetectTodayLine(
+                        day: day, owner: owner, windowFrom: from, windowTo: to, tzOffset: tzOffset,
+                        perId: perId, ownerHr: hr.count, grav: grav.count,
+                        gateLines: todayGateLines, nightMinutes: res.daily.totalSleepMin,
+                        mergedIds: siblingsWithData.map { $0.id }))
+                }
                 if dayStart == nowLocalMidnight && (effortCadenceActive || recoveryLabActive || sleepTraceActive) {
                     let capture = await AlgorithmLabCapture.run(store: store, owner: owner, computedId: computedId,
                         journalId: labJournalId, day: day, dayStart: dayMid, now: now, offset: tzOffset,
@@ -2253,11 +2389,31 @@ final class IntelligenceEngine: ObservableObject {
             // every night. `effectiveStartTs` (the #318 user-corrected onset) is preserved on the row.
             let dayEditedRows = Self.editedRowsForDay(editedRows, day: night.daily.day, tzOffsetSeconds: tzOffset)
             let editsByStart = Dictionary(dayEditedRows.map { ($0.startTs, $0) }, uniquingKeysWith: { a, _ in a })
-            var daily = sleepEditedDaily(night.daily, detected: night.cachedSleep, editsByStart: editsByStart,
+            let detected = night.cachedSleep.filter { candidate in
+                editsByStart[candidate.startTs] != nil || !dayEditedRows.contains { edit in
+                    edit.effectiveStartTs < candidate.endTs && candidate.effectiveStartTs < edit.endTs
+                }
+            }
+            var daily = sleepEditedDaily(night.daily, detected: detected, editsByStart: editsByStart,
                                          habitualMidsleepSec: habitualMidsleepSec)
             daily = DayCycleIntelligenceIntegration.applying(physiologicalSteps, to: daily)
+            let effectiveSessions = detected.map { editsByStart[$0.startTs] ?? $0 }
+                + dayEditedRows.filter { edit in !detected.contains { $0.startTs == edit.startTs } }
+            let main = SleepView.mainNightGroup(effectiveSessions, habitualMidsleepSec: habitualMidsleepSec)
+            let unstagedMain = main.filter { $0.userEdited && $0.stagesJSON == nil }
+                .reduce(0.0) { $0 + SleepView.creditedMinutes($1) }
+            let naps = SleepView.napSleepMinutes(effectiveSessions, habitualMidsleepSec: habitualMidsleepSec)
+            let durationCredit = unstagedMain + naps
+            let rest = AnalyticsEngine.Rest.composite(daily: daily,
+                needHours: durationCredit > 0 ? sleepNeedHours : AnalyticsEngine.Rest.defaultNeedHours,
+                durationCreditMin: durationCredit)
+                ?? (unstagedMain > 0 ? min(100, durationCredit / (sleepNeedHours * 60) * 100) : nil)
+            if unstagedMain > 0, main.allSatisfy({ $0.stagesJSON == nil }) {
+                daily = daily.with(totalSleepMin: unstagedMain, efficiency: nil,
+                                   deepMin: nil, remMin: nil, lightMin: nil)
+            }
             daily = Self.recomputeRecoveryDaily(daily, nightlySkinTempC: night.nightlySkin,
-                                               baselines: baselines2)
+                                               baselines: baselines2, sleepScore: rest)
             let recovery = daily.recovery
             let skinDev = daily.skinTempDevC
             // Charge term-breakdown trace (Group G): only when the Recovery test mode is on. Emits which
@@ -2275,7 +2431,7 @@ final class IntelligenceEngine: ObservableObject {
             // SHARED CONTRACT enrichment: the ordered Charge driver list + the relative skin-temp marker,
             // built from the SAME inputs `recomputeRecovery` reads so the rows can never disagree with the
             // headline. Both are empty/nil pre-baseline (cold-start), matching the score's own null-honesty.
-            let drivers = recomputeChargeDrivers(daily, baselines2)
+            let drivers = recomputeChargeDrivers(daily, baselines2, sleepScore: rest)
             let skinRel = RecoveryScorer.skinTempRelative(deviationC: skinDev)
             // Honest per-day Charge confidence (A3): the strap night reads `.solid`/`.building`/`.calibrating`
             // off the HRV baseline state rather than a blanket `.solid`, so a thin/provisional baseline shows
@@ -2354,7 +2510,7 @@ final class IntelligenceEngine: ObservableObject {
             // same `night.nightlySkin` the line above takes the deviation from — so the two can never
             // describe different nights, and no second derivation exists to drift.
             dailies.append(daily)
-            if let rest = AnalyticsEngine.Rest.composite(daily: daily) {
+            if let rest {
                 restPoints.append(MetricPoint(day: daily.day, key: "sleep_performance", value: rest))
             }
             if let onset = physiologicalSteps.onsetByWakeDay[daily.day] {
@@ -2392,7 +2548,7 @@ final class IntelligenceEngine: ObservableObject {
                 let effortRecipe=cycleEstablished ? physiologicalSteps.recipesByWakeDay[daily.day]:night.effortRecipe
                 let candidates:[(ScoreRecipe?,Double?)]=[
                     (appliedLegacySnapshots[daily.day] == nil ? ScoreRecipe.recovery(daily:daily,baselines:baselines2,source:owner):nil,daily.recovery),
-                    (ScoreRecipe.rest(daily:daily,source:owner),AnalyticsEngine.Rest.composite(daily:daily)),
+                    (durationCredit == 0 ? ScoreRecipe.rest(daily:daily,source:owner) : nil, rest),
                     (effortRecipe,daily.strain)]
                 calculationEvidence += candidates.compactMap {ScoreEvidenceBridge.row($0.0,day:daily.day,source:owner,value:$0.1,context:recipeContext,now:now)}
             }
@@ -3158,6 +3314,18 @@ final class IntelligenceEngine: ObservableObject {
                                             devices: [PairedDevice], activeId: String,
                                             registry: DeviceRegistryStore,
                                             fallbackDeviceId: String) async -> String {
+        await resolveDayOwnerExplained(day: day, from: from, to: to, store: store, devices: devices,
+                                       activeId: activeId, registry: registry,
+                                       fallbackDeviceId: fallbackDeviceId).owner
+    }
+
+    /// `resolveDayOwner` plus, when several live WHOOP rows competed on coverage, the one-line account of
+    /// that choice (picked id + each row's HR count in the window). The line is a value, not a sink, so the
+    /// detached scan loop can carry it with its other per-pass lines.
+    nonisolated static func resolveDayOwnerExplained(day: String, from: Int, to: Int, store: WhoopStore,
+                                                     devices: [PairedDevice], activeId: String,
+                                                     registry: DeviceRegistryStore,
+                                                     fallbackDeviceId: String) async -> (owner: String, line: String?) {
         // A locked override wins outright and skips the presence checks entirely. Timed because it runs on
         // EVERY call, ahead of any presence probe, and the first cut of this instrumentation counted only
         // the probe: that reported the cheap half of owner resolution while a warm pass still had seconds
@@ -3166,10 +3334,10 @@ final class IntelligenceEngine: ObservableObject {
         let lockedOwner = (try? registry.dayOwner(day))?.deviceId
         StoreProbeRecorder.record(.dayOwner, nanos: DispatchTime.now().uptimeNanoseconds &- lockedStarted)
         if let lockedOwner {
-            return lockedOwner
+            return (lockedOwner, nil)
         }
         // No registry rows (shouldn't happen , v15 seeds one , but be safe): keep the legacy id.
-        guard !devices.isEmpty else { return fallbackDeviceId }
+        guard !devices.isEmpty else { return (fallbackDeviceId, nil) }
 
         // #970: the default single-WHOOP install has exactly one device that IS the fallback id, so
         // the owner is a foregone conclusion — the resolver returns that id whether or not it has data in
@@ -3179,7 +3347,7 @@ final class IntelligenceEngine: ObservableObject {
         // guard is deliberately `== fallbackDeviceId`: a lone IMPORT device whose id differs would NOT be
         // byte-identical (no-data -> fallback, not its own id), so it must still take the probe path.
         if devices.count == 1, devices[0].id == fallbackDeviceId {
-            return fallbackDeviceId
+            return (fallbackDeviceId, nil)
         }
 
         // Probe in PRIORITY ORDER and stop at the first candidate that has data.
@@ -3215,10 +3383,27 @@ final class IntelligenceEngine: ObservableObject {
         // index makes the order total and matches Kotlin exactly.
         .enumerated().sorted { ($0.element.priority, $0.offset) < ($1.element.priority, $1.offset) }
         .map(\.element)
-        for c in ranked {
-            if (try? await store.hasHrInWindow(deviceId: c.id, from: from, to: to)) == true { return c.id }
+        // NROOP: several live WHOOP rows (the registry's active WHOOP row and the WHOOP row the connected
+        // strap is attributed to, #1881) compete on HR COVERAGE in this window, not on "any row at all".
+        // Restricted to WHOOP rows at priority 0/1, so a user-chosen non-WHOOP active source (Apple Watch,
+        // a ring) and the import/activity-file ordering behave exactly as before.
+        let whoopIds = Set(devices.filter(SourceIdentity.isWhoop).map(\.id))
+        let liveWhoops = ranked.filter { $0.priority <= 1 && whoopIds.contains($0.id) }
+        if liveWhoops.count > 1, ranked.first.map({ whoopIds.contains($0.id) }) ?? false {
+            var counts: [(deviceId: String, hrRows: Int)] = []
+            for c in liveWhoops {
+                let n = (try? await store.hrFingerprint(deviceId: c.id, from: from, to: to).count) ?? 0
+                counts.append((c.id, n))
+            }
+            if let best = DayOwnerResolver.mostCovered(counts) {
+                return (best, "dayOwner coverage day=\(day) picked=\(best) "
+                              + counts.map { "\($0.deviceId)=\($0.hrRows)" }.joined(separator: " "))
+            }
         }
-        return fallbackDeviceId
+        for c in ranked {
+            if (try? await store.hasHrInWindow(deviceId: c.id, from: from, to: to)) == true { return (c.id, nil) }
+        }
+        return (fallbackDeviceId, nil)
     }
 
     /// The strap family that wrote `owner`'s skin-temp rows (#938), so the nightly funnel converts the raw
@@ -3293,10 +3478,10 @@ final class IntelligenceEngine: ObservableObject {
     /// Pass 1 has no seeded skin baseline. Attach the deviation before scoring so the score,
     /// explanation, trace and persisted row all consume the same temperature. Internal for regression tests.
     static func recomputeRecoveryDaily(_ daily: DailyMetric, nightlySkinTempC: Double?,
-                                       baselines: AnalyticsEngine.ProfileBaselines) -> DailyMetric {
+                                       baselines: AnalyticsEngine.ProfileBaselines, sleepScore: Double? = nil) -> DailyMetric {
         let skinDev = recomputeSkinTempDev(nightlySkinTempC, baselines.skinTemp)
         let input = daily.with(recovery: daily.recovery, skinTempDevC: skinDev, skinTempC: nightlySkinTempC)
-        return input.with(recovery: recomputeRecovery(input, baselines), skinTempDevC: skinDev,
+        return input.with(recovery: recomputeRecovery(input, baselines, sleepScore: sleepScore), skinTempDevC: skinDev,
                           skinTempC: nightlySkinTempC)
     }
 
@@ -3344,12 +3529,12 @@ final class IntelligenceEngine: ObservableObject {
     /// baseline is usable (RecoveryScorer gates on `hrvBaseline.usable`, i.e. ≥ minNightsSeed valid
     /// nights) , so the honest null-until-4-nights cold-start is free. Mirrors AnalyticsEngine's own
     /// recovery call + Android IntelligenceEngine.recomputeRecovery. (#78)
-    private static func recomputeRecovery(_ daily: DailyMetric, _ baselines: AnalyticsEngine.ProfileBaselines) -> Double? {
+    private static func recomputeRecovery(_ daily: DailyMetric, _ baselines: AnalyticsEngine.ProfileBaselines, sleepScore: Double? = nil) -> Double? {
         guard let hrvVal = daily.avgHrv, let rhrVal = daily.restingHr, let hrvBase = baselines.hrv else { return nil }
         // Charge enrichment: feed the Rest COMPOSITE (÷100) as the sleep-quality term instead of raw
         // efficiency, and fold in the night's skin-temp deviation. Both come from the persisted daily
         // fields (the raw streams are gone in pass 2). (Charge/Effort/Rest scoring redesign.)
-        let restQuality = AnalyticsEngine.Rest.composite(daily: daily).map { $0 / 100.0 } ?? daily.efficiency
+        let restQuality = (sleepScore ?? AnalyticsEngine.Rest.composite(daily: daily)).map { $0 / 100.0 } ?? daily.efficiency
         return RecoveryScorer.recovery(hrv: hrvVal, rhr: Double(rhrVal), resp: daily.respRateBpm,
                                        hrvBaseline: hrvBase, rhrBaseline: baselines.restingHR,
                                        respBaseline: baselines.resp, sleepPerf: restQuality,
@@ -3363,11 +3548,11 @@ final class IntelligenceEngine: ObservableObject {
     /// (HRV / RHR / HRV-baseline) is missing or the baseline isn't usable yet, mirroring `recomputeRecovery`'s
     /// own early-nil so a cold-start night shows the calibrating state rather than fabricated rows.
     private func recomputeChargeDrivers(_ daily: DailyMetric,
-                                        _ baselines: AnalyticsEngine.ProfileBaselines) -> [ChargeDriver] {
+                                        _ baselines: AnalyticsEngine.ProfileBaselines, sleepScore: Double? = nil) -> [ChargeDriver] {
         guard let hrvVal = daily.avgHrv, let rhrVal = daily.restingHr, let hrvBase = baselines.hrv else {
             return []
         }
-        let restQuality = AnalyticsEngine.Rest.composite(daily: daily).map { $0 / 100.0 } ?? daily.efficiency
+        let restQuality = (sleepScore ?? AnalyticsEngine.Rest.composite(daily: daily)).map { $0 / 100.0 } ?? daily.efficiency
         return RecoveryScorer.chargeDrivers(hrv: hrvVal, rhr: Double(rhrVal), resp: daily.respRateBpm,
                                             hrvBaseline: hrvBase, rhrBaseline: baselines.restingHR,
                                             respBaseline: baselines.resp, sleepPerf: restQuality,

@@ -325,7 +325,7 @@ extension SleepModel {
         let eff = stages.total > 0 ? stages.asleep / stages.total : nil
         let synth = CachedSleepSession(startTs: onset, endTs: wake, efficiency: eff,
                                        restingHr: nil, avgHrv: nil, stagesJSON: nil)
-        let realSegs = segs.count >= 2 ? segs.sorted { $0.start < $1.start } : nil
+        let realSegs = segs.isEmpty ? nil : segs.sorted { $0.start < $1.start }
         return Night(session: synth, stages: stages, realSegments: realSegs, sourceBlocks: sessions,
                      motionEpochs: motion, habitualMidsleepSec: habitualMidsleepSec)
     }

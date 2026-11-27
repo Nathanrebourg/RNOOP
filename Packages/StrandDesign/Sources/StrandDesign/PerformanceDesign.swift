@@ -2,20 +2,23 @@ import SwiftUI
 
 /// Tokens for the approved compact iPhone performance experience, isolated from the existing themes.
 public enum PerformanceDesign {
-    public static let top = Color(light: "#E2E9ED", dark: "#2B383F")
-    public static let middle = Color(light: "#F1F4F6", dark: "#1E282D")
-    public static let bottom = Color(light: "#F8FAFB", dark: "#0C1114")
-    public static let panelTop = Color(light: "#FFFFFF", dark: "#30393E")
-    public static let panelBottom = Color(light: "#E7EDF0", dark: "#242B30")
-    public static let sleep = Color(light: "#426F8C", dark: "#A5C9DE")
-    public static let effort = Color(light: "#087BA4", dark: "#26B4E5")
+    public static let top = Color(light: "#E2E9ED", dark: "#0A0E14")
+    public static let middle = Color(light: "#F1F4F6", dark: "#0A0E14")
+    public static let bottom = Color(light: "#F8FAFB", dark: "#0A0E14")
+    public static let panelTop = Color(light: "#FFFFFF", dark: "#1A1F26")
+    public static let panelBottom = Color(light: "#E7EDF0", dark: "#1A1F26")
+    public static let sleep = Color(light: "#426F8C", dark: "#4A90E2")
+    public static let effort = Color(light: "#087BA4", dark: "#007AFF")
+    public static let recoveryHigh = Color(light: "#168347", dark: "#2ECC71")
+    public static let recoveryMedium = Color(light: "#997A00", dark: "#FFCC00")
+    public static let recoveryLow = Color(light: "#C62828", dark: "#FF3B30")
     public static let coach = Color(light: "#31536F", dark: "#B7D5EF")
     public static let panelRadius: CGFloat = 14
     public static let navigationRadius: CGFloat = 25
     public static let smallRing: CGFloat = 104
     public static let largeRing: CGFloat = 252
-    public static let smallStroke: CGFloat = 6
-    public static let largeStroke: CGFloat = 13
+    public static let smallStroke: CGFloat = 9
+    public static let largeStroke: CGFloat = 18
     public static let scoreSize: CGFloat = 66
     public static let compactScoreSize: CGFloat = 29
     public static let suffixSize: CGFloat = 25

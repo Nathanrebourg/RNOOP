@@ -24,6 +24,61 @@ final class PerformanceSnapshotTests: XCTestCase {
         XCTAssertEqual(snapshot.stress, 2.7)
     }
 
+    func testHomeReadsStoredNightlyDeviationAndDailyAppleFallbacksWithoutFutureValues() async throws {
+        let store = try await WhoopStore.inMemory()
+        let repo = Repository(deviceId: Repository.whoopSource)
+        repo.setStoreForTesting(store)
+        let day = "2026-11-15"
+        let night = row(day)
+        repo.days = [night]
+        _ = try await store.upsertDailyMetrics([night], deviceId: Repository.whoopSource + "-noop")
+        _ = try await store.upsertAppleDaily([
+            AppleDaily(day: day, steps: 4300, activeKcal: 230, basalKcal: nil, vo2max: 42,
+                       avgHr: nil, maxHr: nil, walkingHr: nil, weightKg: nil),
+            AppleDaily(day: "2026-11-16", steps: 9999, activeKcal: 900, basalKcal: nil, vo2max: 70,
+                       avgHr: nil, maxHr: nil, walkingHr: nil, weightKg: nil)
+        ], deviceId: Repository.appleHealthSource)
+        _ = try await store.upsertMetricSeries([.init(day: "2026-10-01", key: "vo2max_est", value: 38)],
+                                               deviceId: Repository.whoopSource + "-noop")
+
+        let context = try XCTUnwrap(PerformanceContext(day: day, domain: .today))
+        let snapshot = await PerformanceSnapshotModel.capture(repo: repo, context: context)
+        XCTAssertEqual(snapshot.value("skin_temp_delta"), 0.2)
+        XCTAssertEqual(snapshot.value("resp_rate"), 15.2)
+        XCTAssertEqual(snapshot.value("steps"), 4300)
+        XCTAssertEqual(snapshot.value("active_kcal"), 230)
+        XCTAssertEqual(snapshot.value("vo2max"), 42)
+        XCTAssertEqual(snapshot.series["vo2max_est"]?.last?.value, 38)
+        XCTAssertFalse(snapshot.series.values.flatMap { $0 }.contains { $0.day > day })
+    }
+
+    func testAbsoluteSkinTemperatureIsNeverPresentedAsDeviation() async throws {
+        let store = try await WhoopStore.inMemory()
+        let repo = Repository(deviceId: Repository.whoopSource)
+        repo.setStoreForTesting(store)
+        let day = "2026-11-15"
+        let imported = DailyMetric(day: day, totalSleepMin: nil, efficiency: nil, deepMin: nil,
+                                   remMin: nil, lightMin: nil, disturbances: nil, restingHr: nil,
+                                   avgHrv: nil, recovery: nil, strain: nil, exerciseCount: nil,
+                                   skinTempDevC: 34.1)
+        repo.days = [imported]
+        _ = try await store.upsertDailyMetrics([imported], deviceId: Repository.whoopSource)
+        let snapshot = await PerformanceSnapshotModel.capture(repo: repo,
+            context: PerformanceContext(day: day, domain: .today)!)
+        XCTAssertNil(snapshot.value("skin_temp_delta"))
+    }
+
+    func testEmptyHomeMeasurementsStayUnavailable() async throws {
+        let store = try await WhoopStore.inMemory()
+        let repo = Repository(deviceId: Repository.whoopSource)
+        repo.setStoreForTesting(store)
+        let snapshot = await PerformanceSnapshotModel.capture(repo: repo,
+            context: PerformanceContext(day: "2026-11-15", domain: .today)!)
+        for key in ["skin_temp_delta", "resp_rate", "steps", "active_kcal", "vo2max", "vo2max_est"] {
+            XCTAssertTrue((snapshot.series[key] ?? []).isEmpty, "\(key) must remain unavailable")
+        }
+    }
+
     func testHealthAliasesAndRequestedMetricReachTheDatedSeries() async throws {
         let store = try await WhoopStore.inMemory()
         let repo = Repository(deviceId: Repository.whoopSource)
@@ -47,6 +102,23 @@ final class PerformanceSnapshotTests: XCTestCase {
         let snapshot = await PerformanceSnapshotModel.capture(repo: repo, context: PerformanceContext(day: "2026-11-15", domain: .health)!)
         XCTAssertFalse(snapshot.vitals.contains { $0.key == "spo2raw" })
         XCTAssertLessThanOrEqual(snapshot.availableVitals.count, 5)
+    }
+
+    func testImportedOxygenRemainsAvailableWhenAComputedCandidateExists() async throws {
+        let store = try await WhoopStore.inMemory()
+        let repo = Repository(deviceId: Repository.whoopSource)
+        repo.setStoreForTesting(store)
+        let day = "2026-11-15"
+        _ = try await store.upsertMetricSeries([.init(day: day, key: "spo2", value: 98)],
+                                               deviceId: Repository.whoopSource + "-noop")
+        _ = try await store.upsertMetricSeries([.init(day: day, key: "spo2", value: 97)],
+                                               deviceId: Repository.appleHealthSource)
+        let snapshot = await PerformanceSnapshotModel.capture(repo: repo,
+            context: PerformanceContext(day: day, domain: .health)!)
+        let imported = PerformanceHomeData.importedOxygen(snapshot.series["spo2_imported"] ?? [], on: day)
+        XCTAssertEqual(imported?.value, 97)
+        XCTAssertEqual(imported?.source, Repository.appleHealthSource)
+        XCTAssertFalse(snapshot.vitals.contains { $0.key == "spo2" || $0.key == "spo2raw" })
     }
 
     func testSameDayAcrossScreensReusesSnapshotUntilRepositoryRefreshes() async throws {

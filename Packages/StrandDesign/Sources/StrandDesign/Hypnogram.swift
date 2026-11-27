@@ -421,6 +421,7 @@ public struct Hypnogram: View {
             for i in 0..<(intervals.count - (intervals.isEmpty ? 0 : 1)) {
                 let a = intervals[i]
                 let b = intervals[i + 1]
+                guard abs(a.end - b.start) < 1 else { continue }
                 let x = CGFloat((b.start - origin) / span) * size.width
                 let ya = rowY(a.stage.bandRank, in: size.height)
                 let yb = rowY(b.stage.bandRank, in: size.height)

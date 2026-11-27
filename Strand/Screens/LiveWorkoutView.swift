@@ -6,7 +6,7 @@ import WhoopStore
 /// Live workout mode (#238) — the in-exercise screen: a big live heart rate, the current HR zone,
 /// elapsed time, and live effort building, all from the SAME live feed and scorers the rest of the
 /// app uses (no invented numbers). Presented while a manual workout is active, entered from the
-/// Start-workout control on Live. End stops the workout and dismisses.
+/// Start-workout control on Live. End shows a recap after the workout is saved.
 ///
 /// Live HR is the smoothed `AppModel.bpm`; the zone is derived from the user's HR-max via the shared
 /// `HRZones` model; elapsed time ticks from the workout's start (a TimelineView, no manual Timer);
@@ -38,11 +38,30 @@ struct LiveWorkoutView: View {
     /// control must not end the workout instantly with no way back.
     @State private var showEndConfirm = false
     @State private var showDeleteConfirm = false
+    @State private var finishing = false
+    @State private var saveFailed = false
+    @State private var finishedWorkout: AppModel.FinishedWorkout?
 
     private var zoneSet: HRZoneSet { model.profile.hrZoneSet }
     private var zone: Int { model.bpm.map { zoneSet.zoneNumber(forBPM: Double($0)) } ?? 0 }
 
     var body: some View {
+        Group {
+            if let finishedWorkout {
+                NavigationStack {
+                    WorkoutDetailView(row: finishedWorkout.row, recordedSamples: finishedWorkout.samples, onDone: onClose)
+                }
+            } else {
+                recording
+                    .disabled(finishing)
+            }
+        }
+        .alert("Workout could not be saved", isPresented: $saveFailed) {
+            Button("OK", role: .cancel) {}
+        }
+    }
+
+    private var recording: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: NoopMetrics.sectionSpacing) {
                 let cards: [AnyView] = [
@@ -87,7 +106,9 @@ struct LiveWorkoutView: View {
                 .ignoresSafeArea()
         }
         // If the workout ended elsewhere (process restart cleared it), close the screen.
-        .onChangeCompat(of: model.activeWorkout == nil) { gone in if gone { onClose() } }
+        .onChangeCompat(of: model.activeWorkout == nil) { gone in
+            if gone && !finishing && finishedWorkout == nil && !saveFailed { onClose() }
+        }
         // Arm the realtime HR stream while the in-exercise screen is up (#681). On a WHOOP 5/MG live HR
         // only flows while the puffin realtime stream is armed; previously only the Live tab armed it, so
         // starting a manual workout straight from Workouts (Live never opened) left `model.bpm == nil` —
@@ -108,15 +129,26 @@ struct LiveWorkoutView: View {
         }
         // Confirm before ending (#517): ending still requires an explicit confirm so a stray tap on the
         // compact exit control cannot discard the in-progress recording with no way back.
-        .alert("End this workout?",
+        .alert(String(localized: "End this workout?"),
                isPresented: $showEndConfirm) {
             Button("Cancel", role: .cancel) { }
             Button("End", role: .destructive) {
-                model.endWorkout()
-                onClose()
+                finishing = true
+                Task {
+                    defer { finishing = false }
+                    do {
+                        if let result = try await model.endWorkout() {
+                            finishedWorkout = result
+                        } else {
+                            onClose()
+                        }
+                    } catch {
+                        saveFailed = true
+                    }
+                }
             }
         } message: {
-            Text("This stops recording and saves what's captured so far. It can't be resumed.")
+            Text(String(localized: "This stops recording and saves what's captured so far. It can't be resumed."))
         }
         .confirmationDialog("Delete", isPresented: $showDeleteConfirm,
                             titleVisibility: .visible) {
@@ -136,7 +168,7 @@ struct LiveWorkoutView: View {
                     .frame(width: 7, height: 7)
                 Group {
                     if model.activeWorkout?.isPaused == true { Text("Paused") }
-                    else { Text("Recording workout") }
+                    else { Text(String(localized: "Recording workout")) }
                 }
                 .textCase(.uppercase)
                 .font(StrandFont.overline).tracking(StrandFont.overlineTracking)
@@ -149,7 +181,7 @@ struct LiveWorkoutView: View {
             Spacer(minLength: 0)
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel(Text("Recording workout"))
+        .accessibilityLabel(Text(String(localized: "Recording workout")))
     }
 
     /// Centered elapsed-time stack — same TimelineView source as before; card chrome removed so
@@ -245,7 +277,7 @@ struct LiveWorkoutView: View {
                     .font(StrandFont.overline).tracking(StrandFont.overlineTracking)
                     .foregroundStyle(StrandPalette.textSecondary)
                 Spacer()
-                Text(zone >= 1 ? "Zone \(zone) · \(Self.zoneName(zone))" : "Below Zone 1")
+                Text(zone >= 1 ? String(localized: "Zone \(zone) · \(Self.zoneName(zone))") : String(localized: "Below Zone 1"))
                     .font(StrandFont.captionNumber)
                     .foregroundStyle(tint)
                     .multilineTextAlignment(.trailing)
@@ -272,7 +304,7 @@ struct LiveWorkoutView: View {
                 }
             }
             if let band = zoneSet.zones.first(where: { $0.number == zone }) {
-                Text("Zone \(zone): \(Int(band.lower))-\(Int(band.upper)) bpm (\(Int(band.lowerPct * 100))-\(Int(band.upperPct * 100))% max HR)")
+                Text("Zone \(zone): \(Int(band.lower))–\(Int(band.upper)) bpm (\(Int(band.lowerPct * 100))–\(Int(band.upperPct * 100))% max HR)")
                     .font(StrandFont.footnote).foregroundStyle(StrandPalette.textTertiary)
             } else {
                 Text("Warming up. Keep moving to climb into Zone 1.")
@@ -422,7 +454,7 @@ struct LiveWorkoutView: View {
                 .contentShape(Circle())
         }
         .nativeLiquidGlassWorkoutControl()
-        .accessibilityLabel(Text(paused ? "Resume" : "Pause"))
+        .accessibilityLabel(Text(paused ? String(localized: "Resume") : String(localized: "Pause")))
     }
 
     private var deleteWorkoutGlassButton: some View {

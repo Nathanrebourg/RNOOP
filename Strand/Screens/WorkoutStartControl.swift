@@ -20,6 +20,8 @@ struct WorkoutStartControl: View {
     @EnvironmentObject var model: AppModel
     @State private var showLiveWorkout = false
     @State private var showStartSport = false
+    /// Sport picked, waiting on the "before you start" screen (nil when no pre-start is showing).
+    @State private var pendingSport: String?
 
     init(compact: Bool = false) {
         self.compact = compact
@@ -40,9 +42,17 @@ struct WorkoutStartControl: View {
         // (same direct present as the button's already-active path — no cross-view auto-present race).
         .workoutSelectionCover(isPresented: $showStartSport) {
             StartWorkoutSheet { name in
+                pendingSport = name
+            }
+        }
+        .sheet(isPresented: Binding(get: { pendingSport != nil }, set: { if !$0 { pendingSport = nil } })) {
+            PreWorkoutView(sport: pendingSport ?? "", onStart: {
+                let name = pendingSport ?? ""
+                pendingSport = nil
                 model.startWorkout(sport: name)
                 showLiveWorkout = true
-            }
+            }, onCancel: { pendingSport = nil })
+            .environmentObject(model)
         }
     }
 
@@ -51,9 +61,9 @@ struct WorkoutStartControl: View {
             Button(action: openWorkout) {
                 HStack(spacing: NoopMetrics.space1) {
                     Image(systemName: "stopwatch")
-                    Text(model.activeWorkout == nil ? LocalizedStringKey("Start workout")
+                    Text(model.activeWorkout == nil ? LocalizedStringKey("Start an activity")
                                                     : LocalizedStringKey("View active workout"))
-                        .font(StrandFont.overline).lineLimit(1).minimumScaleFactor(0.7)
+                        .font(StrandFont.overline).textCase(.uppercase).lineLimit(1).minimumScaleFactor(0.7)
                 }
                 .foregroundStyle(StrandPalette.textPrimary)
                 .frame(maxWidth: .infinity, minHeight: NoopButtonMetrics.minHitTarget)

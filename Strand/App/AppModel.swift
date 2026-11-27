@@ -96,6 +96,7 @@ final class AppModel: ObservableObject {
     @Published var activeWorkout: ActiveWorkout?
     /// The just-ended workout, for a brief inline confirmation on Live (cleared on the next start).
     @Published var lastWorkout: WorkoutRow?
+    private var workoutSaveInFlight = false
 
     /// Records the GPS route of an in-flight distance-type workout (run / ride / walk / hike) from
     /// CoreLocation (#524) , the Apple analogue of Android's `GpsSession` + foreground `LocationManager`.
@@ -935,7 +936,7 @@ final class AppModel: ObservableObject {
     }
 
     func toggleWorkoutPause() {
-        guard var w = activeWorkout else { return }
+        guard !workoutSaveInFlight, var w = activeWorkout else { return }
         if let pausedAt = w.pausedAt {
             w.pausedDuration += Date().timeIntervalSince(pausedAt)
             w.pausedAt = nil
@@ -950,12 +951,16 @@ final class AppModel: ObservableObject {
 
     /// Abort the active session without saving a workout.
     func discardWorkout() {
-        guard activeWorkout != nil else { return }
+        guard !workoutSaveInFlight, activeWorkout != nil else { return }
+        clearActiveWorkout()
+        lastWorkout = nil
+    }
+
+    private func clearActiveWorkout() {
         activeWorkout = nil
         if activeWorkoutIsGps { gpsRecorder.stop() }
         activeWorkoutIsGps = false
         ActiveWorkoutPersistence.clear()
-        lastWorkout = nil
     }
 
     /// Finish the active workout: finalize the GPS route (#524), score the captured HR window, and save it
@@ -973,23 +978,23 @@ final class AppModel: ObservableObject {
         elapsedSeconds < minimumWorkoutSeconds
     }
 
-    func endWorkout() {
-        guard let w = activeWorkout else { return }
-        activeWorkout = nil
-        let wasGps = activeWorkoutIsGps
-        activeWorkoutIsGps = false
-        // Drop the durable snapshot the instant the session ends , whether it saves below or is discarded
-        // as too-short , so a relaunch never rehydrates an already-finished session (#529).
-        ActiveWorkoutPersistence.clear()
-        // #524: finalize the GPS route. Stop the recorder and take its captured route , it kept
-        // accumulating from CoreLocation independently of the HR window. `capturedRoute()` is nil unless
-        // ≥2 points actually landed (honest: no route, no distance, when nothing was captured , e.g. a
-        // Mac with no GPS, or denied permission). A non-GPS session never armed the recorder.
-        var route: WorkoutRoute?
-        if wasGps {
-            gpsRecorder.stop()
-            route = gpsRecorder.capturedRoute()
+    func endWorkout() async throws -> FinishedWorkout? {
+        guard !workoutSaveInFlight, var w = activeWorkout else { return nil }
+        workoutSaveInFlight = true
+        defer { workoutSaveInFlight = false }
+
+        let workoutDeviceId = deviceId
+        let end = Date()
+        // Freeze recording and retain both active snapshots while the database write is in flight.
+        // A failed write leaves the workout paused, with its captured HR and route available for retry.
+        if !w.isPaused {
+            w.pausedAt = end
+            activeWorkout = w
+            if activeWorkoutIsGps { gpsRecorder.pause() }
+            persistActiveWorkout()
         }
+        let wasGps = activeWorkoutIsGps
+        let route = wasGps ? gpsRecorder.capturedRoute() : nil
         let samples = w.samples
         // Save when there's an HR window OR a real GPS route , a GPS-only walk (HR not streaming) is
         // still a workout (parity with Android's `samples.size < 2 && track.size < 2` discard gate).
@@ -998,10 +1003,10 @@ final class AppModel: ObservableObject {
             emitWorkoutsTrace(WorkoutsTrace.sessionLine(
                 event: "discarded", sportKey: WorkoutSource.traceSportKey(w.sport),
                 hrSamples: samples.count, gpsPoints: route == nil ? 0 : nil))
+            clearActiveWorkout()
             lastWorkout = nil
-            return
+            return nil
         }
-        let end = Date()
         // A session under a minute is a start/stop the wearer did not mean to keep, and it was the thing
         // that made deletion feel broken: the list filled with 5-30 second entries (#2278). Discarded HERE,
         // at save, rather than retained and pruned later, which is the whole difference between dropping
@@ -1019,8 +1024,9 @@ final class AppModel: ObservableObject {
                 gpsPoints: wasGps ? gpsRecorder.pointCount : nil))
             // Drop the route too: keeping a polyline for a session that was never saved would orphan it in
             // RouteStore under a natural key no row claims.
+            clearActiveWorkout()
             lastWorkout = nil
-            return
+            return nil
         }
         let avg = samples.isEmpty ? nil
             : Int((Double(samples.map(\.bpm).reduce(0, +)) / Double(samples.count)).rounded())
@@ -1057,9 +1063,10 @@ final class AppModel: ObservableObject {
             // distance workout; the polyline itself is persisted alongside in RouteStore (the shared
             // WorkoutRow has no route column on Apple). Only a real route sets distance , honest ",".
             distanceM: route?.distanceM, zonesJSON: nil, notes: nil, steps: nil)
-        // Persist the route polyline under the row's natural key so WorkoutDetailView can draw it. On
-        // device only; mirrors the moments / sleepMarks UserDefaults persistence. (#524)
+        guard let store = await repo.storeHandle() else { throw WorkoutSaveError.storeUnavailable }
+        try await store.upsertWorkouts([row], deviceId: workoutDeviceId)
         if let route { RouteStore.store(route, startTs: startTs, sport: w.sport) }
+        clearActiveWorkout()
         lastWorkout = row
         // Workouts & GPS test mode: one session-end summary tagged `.workouts` (the lastSessionSummary readout
         // source) carrying the captured HR window size, the duration, and the accepted GPS point count, so the
@@ -1070,13 +1077,18 @@ final class AppModel: ObservableObject {
             durationSec: Int(w.elapsed(at: end)),
             gpsPoints: wasGps ? gpsRecorder.pointCount : nil))
         buzz(loops: 2, gate: HapticPrefs.workout)
-        Task { [weak self] in
-            guard let self else { return }
-            if let store = await self.repo.storeHandle() {
-                _ = try? await store.upsertWorkouts([row], deviceId: self.deviceId)
-                await self.repo.refresh()
-            }
-        }
+        Task { await repo.refresh() }
+        return FinishedWorkout(row: row, samples: samples)
+    }
+
+    private enum WorkoutSaveError: Error {
+        case storeUnavailable
+    }
+
+    struct FinishedWorkout: Identifiable {
+        let row: WorkoutRow
+        let samples: [HRSample]
+        var id: Int { row.startTs }
     }
 
     /// Append the current smoothed `bpm` to the active workout and recompute its running strain. Called

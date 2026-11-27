@@ -212,6 +212,10 @@ final class ConnectionReadoutTests: XCTestCase {
         XCTAssertEqual(
             ConnectionReadout.clockLatchedLabel(deviceClockUnix: nil, strapNewestUnix: nil),
             "no (waiting for the strap clock)")
+        // NROOP: 0 is the firmware-only placeholder (history decoded, no range reply), never a 1970 record.
+        XCTAssertEqual(
+            ConnectionReadout.clockLatchedLabel(deviceClockUnix: nil, strapNewestUnix: 0),
+            "not reported by this strap (history is decoding)")
         // deviceClockUnix wins when BOTH signals are present (the WHOOP4 correlation is the more direct one).
         XCTAssertEqual(
             ConnectionReadout.clockLatchedLabel(deviceClockUnix: 1_782_475_600, strapNewestUnix: 40_000_000),

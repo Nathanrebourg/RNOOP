@@ -1,5 +1,6 @@
 #if os(iOS)
 import SwiftUI
+import Charts
 import StrandDesign
 import StrandAnalytics
 import WhoopStore
@@ -9,7 +10,11 @@ struct PerformanceExperienceView: View {
     let initialContext: PerformanceContext
     var isRoot = false
     @EnvironmentObject private var repo: Repository
+    @EnvironmentObject private var intelligence: IntelligenceEngine
+    @EnvironmentObject private var profile: ProfileStore
+    @EnvironmentObject private var live: LiveState
     @EnvironmentObject private var router: NavRouter
+    @EnvironmentObject private var ble: BLEManager
     @Environment(\.dismiss) private var dismiss
     @Environment(\.dynamicTypeSize) private var typeSize
     @StateObject private var model = PerformanceSnapshotModel()
@@ -19,8 +24,42 @@ struct PerformanceExperienceView: View {
     @AppStorage(UnitPrefs.effortScaleKey) private var effortPreference = EffortScale.whoop.rawValue
     @State private var day: String
     @State private var showCalendar = false
+    @State private var recalcPhase: String?
+    @State private var recalcResult: String?
     @State private var showSettings = false
     @State private var dataRevision = 0
+    @State private var showDashboardEditor = false
+    @State private var dashboardEditorDestination: TodayCustomizationDestination = .yourCards
+    @State private var showCoachLauncher = false
+    @State private var hydrationDisplay: String?
+    @State private var showManualSleep = false
+    @State private var editingSleep: SleepEditSelection?
+    @State private var nightHeartRate: [HRBucket] = []
+    @State private var showManualWorkout = false
+    @State private var planWorkouts: [WorkoutRow] = []
+    @State private var planReady = false
+    @State private var stressTimeline: [DaytimeStress.HourPoint] = []
+    @State private var stressActivityMaskedHours = 0
+    @State private var stressLoaded = false
+    /// Today's in-progress Effort, scored from the strap HR since the day began (nil below the scorer's minimum).
+    @State private var liveEffort: Double?
+    /// 5-minute HR buckets of the selected day for the "My day" activity timeline (one light read).
+    @State private var dayHeartRate: [HRBucket] = []
+    @AppStorage(DayCycleMode.storageKey) private var dayCycleModeRaw = DayCycleMode.sleepOnset.rawValue
+    @AppStorage(HydrationStore.enabledKey) private var hydrationEnabled = false
+    @AppStorage(WeeklyPlanGoals.sleepMinutesKey) private var planSleepMinutes = 480
+    @AppStorage(WeeklyPlanGoals.sleepNightsKey) private var planSleepNights = 0
+    @AppStorage(WeeklyPlanGoals.workoutDaysKey) private var planWorkoutDays = 0
+    @AppStorage(NroopPlanGoals.dailyStepsKey) private var planDailySteps = 0
+    @AppStorage(NroopPlanGoals.stepsDaysKey) private var planStepsDays = 0
+    @AppStorage(NroopPlanGoals.strengthMinutesKey) private var planStrengthMinutes = 0
+    @AppStorage(DashboardCardPrefs.selectionKey) private var dashboardCardsRaw = ""
+    @AppStorage(HostedCardPrefs.selectionKey) private var hostedCardsRaw = ""
+    @AppStorage(TodayLayoutPrefs.orderKey) private var sectionOrderRaw = ""
+    @AppStorage(TodayLayoutPrefs.hiddenKey) private var hiddenSectionsRaw = ""
+    @AppStorage(KeyMetricPrefs.layoutKey) private var keyMetricsRaw = ""
+    @AppStorage("today.keyMetricsDetailed") private var keyMetricsDetailed = false
+    @AppStorage("today.keyMetricsWindowDays") private var keyMetricsWindowDays = 14
 
     init(context: PerformanceContext, isRoot: Bool = false) {
         self.initialContext = context
@@ -65,7 +104,11 @@ struct PerformanceExperienceView: View {
         }
         .background(PerformanceBackground())
         .toolbar(.hidden, for: .navigationBar)
-        .refreshable { await repo.refresh() }
+        // Like the classic Today pull-to-sync: a pull asks the strap for its stored history, not just a UI reload.
+        .refreshable {
+            if live.historyReady { ble.syncNow() }
+            await repo.refresh()
+        }
         .task(id: loadID) {
             router.performanceContext = context
             await model.load(repo: repo, context: context)
@@ -74,6 +117,72 @@ struct PerformanceExperienceView: View {
         .onReceive(repo.performanceSnapshotCache.$revision) { dataRevision = $0 }
         .sheet(isPresented: $showCalendar) { calendar }
         .sheet(isPresented: $showSettings) { NavigationStack { SettingsView() } }
+        .sheet(isPresented: $showManualWorkout) {
+            ManualWorkoutSheet(editing: nil) { row, replacing in
+                Task {
+                    await repo.saveManualWorkout(row, replacing: replacing)
+                    await intelligence.analyzeRecent()
+                    await repo.refresh()
+                }
+            }
+        }
+        .sheet(isPresented: $showDashboardEditor) {
+            TodayCustomizationSheet(initialDestination: dashboardEditorDestination, sectionOrderRaw: $sectionOrderRaw,
+                hiddenSectionsRaw: $hiddenSectionsRaw, keyMetricsRaw: $keyMetricsRaw,
+                keyMetricsDetailed: $keyMetricsDetailed, keyMetricsWindowDays: $keyMetricsWindowDays,
+                dashboardCardsRaw: $dashboardCardsRaw, hostedCardsRaw: $hostedCardsRaw)
+        }
+        .sheet(isPresented: $showCoachLauncher) { CoachLauncherSheet() }
+        .task(id: "stress|\(repo.deviceId)|\(dataRevision)|\(day)|\(PuffinExperiment.stressPersonalBaselineEnabled)") {
+            stressTimeline = []
+            stressActivityMaskedHours = 0
+            stressLoaded = false
+            guard day == today else { return }
+            let result = await StressDayCurve.today(repo: repo, personalBaseline: PuffinExperiment.stressPersonalBaselineEnabled)
+            guard !Task.isCancelled else { return }
+            stressTimeline = result?.result.timeline ?? []
+            stressActivityMaskedHours = result?.result.activityMaskedHours ?? 0
+            stressLoaded = true
+        }
+        .task(id: "liveEffort|\(repo.deviceId)|\(repo.refreshSeq)|\(day)|\(dayCycleModeRaw)") {
+            liveEffort = nil
+            guard day == today, context.domain == .today || context.domain == .effort else { return }
+            // Like WHOOP, the Effort ring builds up during the day; re-read every few minutes while visible.
+            while !Task.isCancelled {
+                let value = await computeLiveEffort()
+                guard !Task.isCancelled else { return }
+                liveEffort = value
+                try? await Task.sleep(nanoseconds: 180 * 1_000_000_000)
+            }
+        }
+        .task(id: "dayHR|\(repo.deviceId)|\(repo.refreshSeq)|\(day)|\(context.domain.rawValue)") {
+            dayHeartRate = []
+            guard context.domain == .today, let noon = PerformanceSnapshotModel.localNoon(day) else { return }
+            let start = Calendar.current.startOfDay(for: noon)
+            let end = min(Date(), Calendar.current.date(byAdding: .day, value: 1, to: start) ?? Date())
+            let buckets = await repo.hrBuckets(from: Int(start.timeIntervalSince1970), to: Int(end.timeIntervalSince1970), bucketSeconds: 300)
+            if !Task.isCancelled { dayHeartRate = buckets }
+        }
+        .task(id: "\(repo.deviceId)|\(repo.refreshSeq)|\(today)") {
+            planReady = false
+            let rows = await repo.workoutRows(days: 8)
+            guard !Task.isCancelled else { return }
+            planWorkouts = rows
+            planReady = true
+        }
+        .task(id: "hydration|\(repo.deviceId)|\(repo.hydrationSeq)|\(hydrationEnabled)|\(profile.sex)|\(day)|\(dataRevision)|\(dashboardCardsRaw)") {
+            hydrationDisplay = nil
+            guard context.domain == .today, day == today, hydrationEnabled,
+                  DashboardCardPrefs.decodeEnabled(dashboardCardsRaw).contains(.hydration),
+                  let store = await repo.storeHandle() else { return }
+            do {
+                let manual = try await store.metricSeries(deviceId: HydrationStore.sourceId, key: HydrationStore.key, from: day, to: day)
+                let imported = try await store.metricSeries(deviceId: HydrationStore.sourceId, key: HydrationStore.importedKey, from: day, to: day)
+                let total = (manual.first?.value ?? 0) + (imported.first?.value ?? 0)
+                guard !Task.isCancelled, total.isFinite, total >= 0 else { return }
+                hydrationDisplay = HydrationGoal.cardValueString(totalML: total, goalML: repo.hydrationGoalML(profileSex: profile.sex))
+            } catch { hydrationDisplay = nil }
+        }
     }
 
     @ViewBuilder private var header: some View {
@@ -84,9 +193,16 @@ struct PerformanceExperienceView: View {
     private var dailyHeader: some View {
         HStack(spacing: NoopMetrics.space1) {
             Button { showSettings = true } label: {
-                Image(systemName: "person.crop.circle").font(StrandFont.headline)
+                ProfileAvatarView(imageData: profile.avatarImageData, size: 36)
                     .frame(width: PerformanceDesign.controlDiameter, height: PerformanceDesign.controlDiameter)
             }.accessibilityLabel("Profile and settings")
+            let days = repo.days
+            let streak = StreakCalculator.streaks(dayKeys: days.map { $0.day },
+                                                   qualified: days.map { $0.recovery != nil },
+                                                   today: today)
+            Label("\(streak.current)", systemImage: "flame.fill")
+                .font(StrandFont.caption).monospacedDigit()
+                .accessibilityLabel("\(streak.current) days in a row")
             Spacer(minLength: 0)
             HStack(spacing: 0) {
                 Button { shiftDay(-1) } label: { Image(systemName: "chevron.left").frame(width: PerformanceDesign.controlDiameter, height: PerformanceDesign.controlDiameter) }.accessibilityLabel("Previous day")
@@ -97,8 +213,8 @@ struct PerformanceExperienceView: View {
             }.background(StrandPalette.textPrimary.opacity(0.035), in: Capsule())
             Spacer(minLength: 0)
             Button { router.openDevices() } label: {
-                Image(systemName: "applewatch").font(StrandFont.headline)
-                    .frame(width: PerformanceDesign.controlDiameter, height: PerformanceDesign.controlDiameter)
+                StrapBatteryGlyph(percent: live.activeIsWhoop ? live.batteryPct : nil)
+                    .frame(minWidth: PerformanceDesign.controlDiameter, minHeight: PerformanceDesign.controlDiameter)
             }.accessibilityLabel("Manage devices")
         }.foregroundStyle(StrandPalette.textPrimary).font(StrandFont.caption)
     }
@@ -115,7 +231,7 @@ struct PerformanceExperienceView: View {
                 }.accessibilityLabel(isRoot ? "Profile and settings" : "Back")
                 Spacer(minLength: NoopMetrics.space1)
                 if context.domain != .today { Text(context.domain.title.uppercased()).font(StrandFont.overline).tracking(PerformanceDesign.labelTracking) }
-                else { Text(day == today ? "Today" : "Selected day").font(StrandFont.subhead) }
+                else { Text(day == today ? String(localized: "Today") : String(localized: "Selected day")).font(StrandFont.subhead) }
                 Spacer(minLength: NoopMetrics.space1)
                 Button { router.openDevices() } label: {
                     Image(systemName: "applewatch").font(StrandFont.headline)
@@ -155,9 +271,10 @@ struct PerformanceExperienceView: View {
         switch context.domain {
         case .today: todayContents(snapshot)
         case .sleep, .recovery, .effort:
-            DatedPerformanceScoreRing(domain: context.domain, value: snapshot.value(context.domain.metricKey), large: true)
+            DatedPerformanceScoreRing(domain: context.domain, value: displayedScore(context.domain, snapshot), large: true)
                 .frame(maxWidth: .infinity).padding(.vertical, NoopMetrics.space3)
-            if snapshot.value(context.domain.metricKey) == nil { emptyState }
+            if context.domain == .effort, isLiveEffort(snapshot) { liveEffortCaption }
+            if displayedScore(context.domain, snapshot) == nil { emptyState }
             pillarContents(snapshot)
         case .health: healthContents(snapshot)
         case .activities: activitiesContents(snapshot)
@@ -171,60 +288,495 @@ struct PerformanceExperienceView: View {
             layout {
                 ForEach([PerformanceContext.Domain.sleep, .recovery, .effort], id: \.self) { domain in
                     NavigationLink(value: TabRoute.performance(PerformanceContext(day: day, domain: domain)!)) {
+                        let current = displayedScore(domain, snapshot)
+                        // WHOOP keeps the last computed cycle visible until the new one is scored.
+                        let carried = current == nil && day == today ? snapshot.latestPrior(domain.metricKey) : nil
                         VStack(spacing: NoopMetrics.space2) {
-                            DatedPerformanceScoreRing(domain: domain, value: snapshot.value(domain.metricKey))
+                            DatedPerformanceScoreRing(domain: domain, value: current ?? carried?.value)
+                                .opacity(carried == nil ? 1 : 0.6)
                             Text(domain.title.uppercased()).font(StrandFont.overline).tracking(PerformanceDesign.labelTracking)
+                            if domain == .effort, carried == nil, isLiveEffort(snapshot) {
+                                Text("In progress").font(StrandFont.caption).foregroundStyle(StrandPalette.textSecondary)
+                                    .lineLimit(1).minimumScaleFactor(0.75)
+                            }
+                            if let carried {
+                                Text(carriedDayLabel(carried.day))
+                                    .font(StrandFont.caption).foregroundStyle(StrandPalette.textSecondary)
+                                    .lineLimit(1).minimumScaleFactor(0.75)
+                            }
                         }.frame(maxWidth: .infinity).foregroundStyle(StrandPalette.textPrimary)
                     }.buttonStyle(.plain)
                 }
+            }
+            if day == today, [PerformanceContext.Domain.sleep, .recovery, .effort].contains(where: { displayedScore($0, snapshot) == nil }) {
+                unscoredTodayStatus(snapshot)
             }
             ViewThatFits(in: .horizontal) {
                 HStack(alignment: .top, spacing: NoopMetrics.space3) { healthMonitor(snapshot); stressMonitor(snapshot) }
                 VStack(spacing: NoopMetrics.space3) { healthMonitor(snapshot); stressMonitor(snapshot) }
             }
-            HStack { Text("My Day").font(StrandFont.title2); Spacer(); Button { router.requestQuickActions() } label: { Image(systemName: "plus").frame(width: PerformanceDesign.controlDiameter, height: PerformanceDesign.controlDiameter) }.accessibilityLabel("Quick actions") }
+            dayTimeline(snapshot)
+            ageSummary(snapshot)
+            homeMeasurements(snapshot)
+            HStack { Text(String(localized: "My Day")).font(StrandFont.title2); Spacer(); Button { router.requestQuickActions() } label: { Image(systemName: "plus").frame(width: PerformanceDesign.controlDiameter, height: PerformanceDesign.controlDiameter) }.accessibilityLabel("Quick actions") }
             PerformancePanel {
                 VStack(alignment: .leading, spacing: NoopMetrics.space2) {
                     Label("Your Daily Outlook", systemImage: "sun.max").font(StrandFont.headline)
-                    Text(snapshot.hasAnyData ? "Your recorded results and activities for this day." : "Your measurements will appear here after synchronization.")
+                    Text(dailyOutlook(snapshot))
                         .font(StrandFont.subhead).foregroundStyle(StrandPalette.textSecondary)
                 }
             }
             PerformanceCoachLink(context: context)
+            NavigationLink(value: TabRoute.workouts) { Label("All activities", systemImage: "figure.run").font(StrandFont.subhead) }
             activityList(snapshot, includeSleep: true)
             if day == today {
-                HStack(spacing: NoopMetrics.space3) {
-                    WorkoutStartControl(compact: true)
-                    Button { router.openJournal(day: 0) } label: { Label("Journal", systemImage: "book.closed").font(StrandFont.subhead).frame(maxWidth: .infinity, minHeight: NoopMetrics.controlHeight) }
+                AutoWorkoutCard()
+                tonightSleep(snapshot)
+                JournalReminderCard(showsBehaviorInsights: true)
+                weeklyPlan(snapshot)
+                dashboard(snapshot)
+                PerformanceHostedCards(rawSelection: hostedCardsRaw, day: day, revision: dataRevision,
+                    stressTimeline: stressTimeline, stressActivityMaskedHours: stressActivityMaskedHours) {
+                    dashboardEditorDestination = .addedCards
+                    showDashboardEditor = true
                 }
-                Button { router.openAlarms() } label: { PerformancePanel { PerformanceMeasureRow(title: String(localized: "Tonight’s sleep"), value: "", caption: String(localized: "Prepare your sleep and alarm"), symbol: "moon") } }.buttonStyle(.plain)
-                JournalReminderCard()
             }
         }
+    }
+
+    /// Why today's cycle has no score yet, read from real state only, plus a manual sync + re-score.
+    private func unscoredTodayStatus(_ snapshot: PerformanceSnapshot) -> some View {
+        let reason: String
+        if intelligence.computing {
+            reason = String(localized: "Calculating today's scores…")
+        } else if live.backfilling {
+            reason = String(localized: "Syncing last night from the strap…")
+        } else if snapshot.night != nil || !snapshot.sleepSessions.isEmpty {
+            reason = String(localized: "Night detected, today's scores are not calculated yet.")
+        } else if !live.connected {
+            reason = String(localized: "Strap not connected: last night is not synced yet.")
+        } else if let last = live.lastSyncedAt {
+            let time = Date(timeIntervalSince1970: last).formatted(.dateTime.hour().minute().locale(AppLanguage.activeLocale))
+            reason = String(localized: "No sleep detected for last night (last strap sync \(time)).")
+        } else {
+            reason = String(localized: "Last night is not synced yet.")
+        }
+        return PerformancePanel {
+            VStack(alignment: .leading, spacing: NoopMetrics.space2) {
+                Label(reason, systemImage: "info.circle")
+                    .font(StrandFont.footnote).foregroundStyle(StrandPalette.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                if let note = intelligence.note, !note.isEmpty {
+                    Text(note).font(StrandFont.caption).foregroundStyle(StrandPalette.textTertiary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                if let result = recalcResult {
+                    Text(result).font(StrandFont.caption).foregroundStyle(StrandPalette.textSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                Button {
+                    Task { await recalculateToday() }
+                } label: {
+                    Label(recalcPhase ?? (intelligence.computing ? String(localized: "Calculating today's scores…") : String(localized: "Recalculate today")),
+                          systemImage: "arrow.clockwise").font(StrandFont.subhead)
+                }
+                .disabled(recalcPhase != nil || intelligence.computing)
+            }
+        }
+    }
+
+    /// Waits (polling once a second) while the scoring engine is busy; returns whether it is still busy at the limit.
+    private func waitWhileComputing(seconds: Int) async -> Bool {
+        var waited = 0
+        try? await Task.sleep(nanoseconds: 1_000_000_000)
+        while intelligence.computing && waited < seconds {
+            try? await Task.sleep(nanoseconds: 1_000_000_000)
+            waited += 1
+        }
+        return intelligence.computing
+    }
+
+    /// "Recalculer aujourd'hui": waits for the strap sync to finish (90 s at most), then forces the scoring
+    /// pass (waiting out one already running), then reports what was actually found. Real values only.
+    private func recalculateToday() async {
+        recalcResult = nil
+        defer { recalcPhase = nil }
+        // 1. Strap sync.
+        let syncNote: String
+        if live.connected && live.historyReady {
+            recalcPhase = String(localized: "Syncing last night from the strap…")
+            ble.syncNow()
+            var elapsed = 0
+            while !live.backfilling && elapsed < 6 {
+                try? await Task.sleep(nanoseconds: 1_000_000_000); elapsed += 1
+            }
+            let started = live.backfilling
+            while live.backfilling && elapsed < 90 {
+                try? await Task.sleep(nanoseconds: 1_000_000_000); elapsed += 1
+            }
+            if live.backfilling {
+                syncNote = String(localized: "Strap sync still running after 90 s.")
+            } else if started {
+                syncNote = String(localized: "Strap sync finished.")
+            } else {
+                syncNote = String(localized: "The strap did not start a new sync.")
+            }
+        } else {
+            syncNote = String(localized: "Strap not connected, no sync was possible.")
+        }
+        // 2. Scoring pass: let a running one finish, force ours, then let any queued follow-up finish.
+        recalcPhase = String(localized: "Calculating today's scores…")
+        _ = await waitWhileComputing(seconds: 60)
+        await intelligence.analyzeRecent(triggerLabel: "today-recalculate")
+        _ = await waitWhileComputing(seconds: 60)
+        await repo.refresh()
+        await model.load(repo: repo, context: context)
+        // 3. One real result line.
+        let snap = model.snapshot
+        let nightMinutes = snap?.value("sleep_total_min")
+        let night: String
+        if let minutes = nightMinutes, minutes > 0, snap?.value("recovery") != nil {
+            let m = Int(minutes.rounded())
+            night = String(localized: "Night found: \(m / 60) h \(m % 60) min of sleep, scores updated.")
+        } else if let minutes = nightMinutes, minutes > 0 {
+            let m = Int(minutes.rounded())
+            night = String(localized: "Night found: \(m / 60) h \(m % 60) min of sleep, but recovery is not calculated.")
+        } else {
+            let cal = Calendar.current
+            let startOfDay = Int(cal.startOfDay(for: Date()).timeIntervalSince1970)
+            let from = startOfDay - 4 * 3600
+            let to = min(startOfDay + 12 * 3600, Int(Date().timeIntervalSince1970))
+            let count = await repo.hrSamples(from: from, to: to, limit: 400_000).count
+            night = String(localized: "Night not found: \(count) heart-rate readings between 8 pm and 12 pm.")
+        }
+        recalcResult = night + " " + syncNote
+    }
+
+    /// "Yesterday" for the previous day, otherwise a short weekday/date of the carried score.
+    private func carriedDayLabel(_ key: String) -> String {
+        if key == context.shiftedDay(by: -1) { return String(localized: "Yesterday") }
+        guard let date = PerformanceContext.date(key) else { return key }
+        return date.formatted(.dateTime.weekday(.abbreviated).day().month(.abbreviated).locale(AppLanguage.activeLocale))
+    }
+
+    /// The stored score, except today's Effort: max(stored, live) exactly like the classic Today screen.
+    private func displayedScore(_ domain: PerformanceContext.Domain, _ snapshot: PerformanceSnapshot) -> Double? {
+        let stored = snapshot.value(domain.metricKey)
+        guard domain == .effort, day == today else { return stored }
+        return StrainScorer.effectiveEffort(live: liveEffort, stored: stored)
+    }
+
+    private func isLiveEffort(_ snapshot: PerformanceSnapshot) -> Bool {
+        guard day == today, let liveEffort else { return false }
+        guard let stored = snapshot.value("strain") else { return true }
+        return liveEffort > stored
+    }
+
+    private var liveEffortCaption: some View {
+        Label("Effort in progress, measured since the start of your day", systemImage: "dot.radiowaves.left.and.right")
+            .font(StrandFont.footnote).foregroundStyle(StrandPalette.textSecondary)
+            .frame(maxWidth: .infinity)
+    }
+
+    /// Same window and parameters as the classic Today live Effort (LiquidTodayView, #1001/#2460).
+    private func computeLiveEffort() async -> Double? {
+        guard let noon = PerformanceSnapshotModel.localNoon(today) else { return nil }
+        let calendar = Calendar.current
+        var from = Int(calendar.startOfDay(for: noon).timeIntervalSince1970)
+        if DayCycleMode.persisted(dayCycleModeRaw) == .sleepOnset {
+            let markers = await repo.exploreSeries(key: DayCycleIntelligenceIntegration.onsetKey, source: Repository.whoopSource)
+            if let onset = markers.last(where: { $0.day == today }), onset.value.isFinite, onset.value > 0 {
+                from = Int(onset.value)
+            }
+        }
+        let to = max(from, Int(Date().timeIntervalSince1970))
+        let samples = await repo.hrSamples(from: from, to: to, limit: 200_000)
+        guard !samples.isEmpty else { return nil }
+        let maxHR = profile.effortHRmax
+        let restHR = repo.days.first(where: { $0.day == today })?.restingHr.map(Double.init) ?? StrainScorer.defaultRestingHR
+        let method = PuffinExperiment.effortMethod
+        let sex = profile.sex
+        return await Task.detached(priority: .utility) {
+            StrainScorer.strain(samples, maxHR: maxHR, restingHR: restHR, method: method, sex: sex)
+        }.value
+    }
+
+    private func dailyOutlook(_ snapshot: PerformanceSnapshot) -> String {
+        var facts: [String] = []
+        if let sleep = snapshot.value("sleep_performance") {
+            facts.append(String(localized: "sleep performance \(PerformanceFormat.value("sleep_performance", sleep))"))
+        }
+        if let recovery = snapshot.value("recovery") {
+            facts.append(String(localized: "recovery \(PerformanceFormat.value("recovery", recovery))"))
+        }
+        if let effort = displayedScore(.effort, snapshot) {
+            facts.append(String(localized: "effort \(PerformanceFormat.effort(effort))"))
+        }
+        if let debt = snapshot.value("sleep_debt_min") {
+            facts.append(String(localized: "sleep debt \(PerformanceFormat.duration(debt))"))
+        }
+        if !snapshot.workouts.isEmpty {
+            let count = snapshot.workouts.count
+            facts.append(count == 1 ? String(localized: "one recorded workout") :
+                            String(localized: "\(count) recorded workouts"))
+        }
+        guard !facts.isEmpty else { return String(localized: "No daily scores or workouts available yet.") }
+        let formatter = ListFormatter()
+        formatter.locale = AppLanguage.activeLocale
+        let summary = formatter.string(from: facts) ?? facts.joined(separator: ", ")
+        return String(localized: "Recorded for this day: \(summary).")
+    }
+
+    private func tonightSleep(_ snapshot: PerformanceSnapshot) -> some View {
+        let calendar = Calendar.current
+        let now = Date()
+        let tomorrow = calendar.date(byAdding: .day, value: 1, to: now) ?? now
+        let weekday = calendar.component(.weekday, from: tomorrow)
+        let wake = WindDownNudge.wakeMinutes(forWeekday: weekday)
+        let need = snapshot.recommendedSleepNeed.flatMap { $0 > 0 && $0 <= 1440 ? Int($0.rounded()) : nil }
+        let bedtime = need.map { (wake - $0 + 1440) % 1440 }
+        return PerformancePanel {
+            VStack(alignment: .leading, spacing: NoopMetrics.space3) {
+                Label("Tonight’s sleep", systemImage: "moon").font(StrandFont.headline)
+                HStack(alignment: .top, spacing: NoopMetrics.space4) {
+                    sleepTime(String(localized: "Suggested bedtime"), time: bedtime.map(clockMinute))
+                    sleepTime(String(localized: "Wake time"), time: clockMinute(wake))
+                }
+                if bedtime == nil {
+                    Text("Sleep need is unavailable.")
+                        .font(StrandFont.footnote).foregroundStyle(StrandPalette.textSecondary)
+                } else if let need {
+                    let needText = PerformanceFormat.duration(Double(need))
+                    Text("Sleep need tonight: \(needText)")
+                        .font(StrandFont.subhead).foregroundStyle(StrandPalette.textSecondary)
+                    if let debt = snapshot.value("sleep_debt_min"), debt >= 1 {
+                        let debtText = PerformanceFormat.duration(debt)
+                        Text("Includes recovering a sleep debt of \(debtText).")
+                            .font(StrandFont.footnote).foregroundStyle(StrandPalette.textSecondary)
+                    }
+                }
+                Button { router.openAlarms() } label: {
+                    Label("Set or edit alarm", systemImage: "alarm")
+                }.font(StrandFont.subhead)
+            }
+        }
+    }
+
+    private func sleepTime(_ title: String, time: String?) -> some View {
+        VStack(alignment: .leading, spacing: NoopMetrics.space1) {
+            Text(title).font(StrandFont.footnote).foregroundStyle(StrandPalette.textSecondary)
+            Text(time ?? "—").font(StrandFont.title2).monospacedDigit()
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func clockMinute(_ minute: Int) -> String {
+        let clock = AppClock.hourMinuteFormatter()
+        let date = Calendar.current.date(from: DateComponents(year: 2001, month: 1, day: 1,
+                                                              hour: minute / 60, minute: minute % 60))
+        return date.map { clock.string(from: $0) } ?? "—"
+    }
+
+    /// One real daily value per day key for the plan week (steps: Apple/strap merged, then strap estimate).
+    private func planDailyValue(_ snapshot: PerformanceSnapshot, keys: [String], day key: String) -> Double? {
+        for metric in keys {
+            if let value = snapshot.series[metric]?.first(where: { $0.day == key })?.value, value.isFinite { return value }
+        }
+        return nil
+    }
+
+    private func weeklyPlan(_ snapshot: PerformanceSnapshot) -> some View {
+        let goals = WeeklyPlanGoals(sleepMinutes: planSleepMinutes, sleepNights: planSleepNights, workoutDays: planWorkoutDays)
+        let rows = WeeklyPlanSource.rows(days: repo.days, workouts: planReady ? planWorkouts : [], now: Date())
+        let progress = WeeklyPlanEngine.progress(rows: rows, goals: goals)
+        let observed = rows.filter { !$0.isFuture }
+        let stepDays = planDailySteps > 0 ? observed.filter {
+            (planDailyValue(snapshot, keys: ["steps", "steps_est"], day: $0.day) ?? -1) >= Double(planDailySteps)
+        }.count : 0
+        let strength = observed.compactMap { planDailyValue(snapshot, keys: ["strength_min"], day: $0.day) }.reduce(0, +)
+        var fractions: [Double] = []
+        if goals.sleepNights > 0 { fractions.append(min(1, Double(progress.sleepNights) / Double(goals.sleepNights))) }
+        if goals.workoutDays > 0 && planReady { fractions.append(min(1, Double(progress.workoutDays) / Double(goals.workoutDays))) }
+        if planDailySteps > 0 && planStepsDays > 0 { fractions.append(min(1, Double(stepDays) / Double(planStepsDays))) }
+        if planStrengthMinutes > 0 { fractions.append(min(1, strength / Double(planStrengthMinutes))) }
+        let percent = fractions.isEmpty ? nil : Int((fractions.reduce(0, +) / Double(fractions.count) * 100).rounded())
+        let daysLeft = rows.filter { $0.isFuture || $0.isToday }.count
+        return NavigationLink { WeeklyPlanView().modifier(PerformanceLegacyContextReset()) } label: {
+            PerformancePanel {
+                VStack(alignment: .leading, spacing: NoopMetrics.space3) {
+                    HStack { Text(String(localized: "My plan")).font(StrandFont.headline); Spacer(); Image(systemName: "pencil") }
+                    if let percent {
+                        HStack(alignment: .firstTextBaseline) {
+                            Text(verbatim: "\(percent) %").font(StrandFont.title2).monospacedDigit()
+                            Text("accomplished").font(StrandFont.subhead).foregroundStyle(StrandPalette.textSecondary)
+                            Spacer()
+                            Text(daysLeft == 1 ? String(localized: "Last day") : String(localized: "\(daysLeft) days left"))
+                                .font(StrandFont.footnote).foregroundStyle(StrandPalette.textSecondary)
+                        }
+                        ProgressView(value: Double(percent), total: 100).tint(PerformanceDesign.recoveryHigh)
+                    }
+                    if goals.sleepNights > 0 {
+                        Text("Sleep nights: \(progress.sleepNights) / \(goals.sleepNights)").font(StrandFont.subhead).monospacedDigit()
+                        ProgressView(value: Double(min(progress.sleepNights, goals.sleepNights)), total: Double(goals.sleepNights))
+                    }
+                    if goals.workoutDays > 0 && planReady {
+                        Text("Workout days: \(progress.workoutDays) / \(goals.workoutDays)").font(StrandFont.subhead).monospacedDigit()
+                        ProgressView(value: Double(min(progress.workoutDays, goals.workoutDays)), total: Double(goals.workoutDays))
+                    }
+                    if planDailySteps > 0 && planStepsDays > 0 {
+                        Text("Days at \(planDailySteps) steps: \(stepDays) / \(planStepsDays)").font(StrandFont.subhead).monospacedDigit()
+                        ProgressView(value: Double(min(stepDays, planStepsDays)), total: Double(planStepsDays))
+                    }
+                    if planStrengthMinutes > 0 {
+                        Text("Strength: \(Int(strength.rounded())) / \(planStrengthMinutes) min").font(StrandFont.subhead).monospacedDigit()
+                        ProgressView(value: min(strength, Double(planStrengthMinutes)), total: Double(planStrengthMinutes))
+                    }
+                    if fractions.isEmpty {
+                        Text("Choose your weekly sleep and activity goals.").font(StrandFont.subhead).foregroundStyle(StrandPalette.textSecondary)
+                    }
+                }
+            }
+        }.buttonStyle(.plain).foregroundStyle(StrandPalette.textPrimary)
+    }
+
+    private func dashboard(_ snapshot: PerformanceSnapshot) -> some View {
+        let cards = DashboardCardPrefs.decodeEnabled(dashboardCardsRaw).filter { hydrationEnabled || $0 != .hydration }
+        return VStack(alignment: .leading, spacing: NoopMetrics.space3) {
+            HStack {
+                Text(String(localized: "My dashboard")).font(StrandFont.headline)
+                Spacer()
+                Button("Customize") {
+                    dashboardEditorDestination = .yourCards
+                    showDashboardEditor = true
+                }.font(StrandFont.caption)
+            }
+            PerformancePanel {
+                VStack(spacing: 0) {
+                    ForEach(cards) { card in
+                        dashboardCardRow(card, snapshot: snapshot)
+                        if card != cards.last { Divider() }
+                    }
+                    if cards.isEmpty { Text("Choose metrics to show here.").font(StrandFont.subhead) }
+                }
+            }
+        }
+    }
+
+    @ViewBuilder private func dashboardCardRow(_ card: DashboardCard, snapshot: PerformanceSnapshot) -> some View {
+        switch PerformanceDashboardPolicy.destination(for: card) {
+        case .metric(let key):
+            dashboardMetricRow(card, key: key, snapshot: snapshot)
+        case .stepsAverage:
+            RollingStepsAverageCard(day: day)
+        case .hydration:
+            NavigationLink(value: TabRoute.hydration) {
+                PerformanceMeasureRow(title: card.title, value: hydrationDisplay ?? "—", caption: card.subtitle, symbol: card.icon)
+            }.buttonStyle(.plain)
+        case .coupled:
+            NavigationLink(value: TabRoute.coupled) {
+                PerformanceMeasureRow(title: card.title, value: "", caption: card.subtitle, symbol: card.icon)
+            }.buttonStyle(.plain)
+        case .coach:
+            Button { showCoachLauncher = true } label: {
+                PerformanceMeasureRow(title: card.title, value: "", caption: card.subtitle, symbol: card.icon)
+            }.buttonStyle(.plain)
+        }
+    }
+
+    private func dashboardMetricRow(_ card: DashboardCard, key: String, snapshot: PerformanceSnapshot) -> some View {
+        let age = key == "fitness_age" || key == "vitality" ? agePoint(snapshot, key: key) : nil
+        let vo2 = key == "vo2max" ? vo2Point(snapshot) : nil
+        let steps = key == "steps" ? stepsPoint(snapshot) : nil
+        let oxygen = key == "spo2" ? PerformanceHomeData.importedOxygen(snapshot.series["spo2_imported"] ?? [], on: day) : nil
+        let formatKey = vo2?.sourceKey == "vo2max_est" ? "vo2max_est" : key
+        let value = key == "stress" ? snapshot.stress :
+            (key == "fitness_age" || key == "vitality" ? age?.value :
+                (key == "vo2max" ? vo2?.value : (key == "steps" ? steps?.value :
+                    (key == "spo2" ? oxygen?.value : snapshot.value(key)))))
+        let caption: String
+        if key == "fitness_age" || key == "vitality" {
+            caption = age.map { PerformanceFormat.date($0.day) } ?? String(localized: "Measurement unavailable")
+        } else if key == "vo2max" {
+            caption = measurementCaption(vo2?.value, note: formatKey == "vo2max_est" ? String(localized: "Estimate") : nil,
+                                         measuredDay: vo2?.day)
+        } else if key == "active_kcal" {
+            caption = measurementCaption(value, note: String(localized: "Estimate"))
+        } else if key == "steps" {
+            caption = measurementCaption(value, note: steps?.sourceKey == "steps_est" ? String(localized: "Estimate") : nil)
+        } else if key == "resp_rate", snapshot.source(key)?.hasSuffix("-noop") == true {
+            caption = measurementCaption(value, note: String(localized: "Estimate"))
+        } else if key == "spo2" {
+            caption = oxygen == nil ? String(localized: "Not available via Bluetooth") :
+                [String(localized: "Imported"), String(localized: "Not available via Bluetooth")].joined(separator: " · ")
+        } else {
+            caption = card.subtitle
+        }
+        let route: TabRoute
+        switch key {
+        case "vo2max", "active_kcal", "spo2": route = .health
+        case "steps": route = .metricSourced(key: "steps", source: MetricCatalog.combinedStepsSource)
+        default: route = .performance(PerformanceContext(day: day, domain: .trend, metric: key)!)
+        }
+        return NavigationLink(value: route) {
+            PerformanceMeasureRow(title: card.title, value: key == "vo2max" ? vo2Value(value) : PerformanceFormat.value(formatKey, value),
+                                  caption: caption, symbol: card.icon,
+                                  baseline: snapshot.baselines[key].map { String(localized: "30-day avg \(PerformanceFormat.value(key, $0))") },
+                                  direction: Self.direction(value, snapshot.baselines[key]),
+                                  spark: weekPoints(snapshot, key: key).map(\.value))
+        }.buttonStyle(.plain)
     }
 
     private func healthMonitor(_ snapshot: PerformanceSnapshot) -> some View {
         NavigationLink(value: TabRoute.performance(PerformanceContext(day: day, domain: .health)!)) {
             PerformancePanel {
                 VStack(alignment: .leading, spacing: NoopMetrics.space1) {
-                    Label("Vital signs", systemImage: "heart.text.square").font(StrandFont.overline)
-                    Text("\(snapshot.availableVitals.count)/5").font(StrandFont.title2)
+                    Label("Health Monitor", systemImage: "heart.text.square").font(StrandFont.overline)
+                    Text(snapshot.personalVitals.isEmpty ? "—/4" : "\(snapshot.inPersonalRange)/4").font(StrandFont.title2).monospacedDigit()
                     Text(snapshot.personalVitals.isEmpty ? String(localized: "Learning your personal reference") : String(localized: "\(snapshot.inPersonalRange) in your personal range"))
                         .font(StrandFont.overline).foregroundStyle(StrandPalette.textSecondary).fixedSize(horizontal: false, vertical: true)
-                    Text("Available measurements").font(StrandFont.overline).foregroundStyle(StrandPalette.textSecondary)
                 }
             }
         }.buttonStyle(.plain).foregroundStyle(StrandPalette.textPrimary)
     }
 
     private func stressMonitor(_ snapshot: PerformanceSnapshot) -> some View {
-        NavigationLink(value: TabRoute.performance(PerformanceContext(day: day, domain: .trend, metric: "stress")!)) {
+        let hours = day == today ? stressTimeline : []
+        let latest = hours.last(where: \.hasData)?.level
+        let value = latest ?? snapshot.stress
+        return NavigationLink(value: TabRoute.stress) {
             PerformancePanel {
-                VStack(alignment: .leading, spacing: NoopMetrics.space1) {
+                VStack(alignment: .leading, spacing: NoopMetrics.space2) {
                     Label("Stress estimate", systemImage: "waveform.path.ecg").font(StrandFont.overline)
-                    Text(PerformanceFormat.number(snapshot.stress, decimals: 1)).font(StrandFont.title2)
-                    Text("Daily proxy, 0–3").font(StrandFont.overline).foregroundStyle(StrandPalette.textSecondary)
-                    Text(PerformanceFormat.date(day)).font(StrandFont.overline).foregroundStyle(StrandPalette.textSecondary)
+                    if let value {
+                        HStack {
+                            Text(PerformanceFormat.number(value, decimals: 1)).font(StrandFont.title2)
+                            Text(StressBand(score: value).title).font(StrandFont.footnote)
+                        }
+                        .foregroundStyle(StressRamp.color(value))
+                        Text(latest != nil ? String(localized: "Latest hourly estimate") : String(localized: "Daily proxy, 0–3"))
+                            .font(StrandFont.footnote).foregroundStyle(StrandPalette.textSecondary)
+                    }
+                    if latest != nil {
+                        DaytimeLoadLine(hours: hours)
+                        let scored = hours.compactMap(\.level)
+                        let low = scored.filter { $0 < 1 }.count
+                        let medium = scored.filter { $0 >= 1 && $0 < 2 }.count
+                        let high = scored.filter { $0 >= 2 }.count
+                        Text("Low \(low) h · Medium \(medium) h · High \(high) h")
+                            .font(StrandFont.footnote).monospacedDigit().foregroundStyle(StrandPalette.textSecondary)
+                            .lineLimit(1).minimumScaleFactor(0.7)
+                        Text("NROOP estimate from your heart rate and HRV")
+                            .font(StrandFont.overline).foregroundStyle(StrandPalette.textTertiary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    } else if day != today {
+                        Text("Hourly stress is shown for today.")
+                            .font(StrandFont.footnote).foregroundStyle(StrandPalette.textSecondary)
+                    } else if stressLoaded {
+                        Text("No hourly stress measurements available.")
+                            .font(StrandFont.footnote).foregroundStyle(StrandPalette.textSecondary)
+                    } else {
+                        ProgressView()
+                    }
                 }
             }
         }.buttonStyle(.plain).foregroundStyle(StrandPalette.textPrimary)
@@ -232,22 +784,43 @@ struct PerformanceExperienceView: View {
 
     @ViewBuilder private func pillarContents(_ snapshot: PerformanceSnapshot) -> some View {
         if context.domain == .sleep {
+            sleepDetail(snapshot)
+            nightStress
+            sleepWeek(snapshot)
             PerformancePanel {
                 VStack(spacing: 0) {
+                    measure("sleep_performance", snapshot)
+                    Divider()
                     measure("sleep_total_min", snapshot, fallback: snapshot.daily?.totalSleepMin)
+                    Divider()
+                    measure("hours_vs_needed_pct", snapshot)
                     Divider()
                     measure("sleep_consistency", snapshot)
                     Divider()
                     measure("sleep_efficiency", snapshot, fallback: snapshot.daily?.efficiency.map { $0 <= 1 ? $0 * 100 : $0 })
                     Divider()
                     measure("sleep_need_min", snapshot)
+                    Divider()
+                    measure("sleep_debt_min", snapshot)
                 }
             }
             PerformanceFullHistoryLink(key: context.domain.metricKey)
             PerformanceCoachLink(context: context)
-            sleepDetail(snapshot)
+            Button { showManualSleep = true } label: {
+                Label("Add sleep", systemImage: "plus.circle")
+                    .foregroundStyle(PerformanceDesign.sleep)
+            }
+            .sheet(isPresented: $showManualSleep) {
+                ManualSleepEntry(end: min(Int(Date().timeIntervalSince1970),
+                    Int((PerformanceSnapshotModel.localNoon(day) ?? Date()).timeIntervalSince1970)))
+            }
             trendLink("sleep_total_min")
             trendLink("sleep_consistency")
+            NavigationLink { SleepClockStressLabView(repo: repo).modifier(PerformanceLegacyContextReset()) } label: {
+                Label("Experimental sleep stress research", systemImage: "waveform.path.ecg").font(StrandFont.subhead)
+            }
+            Text("Night activation is an unvalidated local research proxy, not an official WHOOP sleep stress score.")
+                .font(StrandFont.footnote).foregroundStyle(StrandPalette.textSecondary)
             NavigationLink(value: TabRoute.sleep) { Label("Detailed sleep tools", systemImage: "moon.zzz").font(StrandFont.subhead) }
         } else if context.domain == .recovery {
             PerformancePanel {
@@ -261,6 +834,15 @@ struct PerformanceExperienceView: View {
                     measure("sleep_performance", snapshot)
                 }
             }
+            if let insight = recoveryInsight(snapshot) {
+                PerformancePanel {
+                    Label(insight, systemImage: "text.bubble").font(StrandFont.subhead)
+                        .foregroundStyle(StrandPalette.textSecondary).fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            recoveryBars(snapshot)
+            weekChart(String(localized: "HRV · 7 days"), key: "hrv", snapshot: snapshot, color: PerformanceDesign.recoveryHigh, bars: false)
+            weekChart(String(localized: "Resting heart rate · 7 days"), key: "rhr", snapshot: snapshot, color: PerformanceDesign.recoveryLow, bars: false)
             PerformanceFullHistoryLink(key: context.domain.metricKey)
             PerformanceCoachLink(context: context)
             Text("These measurements provide context; they are not a percentage breakdown of the recovery score.")
@@ -268,6 +850,7 @@ struct PerformanceExperienceView: View {
             trendLink("hrv")
             trendLink("rhr")
         } else {
+            if day == today { effortTarget(snapshot) }
             PerformancePanel {
                 VStack(spacing: 0) {
                     measure(snapshot.value("steps") != nil ? "steps" : "steps_est", snapshot)
@@ -279,6 +862,10 @@ struct PerformanceExperienceView: View {
                     measure("strength_min", snapshot)
                 }
             }
+            weekChart(String(localized: "Effort · 7 days"), key: "strain", snapshot: snapshot, color: PerformanceDesign.effort, bars: true)
+            zonesWeekChart(snapshot)
+            weekChart(String(localized: "Steps · 7 days"), key: (snapshot.series["steps"] ?? []).isEmpty ? "steps_est" : "steps",
+                      snapshot: snapshot, color: PerformanceDesign.effort, bars: true)
             PerformanceFullHistoryLink(key: context.domain.metricKey)
             PerformanceCoachLink(context: context)
             activityList(snapshot, includeSleep: false)
@@ -287,14 +874,167 @@ struct PerformanceExperienceView: View {
         }
     }
 
+    /// Real points of the visible 7-day window only (missing days stay empty).
+    private struct WeekPoint: Identifiable {
+        let date: Date
+        let value: Double
+        var id: Date { date }
+    }
+
+    private func weekPoints(_ snapshot: PerformanceSnapshot, key: String) -> [WeekPoint] {
+        (snapshot.series[key] ?? []).compactMap { point -> WeekPoint? in
+            guard context.contains(point.day), point.value.isFinite,
+                  let date = PerformanceSnapshotModel.localNoon(point.day) else { return nil }
+            return WeekPoint(date: date, value: key == "strain"
+                ? UnitFormatter.effortValue(point.value, scale: PerformanceFormat.effortScale) : point.value)
+        }
+    }
+
+    @ViewBuilder private func weekChart(_ title: String, key: String, snapshot: PerformanceSnapshot, color: Color, bars: Bool) -> some View {
+        let points = weekPoints(snapshot, key: key)
+        if !points.isEmpty {
+            NavigationLink(value: TabRoute.performance(PerformanceContext(day: day, domain: .trend, metric: key)!)) {
+                PerformancePanel {
+                    VStack(alignment: .leading, spacing: NoopMetrics.space2) {
+                        HStack {
+                            Text(title).font(StrandFont.headline)
+                            Spacer()
+                            Image(systemName: "chevron.right").font(StrandFont.footnote).foregroundStyle(StrandPalette.textSecondary)
+                        }
+                        Chart(points) { point in
+                            if bars {
+                                BarMark(x: .value("Day", point.date, unit: .day), y: .value(title, point.value))
+                                    .foregroundStyle(color)
+                            } else {
+                                LineMark(x: .value("Day", point.date, unit: .day), y: .value(title, point.value))
+                                    .foregroundStyle(color)
+                                    .lineStyle(StrokeStyle(lineWidth: PerformanceDesign.chartStroke))
+                                PointMark(x: .value("Day", point.date, unit: .day), y: .value(title, point.value))
+                                    .foregroundStyle(color)
+                            }
+                        }
+                        .chartXAxis { AxisMarks(values: .stride(by: .day)) { _ in AxisValueLabel(format: .dateTime.weekday(.narrow)) } }
+                        .chartYScale(domain: .automatic(includesZero: bars))
+                        .frame(height: PerformanceDesign.compactChartHeight)
+                    }
+                }
+            }.buttonStyle(.plain).foregroundStyle(StrandPalette.textPrimary)
+        }
+    }
+
+    private struct ZoneBar: Identifiable {
+        let date: Date
+        let band: String
+        let minutes: Double
+        var id: String { band + String(date.timeIntervalSince1970) }
+    }
+
+    @ViewBuilder private func zonesWeekChart(_ snapshot: PerformanceSnapshot) -> some View {
+        let low = String(localized: "Zones 1–3")
+        let high = String(localized: "Zones 4–5")
+        let bars = weekPoints(snapshot, key: "hr_zones13_min").map { ZoneBar(date: $0.date, band: low, minutes: $0.value) }
+            + weekPoints(snapshot, key: "hr_zones45_min").map { ZoneBar(date: $0.date, band: high, minutes: $0.value) }
+        if !bars.isEmpty {
+            PerformancePanel {
+                VStack(alignment: .leading, spacing: NoopMetrics.space2) {
+                    Text("Heart rate zones · 7 days").font(StrandFont.headline)
+                    Chart(bars) { bar in
+                        BarMark(x: .value("Day", bar.date, unit: .day), y: .value("Minutes", bar.minutes))
+                            .foregroundStyle(by: .value("Zones", bar.band))
+                    }
+                    .chartForegroundStyleScale([low: PerformanceDesign.recoveryHigh, high: PerformanceDesign.recoveryMedium])
+                    .chartXAxis { AxisMarks(values: .stride(by: .day)) { _ in AxisValueLabel(format: .dateTime.weekday(.narrow)) } }
+                    .frame(height: PerformanceDesign.compactChartHeight)
+                    Text("Minutes per day, from your strap's heart rate.")
+                        .font(StrandFont.footnote).foregroundStyle(StrandPalette.textSecondary)
+                }
+            }
+        }
+    }
+
+    private func recoveryBars(_ snapshot: PerformanceSnapshot) -> some View {
+        let points = snapshot.series["recovery"] ?? []
+        return PerformancePanel {
+            VStack(alignment: .leading, spacing: NoopMetrics.space2) {
+                Text("Recovery · 7 days").font(StrandFont.headline)
+                if points.isEmpty {
+                    Text("No recovery measurements in this period.").font(StrandFont.footnote).foregroundStyle(StrandPalette.textSecondary)
+                } else {
+                    Chart(points, id: \.day) { point in
+                        if let date = PerformanceSnapshotModel.localNoon(point.day) {
+                            BarMark(x: .value("Day", date, unit: .day), y: .value("Recovery", point.value))
+                                .foregroundStyle(PerformanceContext.Domain.recovery.tint(score: point.value))
+                        }
+                    }.chartYScale(domain: 0...100).frame(height: PerformanceDesign.compactChartHeight)
+                }
+            }
+        }
+    }
+
     private func measure(_ key: String, _ snapshot: PerformanceSnapshot, fallback: Double? = nil) -> some View {
         let metric = PerformanceFormat.metric(key)
         let value = snapshot.value(key) ?? PerformanceContext.finite(fallback)
+        let baseline = snapshot.baselines[key]
+        let bandKeys: Set<String> = ["sleep_performance", "hours_vs_needed_pct", "sleep_consistency", "sleep_efficiency"]
         return NavigationLink(value: TabRoute.performance(PerformanceContext(day: day, domain: .trend, metric: key)!)) {
             PerformanceMeasureRow(title: PerformanceFormat.title(key), value: PerformanceFormat.value(key, value),
                                   caption: value == nil ? String(localized: "Measurement unavailable") : sourceCaption(snapshot.source(key)),
-                                  symbol: metric?.icon ?? "waveform.path.ecg")
+                                  symbol: metric?.icon ?? "waveform.path.ecg",
+                                  baseline: baseline.map { String(localized: "30-day avg \(PerformanceFormat.value(key, $0))") },
+                                  direction: Self.direction(value, baseline),
+                                  badge: bandKeys.contains(key) ? PerformanceBand(percent: value) : nil)
         }.buttonStyle(.plain)
+    }
+
+    /// +1 / -1 when today differs from the 30-day average by more than 3 %, else 0.
+    static func direction(_ value: Double?, _ baseline: Double?) -> Int {
+        guard let value, let baseline, value.isFinite, baseline.isFinite, baseline != 0 else { return 0 }
+        let change = (value - baseline) / abs(baseline)
+        return change > 0.03 ? 1 : change < -0.03 ? -1 : 0
+    }
+
+    /// Short, factual recovery comment from today's HRV / RHR against their own 30-day average.
+    private func recoveryInsight(_ snapshot: PerformanceSnapshot) -> String? {
+        var parts: [String] = []
+        if let hrv = snapshot.value("hrv") ?? PerformanceContext.finite(snapshot.daily?.avgHrv),
+           let base = snapshot.baselines["hrv"], base > 0 {
+            let pct = Int(((hrv - base) / base * 100).rounded())
+            let pctText = "\(abs(pct)) %"
+            if pct > 0 { parts.append(String(localized: "Your HRV is \(pctText) above your 30-day average.")) }
+            else if pct < 0 { parts.append(String(localized: "Your HRV is \(pctText) below your 30-day average.")) }
+            else { parts.append(String(localized: "Your HRV matches your 30-day average.")) }
+        }
+        if let rhr = snapshot.value("rhr") ?? snapshot.daily?.restingHr.map(Double.init),
+           let base = snapshot.baselines["rhr"], base > 0 {
+            let diff = Int((rhr - base).rounded())
+            if diff > 0 { parts.append(String(localized: "Resting heart rate is \(diff) bpm above your 30-day average.")) }
+            else if diff < 0 { parts.append(String(localized: "Resting heart rate is \(-diff) bpm below your 30-day average.")) }
+            else { parts.append(String(localized: "Resting heart rate matches your 30-day average.")) }
+        }
+        return parts.isEmpty ? nil : parts.joined(separator: " ")
+    }
+
+    /// NROOP's effort guide for today's recovery (CoupledView bands), on WHOOP's 0–21 scale only.
+    @ViewBuilder private func effortTarget(_ snapshot: PerformanceSnapshot) -> some View {
+        let recovery = snapshot.value("recovery")
+        if PerformanceFormat.effortScale == .whoop, let band = CoupledView.optimalStrainRange(recovery: recovery), let recovery {
+            let current = displayedScore(.effort, snapshot).map { UnitFormatter.effortValue($0, scale: .whoop) }
+            PerformancePanel {
+                VStack(alignment: .leading, spacing: NoopMetrics.space2) {
+                    Label("Effort target", systemImage: "scope").font(StrandFont.headline)
+                    Text("\(band.lowerBound)–\(band.upperBound)").font(StrandFont.title2).monospacedDigit()
+                        .foregroundStyle(PerformanceDesign.effort)
+                    if let current {
+                        ProgressView(value: min(current, 21), total: 21)
+                            .tint(Double(band.lowerBound)...Double(band.upperBound) ~= current ? PerformanceDesign.recoveryHigh : PerformanceDesign.effort)
+                    }
+                    let recoveryText = "\(Int(recovery.rounded())) %"
+                    Text("Suggested for a recovery of \(recoveryText). A NROOP guide, not WHOOP's Strain Coach.")
+                        .font(StrandFont.footnote).foregroundStyle(StrandPalette.textSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+        }
     }
 
     private func trendLink(_ key: String) -> some View {
@@ -304,59 +1044,363 @@ struct PerformanceExperienceView: View {
         }.buttonStyle(.plain)
     }
 
+    private struct SleepEditSelection: Identifiable {
+        let session: CachedSleepSession
+        var id: Int { session.startTs }
+    }
+
     @ViewBuilder private func sleepDetail(_ snapshot: PerformanceSnapshot) -> some View {
         if let night = snapshot.night {
-            Text("My night").font(StrandFont.title2).padding(.top, NoopMetrics.space2)
+            HStack {
+                Text(day == today ? String(localized: "Last night’s sleep") : String(localized: "My night"))
+                    .font(StrandFont.title2)
+                Spacer()
+                if let target = night.editTarget {
+                    Button { editingSleep = SleepEditSelection(session: target) } label: {
+                        Label("Edit sleep times", systemImage: "pencil")
+                    }
+                    .font(StrandFont.subhead)
+                    .foregroundStyle(PerformanceDesign.sleep)
+                }
+            }
             PerformancePanel {
                 VStack(alignment: .leading, spacing: NoopMetrics.space3) {
-                    HStack { Text("Asleep time").font(StrandFont.subhead); Spacer(); Text(PerformanceFormat.duration(night.stages.asleep)).font(StrandFont.title2) }
-                    Text("\(PerformanceFormat.clock(night.session.effectiveStartTs)) – \(PerformanceFormat.clock(night.session.endTs))")
-                        .font(StrandFont.caption).foregroundStyle(StrandPalette.textSecondary)
-                    if let segments = night.realSegments, !segments.isEmpty {
-                        Hypnogram(intervals: segments, height: PerformanceDesign.stageChartHeight,
-                                  showsHover: false, nightStart: Date(timeIntervalSince1970: TimeInterval(night.session.effectiveStartTs)), showsTimeAxis: true)
-                    } else {
-                        Text("Stage totals only; no recorded timeline is available.").font(StrandFont.footnote).foregroundStyle(StrandPalette.textSecondary)
+                    Text("\(night.onsetText) – \(night.wakeText)").font(StrandFont.subhead)
+                    if night.session.userEdited && night.session.stagesJSON == nil {
+                        Text("Manual entry").font(StrandFont.footnote)
                     }
-                    HStack { stage("Deep", night.stages.deep); Spacer(); stage("REM", night.stages.rem); Spacer(); stage("Light", night.stages.light) }
+                    SleepStageTimeline(night: night, intervals: night.realSegments ?? [],
+                                       heartRate: nightHeartRate, days: repo.days)
+                }
+            }
+            .task(id: "\(repo.deviceId)|\(night.session.effectiveStartTs)-\(night.session.endTs)-\(repo.refreshSeq)") {
+                nightHeartRate = []
+                let readings = await repo.hrBuckets(from: night.session.effectiveStartTs,
+                                                     to: night.session.endTs, bucketSeconds: 60)
+                if !Task.isCancelled { nightHeartRate = readings }
+            }
+            .sheet(item: $editingSleep) { selection in
+                let target = selection.session
+                SleepTimeEditor(bedTs: target.effectiveStartTs, wakeTs: target.endTs,
+                                coverage: min(target.startTs, target.effectiveStartTs)...target.endTs,
+                                onSave: { start, end in
+                                    await repo.editSleepTimes(detectedStartTs: target.startTs, oldEndTs: target.endTs,
+                                                              storedStagesJSON: target.stagesJSON, newStartTs: start, newEndTs: end)
+                                    let age = max(0, Int(Date().timeIntervalSince1970) - min(end, target.endTs)) / 86_400
+                                    await intelligence.analyzeRecent(maxDays: max(21, age + 2))
+                                    await repo.refresh()
+                                })
+            }
+            ForEach(snapshot.sleepSessions.filter { !night.mainGroupStarts.contains($0.startTs) },
+                    id: \.startTs) { nap in
+                PerformancePanel { napMeasure(nap) }
+            }
+        }
+    }
+
+    /// NROOP night stress estimate from the night HR already loaded for the sleep chart (no extra read).
+    @ViewBuilder private var nightStress: some View {
+        if let result = NightStressEstimate.compute(nightHeartRate) {
+            PerformancePanel {
+                VStack(alignment: .leading, spacing: NoopMetrics.space3) {
+                    Label("Sleep stress", systemImage: "waveform.path.ecg").font(StrandFont.headline)
+                    Chart(result.points, id: \.ts) { point in
+                        LineMark(x: .value("Time", Date(timeIntervalSince1970: TimeInterval(point.ts))),
+                                 y: .value("Stress", point.level))
+                        .interpolationMethod(.monotone)
+                        .foregroundStyle(StressRamp.calm)
+                        .lineStyle(StrokeStyle(lineWidth: PerformanceDesign.chartStroke))
+                    }
+                    .chartYScale(domain: 0...3)
+                    .chartYAxis { AxisMarks(position: .leading, values: [0.0, 1.0, 2.0, 3.0]) }
+                    .frame(height: PerformanceDesign.compactChartHeight)
+                    HStack {
+                        stressBandDuration(String(localized: "High stress level"), minutes: result.highMinutes, color: StressRamp.color(2.5))
+                        stressBandDuration(String(localized: "Medium stress level"), minutes: result.mediumMinutes, color: StressRamp.color(1.5))
+                        stressBandDuration(String(localized: "Low stress level"), minutes: result.lowMinutes, color: StressRamp.color(0.5))
+                    }
+                    let floorText = "\(Int(result.floorBpm.rounded())) bpm"
+                    Text("NROOP estimate: how far your heart rate rises above its calmest level of the night (\(floorText)). Not WHOOP's Sleep Stress score.")
+                        .font(StrandFont.footnote).foregroundStyle(StrandPalette.textSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
             }
         }
     }
 
-    private func stage(_ name: LocalizedStringKey, _ minutes: Double) -> some View {
-        VStack(alignment: .leading, spacing: NoopMetrics.space1) { Text(name).font(StrandFont.footnote).foregroundStyle(StrandPalette.textSecondary); Text(PerformanceFormat.duration(minutes)).font(StrandFont.headline) }
+    private func stressBandDuration(_ title: String, minutes: Int, color: Color) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            HStack(spacing: 4) { Circle().fill(color).frame(width: 8, height: 8); Text(title).font(StrandFont.footnote) }
+            Text(PerformanceFormat.duration(Double(minutes))).font(StrandFont.subhead).monospacedDigit()
+        }.frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    @ViewBuilder private func sleepWeek(_ snapshot: PerformanceSnapshot) -> some View {
+        let previous = snapshot.sleepWeek.dropLast().last.map { Repository.localDayKey($0.date) }
+        let recentEffort = snapshot.series["strain"]?.first { $0.day == previous }?.value
+        PerformancePanel {
+            HoursVsNeededCard(slept: snapshot.value("sleep_total_min"), needed: snapshot.value("sleep_need_min"),
+                              debt: snapshot.value("sleep_debt_min"),
+                              recentEffort: recentEffort.map { PerformanceFormat.effort($0) })
+        }
+        PerformancePanel {
+            ConsistencyCard(week: snapshot.sleepWeek, score: snapshot.value("sleep_consistency"))
+        }
+        if !snapshot.sleepWeek.isEmpty {
+            PerformancePanel {
+                VStack(alignment: .leading, spacing: NoopMetrics.space3) {
+                    Text("Weekly sleep performance").font(StrandFont.headline)
+                    HStack(alignment: .bottom, spacing: NoopMetrics.space1) {
+                        ForEach(snapshot.sleepWeek) { night in
+                            let key = Repository.localDayKey(night.date)
+                            let score = snapshot.series["sleep_performance"]?.first { $0.day == key }?.value
+                            sleepPerformanceBar(night.date, score: score)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private func sleepPerformanceBar(_ date: Date, score: Double?) -> some View {
+        let weekday = date.formatted(.dateTime.weekday(.abbreviated).locale(AppLanguage.activeLocale))
+        let value = score.map { ($0 / 100).formatted(.percent.precision(.fractionLength(0))) }
+        return VStack(spacing: NoopMetrics.space1) {
+            Text(value ?? "—").font(StrandFont.footnote).lineLimit(1).minimumScaleFactor(0.7)
+            GeometryReader { geometry in
+                if let score {
+                    Capsule().fill(StrandPalette.surfaceInset)
+                        .overlay(alignment: .bottom) {
+                            Capsule().fill(PerformanceDesign.sleep)
+                                .frame(height: geometry.size.height * CGFloat(min(100, max(0, score))) / 100)
+                        }
+                }
+            }
+            .frame(width: NoopMetrics.space3, height: PerformanceDesign.stageChartHeight)
+            Text(weekday).font(StrandFont.footnote).lineLimit(1)
+        }
+        .frame(maxWidth: .infinity)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(date.formatted(.dateTime.weekday(.wide).locale(AppLanguage.activeLocale)))
+        .accessibilityValue(value ?? String(localized: "No measurement"))
+    }
+
+    private func napMeasure(_ nap: CachedSleepSession) -> some View {
+        let window = "\(PerformanceFormat.clock(nap.effectiveStartTs)) – \(PerformanceFormat.clock(nap.endTs))"
+        let caption = nap.userEdited && nap.stagesJSON == nil
+            ? [window, String(localized: "Manual entry")].joined(separator: " · ") : window
+        return PerformanceMeasureRow(title: String(localized: "Nap"),
+                                     value: PerformanceFormat.duration(SleepView.creditedMinutes(nap)),
+                                     caption: caption, symbol: "powersleep")
+    }
+
+    private struct TimelineSpan: Identifiable {
+        enum Kind { case sleep, workout, detected }
+        let start: Date
+        let end: Date
+        let kind: Kind
+        let symbol: String
+        var id: String { "\(kind)-\(start.timeIntervalSince1970)" }
+    }
+
+    private struct TimelinePoint: Identifiable {
+        let date: Date
+        let bpm: Double
+        var id: Date { date }
+    }
+
+    /// Sleep and recorded workouts of the day, plus NROOP-detected bouts: at least 10 minutes (two
+    /// consecutive 5-minute buckets) at or above the Zone 2 floor that overlap nothing already recorded.
+    private func timelineSpans(_ snapshot: PerformanceSnapshot) -> [TimelineSpan] {
+        var spans: [TimelineSpan] = []
+        if let night = snapshot.night {
+            spans.append(TimelineSpan(start: Date(timeIntervalSince1970: TimeInterval(night.session.effectiveStartTs)),
+                                      end: Date(timeIntervalSince1970: TimeInterval(night.session.endTs)), kind: .sleep, symbol: "moon.fill"))
+        }
+        for nap in snapshot.sleepSessions where !(snapshot.night?.mainGroupStarts.contains(nap.startTs) ?? false) {
+            spans.append(TimelineSpan(start: Date(timeIntervalSince1970: TimeInterval(nap.effectiveStartTs)),
+                                      end: Date(timeIntervalSince1970: TimeInterval(nap.endTs)), kind: .sleep, symbol: "moon.fill"))
+        }
+        for row in snapshot.workouts {
+            spans.append(TimelineSpan(start: Date(timeIntervalSince1970: TimeInterval(row.startTs)),
+                                      end: Date(timeIntervalSince1970: TimeInterval(row.endTs)), kind: .workout, symbol: sportSymbol(row.sport)))
+        }
+        guard let zone2 = profile.hrZoneSet.zones.first(where: { $0.number == 2 })?.lower, zone2 > 0 else { return spans }
+        let recorded = spans
+        var runStart: Int?
+        var last = 0
+        var count = 0
+        func close() {
+            if let first = runStart, count >= 2 {
+                let span = TimelineSpan(start: Date(timeIntervalSince1970: TimeInterval(first)),
+                                        end: Date(timeIntervalSince1970: TimeInterval(last + 300)), kind: .detected, symbol: "figure.walk")
+                if !recorded.contains(where: { $0.start < span.end && span.start < $0.end }) { spans.append(span) }
+            }
+            runStart = nil; count = 0
+        }
+        for bucket in dayHeartRate.sorted(by: { $0.ts < $1.ts }) {
+            let elevated = bucket.bpm.isFinite && bucket.bpm >= zone2
+            if elevated, runStart != nil, bucket.ts - last <= 300 { last = bucket.ts; count += 1 }
+            else if elevated { close(); runStart = bucket.ts; last = bucket.ts; count = 1 }
+            else { close() }
+        }
+        close()
+        return spans
+    }
+
+    @ViewBuilder private func dayTimeline(_ snapshot: PerformanceSnapshot) -> some View {
+        let points = dayHeartRate.filter { $0.bpm.isFinite && $0.bpm > 0 }
+            .map { TimelinePoint(date: Date(timeIntervalSince1970: TimeInterval($0.ts)), bpm: $0.bpm) }
+        if points.count >= 6, let first = points.first?.date, let lastDate = points.last?.date {
+            let spans = timelineSpans(snapshot).filter { $0.end > first && $0.start < lastDate }
+            let top = (points.map(\.bpm).max() ?? 150) + 18
+            let floorY = max(0, (points.map(\.bpm).min() ?? 40) - 10)
+            let detected = spans.filter { $0.kind == .detected }
+            PerformancePanel {
+                VStack(alignment: .leading, spacing: NoopMetrics.space2) {
+                    HStack {
+                        Text("My day").font(StrandFont.headline)
+                        Spacer()
+                        Text("Heart rate").font(StrandFont.footnote).foregroundStyle(StrandPalette.textSecondary)
+                    }
+                    Chart {
+                        ForEach(spans) { span in
+                            RectangleMark(xStart: .value("Start", max(span.start, first)), xEnd: .value("End", min(span.end, lastDate)),
+                                          yStart: .value("Low", floorY), yEnd: .value("High", top))
+                                .foregroundStyle(spanColor(span.kind).opacity(span.kind == .detected ? 0.10 : 0.16))
+                            PointMark(x: .value("Middle", Date(timeIntervalSince1970: (max(span.start, first).timeIntervalSince1970
+                                                                                       + min(span.end, lastDate).timeIntervalSince1970) / 2)),
+                                      y: .value("Icon", top))
+                                .symbolSize(0)
+                                .annotation(position: .overlay) {
+                                    Image(systemName: span.symbol).font(.system(size: 12, weight: .semibold))
+                                        .foregroundStyle(spanColor(span.kind))
+                                }
+                        }
+                        ForEach(points) { point in
+                            LineMark(x: .value("Time", point.date), y: .value("BPM", point.bpm))
+                                .foregroundStyle(PerformanceDesign.recoveryHigh.opacity(0.85))
+                                .lineStyle(StrokeStyle(lineWidth: 1.4))
+                                .interpolationMethod(.monotone)
+                        }
+                    }
+                    .chartYScale(domain: floorY...(top + 8))
+                    .chartXAxis { AxisMarks(values: .stride(by: .hour, count: 6)) { _ in
+                        AxisGridLine(); AxisValueLabel(format: .dateTime.hour()) } }
+                    .frame(height: PerformanceDesign.compactChartHeight + 20)
+                    ForEach(detected) { span in
+                        let window = "\(PerformanceFormat.clock(Int(span.start.timeIntervalSince1970))) – \(PerformanceFormat.clock(Int(span.end.timeIntervalSince1970)))"
+                        Label(String(localized: "Possible activity \(window) · NROOP detection"), systemImage: "figure.walk")
+                            .font(StrandFont.footnote).foregroundStyle(StrandPalette.textSecondary)
+                    }
+                    if !detected.isEmpty {
+                        Button { showManualWorkout = true } label: {
+                            Label("Add activity", systemImage: "plus").font(StrandFont.subhead)
+                        }
+                    }
+                    Text("Bands show your recorded sleep and activities. Yellow periods are sustained heart rate at Zone 2 or above for 10 minutes or more, detected by NROOP from your strap.")
+                        .font(StrandFont.overline).foregroundStyle(StrandPalette.textTertiary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+        }
+    }
+
+    private func spanColor(_ kind: TimelineSpan.Kind) -> Color {
+        switch kind {
+        case .sleep: return PerformanceActivityStyle.sleepPill
+        case .workout: return PerformanceActivityStyle.workoutPill
+        case .detected: return PerformanceDesign.recoveryMedium
+        }
+    }
+
+    /// "7:48" style duration for the activity pill (real minutes only).
+    static func clockDuration(_ minutes: Double?) -> String {
+        guard let minutes, minutes.isFinite, minutes > 0 else { return "—" }
+        let total = Int(minutes.rounded())
+        return String(format: "%d:%02d", total / 60, total % 60)
+    }
+
+    private func creditedSleep(_ night: Night) -> Double? {
+        let minutes = SleepView.creditedMinutes(night.session)
+        return minutes > 0 ? minutes : nil
     }
 
     private func activityList(_ snapshot: PerformanceSnapshot, includeSleep: Bool) -> some View {
-        PerformancePanel {
-            VStack(alignment: .leading, spacing: NoopMetrics.space3) {
-                Text("Activities for this day").font(StrandFont.overline)
-                if includeSleep, let night = snapshot.night {
-                    NavigationLink(value: TabRoute.performance(PerformanceContext(day: day, domain: .sleep)!)) {
-                        PerformanceMeasureRow(title: String(localized: "Sleep"), value: PerformanceFormat.duration(night.stages.asleep),
-                                              caption: "\(PerformanceFormat.clock(night.session.effectiveStartTs)) – \(PerformanceFormat.clock(night.session.endTs))", symbol: "moon")
-                    }.buttonStyle(.plain)
-                }
-                ForEach(Array(snapshot.workouts.enumerated()), id: \.offset) { _, row in
-                    NavigationLink(value: TabRoute.performanceWorkout(start: row.startTs, source: row.source)) {
-                        PerformanceMeasureRow(title: row.sport, value: PerformanceFormat.effort(row.strain),
-                                              caption: "\(PerformanceFormat.clock(row.startTs)) – \(PerformanceFormat.clock(row.endTs))", symbol: "figure.run")
-                    }.buttonStyle(.plain)
-                }
-                if snapshot.workouts.isEmpty, !(includeSleep && snapshot.night != nil) {
-                    Text("No recorded activity for this day.").font(StrandFont.subhead).foregroundStyle(StrandPalette.textSecondary)
+        let mainStarts = snapshot.night?.mainGroupStarts ?? []
+        let naps = includeSleep ? snapshot.sleepSessions.filter { !mainStarts.contains($0.startTs) } : []
+        return VStack(alignment: .leading, spacing: NoopMetrics.space2) {
+            HStack {
+                Text(day == today ? String(localized: "Today’s Activities") : String(localized: "Activities"))
+                    .font(StrandFont.overline).tracking(PerformanceDesign.labelTracking).textCase(.uppercase)
+                    .foregroundStyle(StrandPalette.textSecondary)
+                Spacer()
+                NavigationLink(value: TabRoute.workouts) {
+                    Image(systemName: "arrow.up.left.and.arrow.down.right").font(StrandFont.footnote)
+                        .foregroundStyle(StrandPalette.textSecondary)
+                        .frame(width: PerformanceDesign.controlDiameter, height: 28)
+                }.accessibilityLabel("All activities")
+            }
+            if includeSleep, let night = snapshot.night {
+                NavigationLink(value: TabRoute.performance(PerformanceContext(day: day, domain: .sleep)!)) {
+                    PerformanceActivityCard(badge: Self.clockDuration(night.stages.asleep > 0
+                                                ? night.stages.asleep : creditedSleep(night)),
+                                            badgeColor: PerformanceActivityStyle.sleepPill, symbol: "moon.fill",
+                                            title: String(localized: "Sleep"),
+                                            start: night.onsetText, end: night.wakeText)
+                }.buttonStyle(.plain)
+            }
+            ForEach(naps, id: \.startTs) { nap in
+                NavigationLink(value: TabRoute.performance(PerformanceContext(day: day, domain: .sleep)!)) {
+                    PerformanceActivityCard(badge: Self.clockDuration(SleepView.creditedMinutes(nap)),
+                                            badgeColor: PerformanceActivityStyle.sleepPill, symbol: "powersleep",
+                                            title: String(localized: "Nap"),
+                                            start: PerformanceFormat.clock(nap.effectiveStartTs), end: PerformanceFormat.clock(nap.endTs))
+                }.buttonStyle(.plain)
+            }
+            ForEach(Array(snapshot.workouts.enumerated()), id: \.offset) { _, row in
+                NavigationLink(value: TabRoute.performanceWorkout(start: row.startTs, source: row.source)) {
+                    PerformanceActivityCard(badge: PerformanceFormat.effort(row.strain),
+                                            badgeColor: PerformanceActivityStyle.workoutPill, symbol: sportSymbol(row.sport),
+                                            title: WorkoutSource.displaySport(row.sport),
+                                            start: PerformanceFormat.clock(row.startTs), end: PerformanceFormat.clock(row.endTs))
+                }.buttonStyle(.plain)
+            }
+            if snapshot.workouts.isEmpty, naps.isEmpty, !(includeSleep && snapshot.night != nil) {
+                Text("No recorded activity for this day.").font(StrandFont.subhead).foregroundStyle(StrandPalette.textSecondary)
+            }
+            if includeSleep && day == today {
+                ViewThatFits(in: .horizontal) {
+                    HStack(spacing: NoopMetrics.space3) { addActivityButton; WorkoutStartControl(compact: true) }
+                    VStack(alignment: .leading, spacing: NoopMetrics.space3) { addActivityButton; WorkoutStartControl(compact: true) }
                 }
             }
         }
     }
 
+    private var addActivityButton: some View {
+        Button { showManualWorkout = true } label: {
+            HStack(spacing: NoopMetrics.space1) {
+                Image(systemName: "plus")
+                Text("Add activity").font(StrandFont.overline).textCase(.uppercase).lineLimit(1).minimumScaleFactor(0.7)
+            }
+            .foregroundStyle(StrandPalette.textPrimary)
+            .frame(maxWidth: .infinity, minHeight: 44)
+            .background(PerformanceActivityStyle.row, in: RoundedRectangle(cornerRadius: 10))
+        }.buttonStyle(.plain)
+    }
+
     private func healthContents(_ snapshot: PerformanceSnapshot) -> some View {
-        VStack(alignment: .leading, spacing: NoopMetrics.space4) {
-            Text("Your personal reference").font(StrandFont.title1)
+        let oxygen = PerformanceHomeData.importedOxygen(snapshot.series["spo2_imported"] ?? [], on: day)
+        let availableCount = snapshot.availableVitals.count + (oxygen == nil ? 0 : 1)
+        return VStack(alignment: .leading, spacing: NoopMetrics.space4) {
+            Text("Health").font(StrandFont.title1)
+            ageSummary(snapshot)
+            stressMonitor(snapshot)
+            Text("Health Monitor").font(StrandFont.headline)
             PerformancePanel {
                 VStack(alignment: .leading, spacing: NoopMetrics.space2) {
-                    Text("\(snapshot.availableVitals.count) available measurements").font(StrandFont.headline)
+                    Text("\(availableCount) available measurements").font(StrandFont.headline)
                     Text(snapshot.personalVitals.isEmpty ? String(localized: "Learning your personal reference") : String(localized: "\(snapshot.inPersonalRange) in your personal range"))
                         .font(StrandFont.subhead).foregroundStyle(StrandPalette.textSecondary)
                 }
@@ -366,18 +1410,156 @@ struct PerformanceExperienceView: View {
                     ForEach(snapshot.vitals) { vital in
                         NavigationLink(value: TabRoute.performance(PerformanceContext(day: day, domain: .trend, metric: vital.key)!)) {
                             PerformanceMeasureRow(title: vital.label,
-                                                  value: vital.day == day ? PerformanceFormat.value(PerformanceContext.canonicalMetric(vital.key), vital.value) : "—",
-                                                  caption: vital.day != day || vital.value == nil ? String(localized: "Measurement unavailable") : (vital.banding.basis == .personal ? String(localized: "Compared with your personal reference") : String(localized: "Personal reference not established")),
-                                                  symbol: PerformanceFormat.metric(vital.key)?.icon ?? "heart")
+                                                  value: vital.day == day ? (vital.formattedValue ?? "—") : "—",
+                                                  caption: healthVitalCaption(vital, snapshot: snapshot),
+                                                  symbol: vital.banding.basis == .personal && vital.day == day ? (vital.banding.band == .inRange ? "checkmark.circle.fill" : "exclamationmark.circle.fill") : "circle.dashed")
                         }.buttonStyle(.plain)
                         Divider()
                     }
+                    NavigationLink(value: TabRoute.health) {
+                        PerformanceMeasureRow(title: String(localized: "Blood O₂"),
+                            value: PerformanceFormat.value("spo2", oxygen?.value),
+                            caption: oxygen == nil ? String(localized: "Not available via Bluetooth") :
+                                [String(localized: "Imported"), String(localized: "Not available via Bluetooth")].joined(separator: " · "),
+                            symbol: "drop")
+                    }.buttonStyle(.plain)
                 }
             }
             PerformanceCoachLink(context: context)
             NavigationLink { LongitudinalTrendsView(repo: repo).modifier(PerformanceLegacyContextReset()) } label: { Label("Long-term trends", systemImage: "chart.line.uptrend.xyaxis").font(StrandFont.subhead) }
             NavigationLink(value: TabRoute.health) { Label("All health tools", systemImage: "heart.text.square").font(StrandFont.subhead) }
         }
+    }
+
+    private func healthVitalCaption(_ vital: BodyVitalReading, snapshot: PerformanceSnapshot) -> String {
+        guard vital.day == day, vital.value != nil else { return String(localized: "Measurement unavailable") }
+        if vital.key == "resp", vital.source == .noopComputed || snapshot.source("resp_rate")?.hasSuffix("-noop") == true {
+            return [String(localized: "Estimate"), vital.stateCaption].joined(separator: " · ")
+        }
+        return vital.stateCaption
+    }
+
+    private func ageSummary(_ snapshot: PerformanceSnapshot) -> some View {
+        PerformancePanel {
+            VStack(alignment: .leading, spacing: NoopMetrics.space3) {
+                Text("NROOP Age").font(StrandFont.headline)
+                ageSphere(agePoint(snapshot, key: "fitness_age")?.value)
+                Text("On-device approximations, not WHOOP scores. Pace of Aging is not available.")
+                    .font(StrandFont.footnote).foregroundStyle(StrandPalette.textSecondary)
+                ForEach(["fitness_age", "body_age", "vitality"], id: \.self) { key in
+                    let point = agePoint(snapshot, key: key)
+                    NavigationLink(value: TabRoute.performance(PerformanceContext(day: day, domain: .trend, metric: key)!)) {
+                        PerformanceMeasureRow(title: PerformanceFormat.title(key), value: PerformanceFormat.value(key, point?.value),
+                                              caption: point.map { PerformanceFormat.date($0.day) } ?? String(localized: "Measurement unavailable"),
+                                              symbol: PerformanceFormat.metric(key)?.icon ?? "heart")
+                    }.buttonStyle(.plain)
+                }
+            }
+        }
+    }
+
+    /// Healthspan-like layout only: a glowing sphere around the stored NROOP fitness age, and its
+    /// difference with the age in your profile. Nothing is shown when either value is missing.
+    @ViewBuilder private func ageSphere(_ fitnessAge: Double?) -> some View {
+        if let fitnessAge, fitnessAge.isFinite, fitnessAge > 0 {
+            VStack(spacing: NoopMetrics.space2) {
+                ZStack {
+                    Circle().fill(RadialGradient(colors: [PerformanceDesign.recoveryHigh.opacity(0.55), PerformanceDesign.recoveryHigh.opacity(0.08)],
+                                                 center: .center, startRadius: 4, endRadius: 80))
+                    Circle().strokeBorder(PerformanceDesign.recoveryHigh.opacity(0.6), lineWidth: 1.5)
+                    VStack(spacing: 0) {
+                        Text(verbatim: String(format: "%.1f", fitnessAge)).font(StrandFont.display(44)).monospacedDigit()
+                        Text("NROOP estimate").font(StrandFont.overline).foregroundStyle(StrandPalette.textSecondary)
+                    }
+                }
+                .frame(width: 150, height: 150)
+                if profile.age > 0 {
+                    let diff = Double(profile.age) - fitnessAge
+                    let diffText = String(format: "%.1f", abs(diff))
+                    Text(diff >= 0 ? String(localized: "\(diffText) years below your age (\(profile.age))")
+                                   : String(localized: "\(diffText) years above your age (\(profile.age))"))
+                        .font(StrandFont.subhead).foregroundStyle(diff >= 0 ? PerformanceDesign.recoveryHigh : PerformanceDesign.recoveryMedium)
+                }
+            }
+            .frame(maxWidth: .infinity)
+        }
+    }
+
+    private func agePoint(_ snapshot: PerformanceSnapshot, key: String) -> ResolvedMetricPoint? {
+        snapshot.series[key]?.last(where: { $0.day <= day })
+    }
+
+    private func homeMeasurements(_ snapshot: PerformanceSnapshot) -> some View {
+        let temperature = UnitPrefs.resolveTemperature(system: UnitSystem(rawValue: unitPreference) ?? .metric,
+                                                       override: temperaturePreference)
+        let skin = snapshot.value("skin_temp_delta")
+        let skinValue = skin.map { SkinTempDisplay.formatReading(.init(value: $0, kind: .deviation),
+                                                                   fahrenheit: temperature == .fahrenheit) } ?? "—"
+        // Apple Health respiratory samples are not necessarily nocturnal.
+        let respiratorySource = snapshot.source("resp_rate")
+        let respiratory = respiratorySource == Repository.appleHealthSource ? nil : snapshot.value("resp_rate")
+        let respiratoryNote = respiratorySource?.hasSuffix("-noop") == true
+            ? [String(localized: "Sleep"), String(localized: "Estimate")].joined(separator: " · ")
+            : String(localized: "Sleep")
+        let steps = stepsPoint(snapshot)
+        let energy = snapshot.value("active_kcal").flatMap { $0 >= 0 ? $0 : nil }
+        let vo2 = vo2Point(snapshot)
+        let vo2Key = vo2?.sourceKey == "vo2max_est" ? "vo2max_est" : "vo2max"
+        return VStack(alignment: .leading, spacing: NoopMetrics.space3) {
+            Text("Key Metrics").font(StrandFont.headline)
+            PerformancePanel {
+                VStack(spacing: 0) {
+                    homeMeasurementRow(title: String(localized: "Skin Temperature"), value: skinValue,
+                        caption: measurementCaption(skin, note: String(localized: "vs baseline")), symbol: "thermometer",
+                        route: .performance(PerformanceContext(day: day, domain: .health)!))
+                    Divider()
+                    homeMeasurementRow(title: String(localized: "Respiratory Rate"),
+                        value: PerformanceFormat.value("resp_rate", respiratory),
+                        caption: measurementCaption(respiratory, note: respiratoryNote), symbol: "lungs",
+                        route: .performance(PerformanceContext(day: day, domain: .trend, metric: "resp_rate")!))
+                    Divider()
+                    homeMeasurementRow(title: String(localized: "VO₂ Max"), value: vo2Value(vo2?.value),
+                        caption: measurementCaption(vo2?.value, note: vo2Key == "vo2max_est" ? String(localized: "Estimate") : nil,
+                                                    measuredDay: vo2?.day), symbol: "figure.run", route: .health)
+                    Divider()
+                    homeMeasurementRow(title: String(localized: "Steps"), value: PerformanceFormat.value("steps", steps?.value),
+                        caption: measurementCaption(steps?.value, note: steps?.sourceKey == "steps_est" ? String(localized: "Estimate") : nil),
+                        symbol: "figure.walk", route: .metricSourced(key: "steps", source: MetricCatalog.combinedStepsSource))
+                    Divider()
+                    homeMeasurementRow(title: String(localized: "Active Energy"), value: PerformanceFormat.value("active_kcal", energy),
+                        caption: measurementCaption(energy, note: String(localized: "Estimate")), symbol: "flame",
+                        route: .performance(PerformanceContext(day: day, domain: .trend, metric: "active_kcal")!))
+                }
+            }
+        }
+    }
+
+    private func measurementCaption(_ value: Double?, note: String? = nil, measuredDay: String? = nil) -> String {
+        guard value != nil else { return String(localized: "Measurement unavailable") }
+        return [note, PerformanceFormat.date(measuredDay ?? day)].compactMap { $0 }.joined(separator: " · ")
+    }
+
+    private func vo2Point(_ snapshot: PerformanceSnapshot) -> ResolvedMetricPoint? {
+        let points = PerformanceHomeData.merged(snapshot.series["vo2max"] ?? [],
+                                                fallback: snapshot.series["vo2max_est"] ?? [],
+                                                from: "0000-01-01", through: day)
+        return PerformanceHomeData.latest(points.filter { $0.value > 0 }, through: day)
+    }
+
+    private func stepsPoint(_ snapshot: PerformanceSnapshot) -> ResolvedMetricPoint? {
+        PerformanceHomeData.dailySteps(measured: snapshot.series["steps"] ?? [],
+                                       estimated: snapshot.series["steps_est"] ?? [], on: day)
+    }
+
+    private func vo2Value(_ value: Double?) -> String {
+        guard value != nil else { return "—" }
+        return PerformanceFormat.number(value, decimals: 1) + " mL/kg/min"
+    }
+
+    private func homeMeasurementRow(title: String, value: String, caption: String, symbol: String, route: TabRoute) -> some View {
+        NavigationLink(value: route) {
+            PerformanceMeasureRow(title: title, value: value, caption: caption, symbol: symbol)
+        }.buttonStyle(.plain)
     }
 
     private func activitiesContents(_ snapshot: PerformanceSnapshot) -> some View {

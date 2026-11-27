@@ -13,18 +13,80 @@ import WhoopStore
 // parity contract). The tile presentation (value / caption / accent / sparkline) is a verbatim lift of the
 // `NightDetailCard` "Consistency" tile, so the hosted card reads byte-identically to the Sleep-tab tile.
 
+struct SleepScheduleDay: Identifiable {
+    let date: Date
+    let onset: Int?
+    let wake: Int?
+    var id: Date { date }
+}
+
 /// The "Consistency" card. Renders the wearer's latest sleep-consistency percentage against their personal
 /// typical from the shared [SleepModel], as a single full-width StatTile with its sparkline and vs-typical
 /// caption — the same presentation the Night-detail grid uses for this metric.
 struct ConsistencyCard: View {
-    let model: SleepModel
+    private let model: SleepModel?
+    private var week: [SleepScheduleDay] = []
+    private var score: Double?
+
+    init(model: SleepModel) { self.model = model }
+
+    init(week: [SleepScheduleDay], score: Double?) {
+        model = nil
+        self.week = week
+        self.score = score
+    }
 
     var body: some View {
+        if let model {
+            summary(model)
+        } else {
+            schedule
+        }
+    }
+
+    private var schedule: some View {
+        Grid(alignment: .leading, horizontalSpacing: NoopMetrics.space3, verticalSpacing: NoopMetrics.space2) {
+            GridRow {
+                HStack {
+                    Text("Consistency").font(StrandFont.headline)
+                    Spacer(minLength: 0)
+                    if let score {
+                        Text((score / 100).formatted(.percent.precision(.fractionLength(0))))
+                            .font(StrandFont.headline)
+                    }
+                }
+                .gridCellColumns(3)
+            }
+            GridRow {
+                Text("Day")
+                Text("Bedtime")
+                Text("Wake time")
+            }
+            .foregroundStyle(StrandPalette.textSecondary)
+            ForEach(week) { day in
+                GridRow {
+                    Text(day.date.formatted(.dateTime.weekday(.abbreviated).locale(AppLanguage.activeLocale)))
+                    Text(clock(day.onset))
+                    Text(clock(day.wake))
+                }
+                .monospacedDigit()
+            }
+        }
+        .font(StrandFont.footnote)
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func clock(_ timestamp: Int?) -> String {
+        guard let timestamp else { return "—" }
+        return AppClock.hourMinuteFormatter().string(from: Date(timeIntervalSince1970: TimeInterval(timestamp)))
+    }
+
+    private func summary(_ model: SleepModel) -> some View {
         // The metric (latest %, typical mean, history series) is computed ONCE in the model build and
         // read here — the same memoized result the Night-detail grid reads for its tile.
         let cons = model.consistency
 
-        VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+        return VStack(alignment: .leading, spacing: NoopMetrics.gap) {
             SectionHeader("Consistency", overline: "Sleep")
             // Verbatim of the NightDetailCard "Consistency" tile so the hosted value matches the Sleep-tab
             // tile exactly; stretched to the card's full width as a single-metric summary.

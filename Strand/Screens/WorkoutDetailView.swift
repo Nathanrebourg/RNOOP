@@ -3,6 +3,7 @@ import StrandDesign
 import StrandAnalytics
 import StrandImport
 import WhoopStore
+import WhoopProtocol
 import Foundation
 #if canImport(MapKit)
 import MapKit
@@ -29,6 +30,8 @@ import MapKit
 
 struct WorkoutDetailView: View {
     let row: WorkoutRow
+    var recordedSamples: [HRSample]? = nil
+    var onDone: (() -> Void)? = nil
 
     @EnvironmentObject private var repo: Repository
     @StateObject private var profile = ProfileStore()
@@ -52,6 +55,7 @@ struct WorkoutDetailView: View {
     @State private var zoneMinutes: [Double]? = nil
     /// True when the zones bar came from imported WHOOP percentages (vs derived from raw strap HR).
     @State private var zonesFromImport = false
+    @State private var dailyEffort: Double?
     @State private var loaded = false
     /// #516: computed from the recorded workout-end + post-workout HR window. nil when the workout was
     /// not intense enough or the strap did not record enough post-workout coverage.
@@ -70,6 +74,20 @@ struct WorkoutDetailView: View {
     private struct StepReadout { let count: Int; let fromStrap: Bool }
     @State private var steps: StepReadout?
 
+    private var effortTint: Color {
+        #if os(iOS)
+        if recordedSamples != nil { return PerformanceDesign.effort }
+        #endif
+        return StrandPalette.effortColor
+    }
+
+    private var workoutBackground: AnyView? {
+        #if os(iOS)
+        if recordedSamples != nil { return AnyView(PerformanceBackground()) }
+        #endif
+        return liquidScaffoldSky()
+    }
+
     var body: some View {
         ScreenScaffold(title: "\(WorkoutSource.displaySport(row.sport))",
                        subtitle: "\(dateLabel(row.startTs))",
@@ -82,21 +100,21 @@ struct WorkoutDetailView: View {
                        // and every other liquid screen. Fixed and full-bleed; it does not scroll. This
                        // screen is presented in a sheet wrapped in a NavigationStack by WorkoutsView, so it
                        // needs no extra macOS NavigationStack of its own.
-                       topBackground: liquidScaffoldSky()) {
+                       topBackground: workoutBackground) {
             headerCard
-            statStrip
-            routeCard
-            hrCurveCard
-            zonesCard
-            heartRateRecoveryCard
             if let strain = row.strain {
                 effortCard(strain: strain)
             }
+            statStrip
+            hrCurveCard
+            zonesCard
+            routeCard
+            heartRateRecoveryCard
         }
         .toolbar {
             // A Done affordance for the sheet on both platforms (iOS gets the grabber too).
             ToolbarItem(placement: .cancellationAction) {
-                Button("Done") { dismiss() }
+                Button("Done") { if let onDone { onDone() } else { dismiss() } }
             }
         }
         .task { await load() }
@@ -116,8 +134,21 @@ struct WorkoutDetailView: View {
 
         // HR curve over the exact session window — a finer bucket than the 24h chart so a short run
         // still reads as a curve, not a handful of points.
-        let buckets = await repo.workoutHrBuckets(from: row.startTs, to: row.endTs, source: row.source)
-        let points = buckets.map { TrendPoint(date: Date(timeIntervalSince1970: TimeInterval($0.ts)), value: $0.bpm) }
+        let points: [TrendPoint]
+        let zoneSet = profile.hrZoneSet
+        if let recordedSamples, !recordedSamples.isEmpty {
+            var previous: Int?
+            var segment = 0
+            points = recordedSamples.map { sample in
+                if let previous, sample.ts - previous > 10 { segment += 1 }
+                previous = sample.ts
+                return TrendPoint(date: Date(timeIntervalSince1970: TimeInterval(sample.ts)),
+                                  value: Double(sample.bpm), segment: String(segment))
+            }
+        } else {
+            let buckets = await repo.workoutHrBuckets(from: row.startTs, to: row.endTs, source: row.source)
+            points = buckets.map { TrendPoint(date: Date(timeIntervalSince1970: TimeInterval($0.ts)), value: $0.bpm) }
+        }
 
         // Zones: prefer the imported per-workout percentages (a WHOOP-computed split), and only fall
         // back to deriving zone-minutes from the strap's own raw HR when the row has none — so we
@@ -132,12 +163,27 @@ struct WorkoutDetailView: View {
             }
         }
         if minutes == nil {
-            minutes = await repo.workoutZoneMinutes(from: row.startTs, to: row.endTs, zoneSet: profile.hrZoneSet,
-                                                    source: row.source)
+            if let recordedSamples, !recordedSamples.isEmpty {
+                minutes = HRZones.timeInZone(recordedSamples, zoneSet: zoneSet).seconds.map { $0 / 60 }
+            } else {
+                minutes = await repo.workoutZoneMinutes(from: row.startTs, to: row.endTs, zoneSet: zoneSet,
+                                                        source: row.source)
+            }
         }
 
-        let hrr = await repo.workoutHeartRateRecovery(
+        await MainActor.run {
+            self.route = routePoints
+            self.hrPoints = points
+            self.zoneMinutes = minutes
+            self.zonesFromImport = fromImport
+            self.loaded = true
+        }
+
+        async let hrr = repo.workoutHeartRateRecovery(
             from: row.startTs, to: row.endTs, maxHR: Double(profile.hrMax), source: row.source)
+        let workoutDay = Repository.localDayKey(Date(timeIntervalSince1970: TimeInterval(row.startTs)))
+        async let resolvedEffort = repo.resolvedSeries(key: "strain", source: Repository.whoopSource,
+                                                       from: workoutDay, to: workoutDay)
 
         // Steps for an on-foot session (#398), computed at display time over the exact window so it
         // "fills in after sync": prefer the strap's own counter (MG/5.0) once it has offloaded the window,
@@ -157,14 +203,12 @@ struct WorkoutDetailView: View {
             }
         }
 
+        let effort = await resolvedEffort.points.first { $0.day == workoutDay }?.value
+        let recovery = await hrr
         await MainActor.run {
-            self.route = routePoints
-            self.hrPoints = points
-            self.zoneMinutes = minutes
-            self.zonesFromImport = fromImport
-            self.heartRateRecovery = hrr
+            self.dailyEffort = PerformanceContext.finite(effort)
+            self.heartRateRecovery = recovery
             self.steps = stepReadout
-            self.loaded = true
         }
     }
 
@@ -214,13 +258,13 @@ struct WorkoutDetailView: View {
     // MARK: - Header
 
     private var headerCard: some View {
-        NoopCard(tint: StrandPalette.effortColor) {
+        NoopCard(tint: effortTint) {
             HStack(alignment: .center, spacing: 14) {
                 Image(systemName: sportSymbol(row.sport))
                     .font(.system(size: 22, weight: .semibold))
-                    .foregroundStyle(StrandPalette.effortColor)
+                    .foregroundStyle(effortTint)
                     .frame(width: 44, height: 44)
-                    .background(StrandPalette.effortColor.opacity(0.14),
+                    .background(effortTint.opacity(0.14),
                                 in: RoundedRectangle(cornerRadius: 12, style: .continuous))
                     .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 3) {
@@ -246,7 +290,7 @@ struct WorkoutDetailView: View {
             StatTile(label: "Duration",
                      value: durationLabel(row.durationS),
                      caption: String(localized: "active"),
-                     accent: StrandPalette.effortColor)
+                     accent: effortTint)
             StatTile(label: "Avg HR",
                      value: row.avgHr.map { "\($0)" } ?? "–",
                      caption: row.avgHr != nil ? "bpm" : nil,
@@ -267,9 +311,9 @@ struct WorkoutDetailView: View {
             }
             // Steps for an on-foot sport (#398). Shown for the on-foot set even before the value lands, so
             // the tile doesn't pop in; "–" until a source has data. Caption is honest about the source.
-            if WorkoutCatalog.isOnFoot(row.sport) {
+            if row.steps != nil || WorkoutCatalog.isOnFoot(row.sport) {
                 StatTile(label: "Steps",
-                         value: steps.map { grouped(Double($0.count)) } ?? "–",
+                         value: steps.map { grouped(Double($0.count)) } ?? row.steps.map { grouped(Double($0)) } ?? "–",
                          caption: steps.map { $0.fromStrap ? String(localized: "strap")
                                                           : String(localized: "phone") },
                          accent: steps != nil ? StrandPalette.metricCyan : StrandPalette.textTertiary)
@@ -287,7 +331,7 @@ struct WorkoutDetailView: View {
             VStack(alignment: .leading, spacing: NoopMetrics.gap) {
                 SectionHeader("Route", overline: routeOriginLabel,
                               trailing: distanceLabel(row.distanceM))
-                NoopCard(padding: 0, tint: StrandPalette.effortColor) {
+                NoopCard(padding: 0, tint: effortTint) {
                     VStack(alignment: .leading, spacing: 0) {
                         WorkoutRouteMap(points: route)
                             .frame(height: 220)
@@ -414,11 +458,12 @@ struct WorkoutDetailView: View {
                     title: "HEART RATE",
                     subtitle: String(localized: "Beats per minute across the session"),
                     trailing: row.avgHr.map { String(localized: "avg \($0)") },
-                    tint: StrandPalette.effortColor
+                    tint: effortTint
                 ) {
                     TrendChart(
                         points: hrPoints,
-                        gradient: StrandPalette.effortGradient,
+                        gradient: recordedSamples == nil
+                            ? StrandPalette.effortGradient : Gradient(colors: [effortTint, effortTint]),
                         valueRange: lo...hi,
                         showsArea: true,
                         valueFormat: { String(localized: "\(Int($0.rounded())) bpm") },
@@ -470,14 +515,14 @@ struct WorkoutDetailView: View {
                 SectionHeader("HR Zones",
                               overline: zonesFromImport ? "Whoop import" : "From strap HR",
                               trailing: String(localized: "\(Int(total.rounded()))m in zone"))
-                NoopCard(tint: StrandPalette.effortColor) {
+                NoopCard(tint: effortTint) {
                     VStack(alignment: .leading, spacing: 12) {
                         GeometryReader { geo in
                             HStack(spacing: 2) {
                                 ForEach(0..<5, id: \.self) { i in
                                     Rectangle()
                                         .fill(StrandPalette.hrZoneColor(i + 1))
-                                        .frame(width: max(0, CGFloat(z[i] / total) * geo.size.width))
+                                        .frame(width: max(0, CGFloat(z[i] / total) * (geo.size.width - 8)))
                                         .overlay {
                                             if i == busiest {
                                                 Rectangle()
@@ -492,14 +537,12 @@ struct WorkoutDetailView: View {
                         .accessibilityElement(children: .ignore)
                         .accessibilityLabel(String(localized: "Heart-rate zone split: \((1...5).map { String(localized: "zone \($0) \(Int((z[$0 - 1] / total * 100).rounded())) percent") }.joined(separator: ", "))"))
                         Divider().overlay(StrandPalette.hairline)
-                        HStack(spacing: 0) {
-                            ForEach(0..<5, id: \.self) { i in
-                                zoneStat(i + 1, minutes: z[i], total: total)
-                            }
+                        ForEach(1...5, id: \.self) { zone in
+                            zoneStat(zone, minutes: z[zone - 1], total: total)
                         }
                         Text(zonesFromImport
                              ? "WHOOP's imported per-zone split for this session."
-                             : "Time in each %HRmax zone, derived from the strap's heart rate over this window (approximate).")
+                             : "Estimated from recorded heart rate. Percentages are based on time in zones 1–5.")
                             .font(StrandFont.footnote)
                             .foregroundStyle(StrandPalette.textTertiary)
                     }
@@ -509,21 +552,25 @@ struct WorkoutDetailView: View {
     }
 
     private func zoneStat(_ zone: Int, minutes: Double, total: Double) -> some View {
-        VStack(alignment: .leading, spacing: 3) {
-            HStack(spacing: 5) {
-                RoundedRectangle(cornerRadius: 2, style: .continuous)
-                    .fill(StrandPalette.hrZoneColor(zone))
-                    .frame(width: 9, height: 9)
-                Text("Z\(zone)" as String).strandOverline()
+        HStack(spacing: NoopMetrics.space2) {
+            Circle().fill(StrandPalette.hrZoneColor(zone))
+                .frame(width: NoopMetrics.space2, height: NoopMetrics.space2)
+            Text(String(localized: "Zone \(zone)"))
+                .font(StrandFont.subhead)
+            if !zonesFromImport, let band = profile.hrZoneSet.zones.first(where: { $0.number == zone }) {
+                let lower = Int(band.lower.rounded(.up))
+                let upper = Int(band.upper.rounded(.up)) - 1
+                Text(zone == 5 ? String(localized: "≥\(lower) bpm") : String(localized: "\(lower)–\(upper) bpm"))
+                    .foregroundStyle(StrandPalette.textSecondary)
             }
-            Text("\(Int((minutes / max(total, 0.001) * 100).rounded()))%")
-                .font(StrandFont.number(15))
-                .foregroundStyle(StrandPalette.textPrimary)
+            Spacer()
             Text(durationLabel(minutes * 60))
-                .font(StrandFont.footnote)
-                .foregroundStyle(StrandPalette.textTertiary)
+            Text(minutes / total, format: .percent.precision(.fractionLength(0)))
+                .foregroundStyle(StrandPalette.textSecondary)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .font(StrandFont.footnote)
+        .monospacedDigit()
+        .accessibilityElement(children: .combine)
     }
 
     // MARK: - Effort contribution
@@ -536,14 +583,16 @@ struct WorkoutDetailView: View {
         let displayValue = UnitFormatter.effortValue(strain, scale: effortScale)
         let scaleMax: Double = effortScale == .whoop ? 21 : 100
         let fraction = max(0, min(1, displayValue / scaleMax))
+        let scaleCaption = String(localized: "of \(UnitFormatter.effortScaleMax(effortScale))")
+        let effortLabel = String(localized: "Effort \(UnitFormatter.effortDisplay(strain, scale: effortScale))")
         return VStack(alignment: .leading, spacing: NoopMetrics.gap) {
             SectionHeader("Effort", overline: "This session")
-            NoopCard(tint: StrandPalette.effortColor) {
+            NoopCard(tint: effortTint) {
                 HStack(alignment: .center, spacing: 18) {
                     ZStack {
                         // Static (posed) vessel — a compact liquid gauge inside a card, so it costs a single
                         // cached frame rather than a live canvas (same call as Trends' pip vessels).
-                        LiquidVessel(value: fraction, tint: StrandPalette.effortColor, animated: false)
+                        LiquidVessel(value: fraction, tint: effortTint, animated: false)
                             .frame(width: 88, height: 88)
                         VStack(spacing: 0) {
                             // The session's Effort contribution ticks up to its value — the NOOP signature.
@@ -552,20 +601,25 @@ struct WorkoutDetailView: View {
                                         font: StrandFont.rounded(28),
                                         color: StrandPalette.textPrimary)
                                 .shadow(color: .black.opacity(0.5), radius: 5, y: 1)
-                            Text(effortScale == .whoop ? "of 21" : "of 100")
+                            Text(scaleCaption)
                                 .font(StrandFont.caption)
                                 .foregroundStyle(StrandPalette.textSecondary)
                         }
                         .allowsHitTesting(false)
                     }
                     .accessibilityElement(children: .ignore)
-                    .accessibilityLabel(String(localized: "Effort \(UnitFormatter.effortDisplay(strain, scale: effortScale)) \(effortScale == .whoop ? "of 21" : "of 100")"))
+                    .accessibilityLabel([effortLabel, scaleCaption].joined(separator: " "))
                     Spacer(minLength: 0)
-                    Text("This session's contribution to the day's Effort, as captured during the workout.")
-                        .font(StrandFont.subhead)
-                        .foregroundStyle(StrandPalette.textSecondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .frame(maxWidth: 240, alignment: .leading)
+                    VStack(alignment: .leading, spacing: NoopMetrics.space1) {
+                        Text("Workout contribution to daily effort")
+                        if let dailyEffort {
+                            Text(String(localized: "Recorded daily effort \(UnitFormatter.effortDisplay(dailyEffort, scale: effortScale))"))
+                        }
+                    }
+                    .font(StrandFont.subhead)
+                    .foregroundStyle(StrandPalette.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: 240, alignment: .leading)
                 }
             }
         }

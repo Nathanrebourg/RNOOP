@@ -327,12 +327,10 @@ extension WhoopStore {
     /// protects a hand-corrected night — the manual nap can never be overwritten or folded away. `startTs`
     /// is the immutable detected-style key; `startTsAdjusted` stays nil because a manually-added session's
     /// onset IS the chosen onset (there is no "detected" onset to diverge from). `stagesJSON` is staged from
-    /// the raw streams over `[startTs, endTs]` by the caller (falling back to a single "awake" block when
-    /// the strap has no dense data there yet — the self-heal swaps in real stages once raw lands).
+    /// the raw streams over `[startTs, endTs]` by the caller and stays nil for unstaged entries.
     ///
-    /// Uses `ON CONFLICT(deviceId, startTs) DO NOTHING` so it is purely ADDITIVE: it can never clobber an
-    /// existing detected/edited session that happens to share the exact onset second. Returns rows inserted
-    /// (0 when a session already exists at that onset). Mirrors Android `insertManualSleepSession`.
+    /// An overlapping session under the same device or an occupied onset key prevents insertion.
+    /// The overlap check and insert run in the same write transaction.
     @discardableResult
     public func insertManualSleepSession(deviceId: String, startTs: Int, endTs: Int,
                                          efficiency: Double?, stagesJSON: String?) async throws -> Int {
@@ -341,9 +339,13 @@ extension WhoopStore {
                 INSERT INTO sleepSession
                     (deviceId, startTs, endTs, efficiency, restingHr, avgHrv, stagesJSON,
                      userEdited, startTsAdjusted)
-                VALUES (?, ?, ?, ?, NULL, NULL, ?, 1, NULL)
+                SELECT ?, ?, ?, ?, NULL, NULL, ?, 1, NULL
+                WHERE NOT EXISTS (
+                    SELECT 1 FROM sleepSession
+                    WHERE deviceId = ? AND COALESCE(startTsAdjusted, startTs) < ? AND endTs > ?
+                )
                 ON CONFLICT(deviceId, startTs) DO NOTHING
-                """, arguments: [deviceId, startTs, endTs, efficiency, stagesJSON])
+                """, arguments: [deviceId, startTs, endTs, efficiency, stagesJSON, deviceId, endTs, startTs])
             return db.changesCount
         }
     }

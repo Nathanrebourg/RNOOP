@@ -116,6 +116,22 @@ extension WhoopStore {
         }
     }
 
+    /// NROOP: every device id that has at least one raw heart-rate row, found by a loose index scan over
+    /// the `(deviceId, ts)` primary key (one seek per distinct id, never a table walk). Used to find the id
+    /// a strap's samples were actually banked under when it differs from the registry's.
+    public func hrDeviceIds() async throws -> [String] {
+        try syncRead { db in
+            try String.fetchAll(db, sql: """
+                WITH RECURSIVE ids(d) AS (
+                    SELECT MIN(deviceId) FROM hrSample
+                    UNION ALL
+                    SELECT (SELECT MIN(deviceId) FROM hrSample WHERE deviceId > ids.d) FROM ids WHERE ids.d IS NOT NULL
+                )
+                SELECT d FROM ids WHERE d IS NOT NULL
+                """)
+        }
+    }
+
     /// Whether `deviceId` has ANY heart rate in the window, as a scalar EXISTS rather than a row.
     ///
     /// The day-owner resolver asks this once per candidate per day, so a 60-day steps-calibration window

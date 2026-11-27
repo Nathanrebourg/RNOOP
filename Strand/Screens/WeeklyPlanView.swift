@@ -10,6 +10,9 @@ struct WeeklyPlanView: View {
     @AppStorage(WeeklyPlanGoals.sleepMinutesKey) private var sleepMinutes = 480
     @AppStorage(WeeklyPlanGoals.sleepNightsKey) private var sleepNights = 0
     @AppStorage(WeeklyPlanGoals.workoutDaysKey) private var workoutDays = 0
+    @AppStorage(NroopPlanGoals.dailyStepsKey) private var dailySteps = 0
+    @AppStorage(NroopPlanGoals.stepsDaysKey) private var stepsDays = 0
+    @AppStorage(NroopPlanGoals.strengthMinutesKey) private var strengthMinutes = 0
     @State private var workouts: [WorkoutRow] = []
     @State private var loadedKey: String?
 
@@ -82,6 +85,17 @@ struct WeeklyPlanView: View {
                 }
                 Stepper(value: clamped($workoutDays, range: 0...7), in: 0...7) {
                     Text("Workout days goal: \(goals.workoutDays)").font(StrandFont.bodyNumber)
+                }
+                Stepper(value: clamped($dailySteps, range: 0...40_000), in: 0...40_000, step: 500) {
+                    Text(dailySteps == 0 ? String(localized: "Daily steps goal: off") : String(localized: "Daily steps goal: \(dailySteps)"))
+                        .font(StrandFont.bodyNumber)
+                }
+                Stepper(value: clamped($stepsDays, range: 0...7), in: 0...7) {
+                    Text("Days at the steps goal: \(stepsDays)").font(StrandFont.bodyNumber)
+                }
+                Stepper(value: clamped($strengthMinutes, range: 0...900), in: 0...900, step: 15) {
+                    Text(strengthMinutes == 0 ? String(localized: "Weekly strength goal: off") : String(localized: "Weekly strength goal: \(strengthMinutes) min"))
+                        .font(StrandFont.bodyNumber)
                 }
                 Text("Goals stay on this device and are not included in backups.")
                     .font(StrandFont.footnote)

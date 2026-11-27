@@ -9,6 +9,15 @@ import XCTest
 final class RestNeedTests: XCTestCase {
     private typealias Rest = AnalyticsEngine.Rest
 
+    func testNapCreditsOnlyTheDurationTerm() {
+        let score = Rest.composite(tstSeconds: 21_600, inBedSeconds: 22_800, efficiency: 0.9,
+                                   restorativeSeconds: 7_200, needHours: 8, consistency: 0.8)
+        let withNap = Rest.composite(tstSeconds: 21_600, inBedSeconds: 22_800, efficiency: 0.9,
+                                     restorativeSeconds: 7_200, needHours: 8, consistency: 0.8,
+                                     durationCreditSeconds: 1_800)
+        XCTAssertEqual(withNap - score, 3.12, accuracy: 0.02)
+    }
+
     func testChronicUnderSleeperStaysAtFloor() {
         // 14 nights of ~5.5 h. A self-referential mean returns ~5.5; the anchor must hold >= 7.0.
         let nights = Array(repeating: 5.5, count: 14)
