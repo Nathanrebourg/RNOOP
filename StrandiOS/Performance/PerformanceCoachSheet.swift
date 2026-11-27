@@ -264,10 +264,8 @@ struct PerformanceTabBar: View {
             .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: PerformanceDesign.navigationRadius))
             .overlay(RoundedRectangle(cornerRadius: PerformanceDesign.navigationRadius).strokeBorder(PerformanceDesign.coach.opacity(0.14), lineWidth: NoopMetrics.hairlineWidth))
             if coachEnabled {
-                Button(action: openCoach) { PerformanceCoachSymbol().frame(width: PerformanceDesign.coachDiameter, height: PerformanceDesign.navigationHeight) }
+                Button(action: openCoach) { PerformanceCoachSymbol(diameter: 50).shadow(color: .black.opacity(0.4), radius: 6, y: 2).frame(width: PerformanceDesign.coachDiameter + 6, height: PerformanceDesign.navigationHeight) }
                     .buttonStyle(.plain)
-                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: PerformanceDesign.navigationRadius))
-                    .overlay(RoundedRectangle(cornerRadius: PerformanceDesign.navigationRadius).strokeBorder(PerformanceDesign.coach.opacity(0.3), lineWidth: NoopMetrics.hairlineWidth))
                     .accessibilityLabel("Open contextual Coach")
             }
         }

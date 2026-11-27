@@ -63,7 +63,7 @@ struct WorkoutStartControl: View {
                     Image(systemName: "stopwatch")
                     Text(model.activeWorkout == nil ? LocalizedStringKey("Start an activity")
                                                     : LocalizedStringKey("View active workout"))
-                        .font(StrandFont.overline).lineLimit(1).minimumScaleFactor(0.7)
+                        .font(StrandFont.overline).textCase(.uppercase).lineLimit(1).minimumScaleFactor(0.7)
                 }
                 .foregroundStyle(StrandPalette.textPrimary)
                 .frame(maxWidth: .infinity, minHeight: NoopButtonMetrics.minHitTarget)

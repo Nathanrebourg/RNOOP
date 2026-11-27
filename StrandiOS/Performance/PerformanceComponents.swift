@@ -196,44 +196,91 @@ struct PerformanceMeasureRow: View {
     }
 }
 
-/// WHOOP-style activity card: coloured score/duration tile, sport icon, name and times.
+/// WHOOP-like colours for the Today's Activities rows (own values, tuned to the reference look).
+enum PerformanceActivityStyle {
+    static let row = Color(red: 0.13, green: 0.15, blue: 0.17)
+    static let sleepPill = Color(red: 0.42, green: 0.53, blue: 0.64)
+    static let workoutPill = Color(red: 0.0, green: 0.58, blue: 0.91)
+    static let timeBar = Color(red: 0.25, green: 0.62, blue: 0.95)
+}
+
+/// Today's Activities row: coloured pill (icon + value), uppercase name, start/end stacked by a thin bar.
 struct PerformanceActivityCard: View {
     let badge: String
     let badgeColor: Color
     let symbol: String
     let title: String
-    let times: String
+    let start: String
+    let end: String
     var body: some View {
         HStack(spacing: NoopMetrics.space3) {
-            Text(badge).font(StrandFont.headline).monospacedDigit().minimumScaleFactor(0.6).lineLimit(1)
-                .foregroundStyle(.white)
-                .frame(width: 64, height: 44)
-                .background(badgeColor, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
-            Image(systemName: symbol).font(StrandFont.headline).foregroundStyle(badgeColor)
-                .frame(width: NoopMetrics.space6)
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title.uppercased()).font(StrandFont.subhead).foregroundStyle(StrandPalette.textPrimary)
-                    .lineLimit(1).minimumScaleFactor(0.75)
-                Text(times).font(StrandFont.footnote).monospacedDigit().foregroundStyle(StrandPalette.textSecondary)
+            HStack(spacing: 6) {
+                Image(systemName: symbol).font(.system(size: 15, weight: .semibold))
+                Text(badge).font(.system(size: 17, weight: .bold, design: .rounded)).monospacedDigit()
+                    .lineLimit(1).minimumScaleFactor(0.6)
             }
+            .foregroundStyle(.white)
+            .frame(width: 92, height: 40)
+            .background(badgeColor, in: RoundedRectangle(cornerRadius: 6, style: .continuous))
+            Text(title.uppercased()).font(.system(size: 14, weight: .bold)).tracking(0.6)
+                .foregroundStyle(StrandPalette.textPrimary).lineLimit(1).minimumScaleFactor(0.7)
             Spacer(minLength: NoopMetrics.space2)
-            Image(systemName: "chevron.right").font(StrandFont.footnote).foregroundStyle(StrandPalette.textSecondary)
+            VStack(alignment: .trailing, spacing: 6) {
+                Text(start)
+                Text(end)
+            }
+            .font(.system(size: 12, weight: .medium)).monospacedDigit()
+            .foregroundStyle(StrandPalette.textSecondary)
+            RoundedRectangle(cornerRadius: 1).fill(PerformanceActivityStyle.timeBar).frame(width: 2, height: 34)
         }
-        .padding(NoopMetrics.space3)
-        .background(PerformanceDesign.panelTop, in: RoundedRectangle(cornerRadius: PerformanceDesign.panelRadius, style: .continuous))
+        .padding(.horizontal, NoopMetrics.space3).padding(.vertical, 10)
+        .background(PerformanceActivityStyle.row, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
         .contentShape(Rectangle())
     }
 }
 
-struct PerformanceCoachSymbol: View {
+/// WHOOP-style strap battery read-out: "60%" next to a small rounded strap glyph filled to the level.
+struct StrapBatteryGlyph: View {
+    let percent: Double?
     var body: some View {
-        ZStack(alignment: .topTrailing) {
-            Text(verbatim: "N").font(StrandFont.title2).italic()
-            Image(systemName: "sparkle").font(StrandFont.overline)
+        HStack(spacing: 5) {
+            Text(percent.map { "\(Int($0.rounded()))%" } ?? "—")
+                .font(.system(size: 12, weight: .semibold)).monospacedDigit()
+                .foregroundStyle(StrandPalette.textSecondary)
+            ZStack(alignment: .bottom) {
+                RoundedRectangle(cornerRadius: 5, style: .continuous)
+                    .strokeBorder(StrandPalette.textPrimary.opacity(0.85), lineWidth: 1.5)
+                if let percent {
+                    let level = min(max(percent / 100, 0.08), 1)
+                    RoundedRectangle(cornerRadius: 2.5, style: .continuous)
+                        .fill(percent <= 20 ? PerformanceDesign.recoveryLow : PerformanceDesign.recoveryHigh)
+                        .frame(width: 8, height: 15 * level)
+                        .padding(.bottom, 3.5)
+                }
+            }
+            .frame(width: 15, height: 22)
+            // the clasp, so it reads as a strap rather than a phone battery
+            .overlay(alignment: .trailing) {
+                RoundedRectangle(cornerRadius: 1).fill(StrandPalette.textPrimary.opacity(0.85))
+                    .frame(width: 2.5, height: 7).offset(x: 3)
+            }
         }
-        .foregroundStyle(PerformanceDesign.coach)
-        .frame(width: PerformanceDesign.coachSymbolDiameter, height: PerformanceDesign.coachSymbolDiameter)
-        .overlay(Circle().strokeBorder(PerformanceDesign.coach.opacity(0.7), lineWidth: NoopMetrics.hairlineWidth))
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(percent.map { String(localized: "Strap battery \(Int($0.rounded())) percent") } ?? String(localized: "Strap battery unavailable"))
+    }
+}
+
+/// NROOP coach button: a dark circle, thin light ring and a clean "N" monogram (own mark).
+struct PerformanceCoachSymbol: View {
+    var diameter: CGFloat = PerformanceDesign.coachSymbolDiameter
+    var body: some View {
+        ZStack {
+            Circle().fill(Color(red: 0.09, green: 0.10, blue: 0.13))
+            Circle().strokeBorder(Color.white.opacity(0.55), lineWidth: max(1, diameter / 32))
+            Text(verbatim: "N").font(.system(size: diameter * 0.44, weight: .semibold, design: .rounded))
+                .foregroundStyle(.white)
+        }
+        .frame(width: diameter, height: diameter)
         .accessibilityHidden(true)
     }
 }
