@@ -23,6 +23,6 @@ final class SleepDetectTodayLineTests: XCTestCase {
         XCTAssertTrue(line.hasPrefix("sleep-detect today day=2026-11-27 owner=my-whoop "))
         XCTAssertTrue(line.contains("my-whoop hr=0;"))
         XCTAssertTrue(line.contains("whoop-x hr=12 first="))
-        XCTAssertTrue(line.hasSuffix("cand=0 gates=[] night=none"))
+        XCTAssertTrue(line.hasSuffix("cand=0 gates=[] merged=[] night=none"))
     }
 }

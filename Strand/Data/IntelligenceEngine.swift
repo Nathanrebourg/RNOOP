@@ -468,7 +468,7 @@ final class IntelligenceEngine: ObservableObject {
                                                  tzOffset: Int,
                                                  perId: [(id: String, count: Int, first: Int?, last: Int?)],
                                                  ownerHr: Int, grav: Int, gateLines: [String],
-                                                 nightMinutes: Double?) -> String {
+                                                 nightMinutes: Double?, mergedIds: [String] = []) -> String {
         let ids = perId.map { e -> String in
             let span = (e.first != nil && e.last != nil)
                 ? " first=\(diagClock(e.first!, offsetSec: tzOffset)) last=\(diagClock(e.last!, offsetSec: tzOffset))" : ""
@@ -478,7 +478,8 @@ final class IntelligenceEngine: ObservableObject {
         let night = nightMinutes.map { "\(Int($0.rounded()))min" } ?? "none"
         return "sleep-detect today day=\(day) owner=\(owner) "
             + "window=\(diagClock(windowFrom, offsetSec: tzOffset))..\(diagClock(windowTo, offsetSec: tzOffset)) "
-            + "ids[\(ids)] ownerHr=\(ownerHr) grav=\(grav) cand=\(gates.cand) gates=\(gates.text) night=\(night)"
+            + "ids[\(ids)] ownerHr=\(ownerHr) grav=\(grav) cand=\(gates.cand) gates=\(gates.text) "
+            + "merged=[\(mergedIds.joined(separator: ","))] night=\(night)"
     }
 
     nonisolated static func sleepDetectNoNightLogLine(day: String, hrCount: Int, rrCount: Int,
@@ -1234,6 +1235,10 @@ final class IntelligenceEngine: ObservableObject {
             let hrWindow = SlidingStreamWindow<HRSample>(tsOf: { $0.ts }, limit: StreamReadCap.hr) { o, f, t in
                 try? await store.hrSamples(deviceId: o, from: f, to: t, limit: StreamReadCap.hr)
             }
+            // NROOP: ids the strap's samples may be banked under besides the day's owner (see `SiblingStreamMerge`).
+            let siblingStoreIds = (try? await store.hrDeviceIds()) ?? []
+            let siblingRegWhoop = regDevices.filter(SourceIdentity.isWhoop).map(\.id)
+            let siblingRegOther = regDevices.filter { !SourceIdentity.isWhoop($0) }.map(\.id)
             let activeWhoop5RR = (try? await store.isWhoop5RRSource(deviceId: regActiveId)) ?? true
             let rrWindow = SlidingStreamWindow<RRInterval>(tsOf: { $0.ts }, limit: StreamReadCap.rr) { o, f, t in
                 try? await store.rrIntervals(deviceId: o, from: f, to: t, limit: StreamReadCap.rr,
@@ -1287,6 +1292,18 @@ final class IntelligenceEngine: ObservableObject {
                 // per-device raw anchor — so its anchor slot stays nil. Pass-global inputs (profile/
                 // baselines1/toggles) already dropped the whole cache above on change. A miss falls straight
                 // through to the identical full path.
+                // NROOP: sibling ids holding raw HR for this window (the strap banked part of the night under
+                // another id than the owner's). Counts only; folded into the day-cache key below.
+                var siblingsWithData: [(id: String, count: Int, maxTs: Int)] = []
+                for sid in SiblingStreamMerge.candidateIds(owner: owner, registeredWhoop: siblingRegWhoop,
+                                                           registeredOther: siblingRegOther,
+                                                           storeIds: siblingStoreIds,
+                                                           legacyIds: [Repository.whoopSource, ownerFallbackId]) {
+                    if let fp = try? await store.hrFingerprint(deviceId: sid, from: from, to: to), fp.count > 0 {
+                        siblingsWithData.append((sid, fp.count, fp.maxTs))
+                    }
+                }
+                let siblingKey = siblingsWithData.map { "\($0.id):\($0.count):\($0.maxTs)" }.joined(separator: ",")
                 var dayCacheKey: String? = nil
                 // The newest opt-in sleep/stress comparisons read history or completed windows and are never cached.
                 // Bypass only this day's reuse so activation/history updates cannot serve a stale report.
@@ -1320,7 +1337,7 @@ final class IntelligenceEngine: ObservableObject {
                             // watermark gate above, never this one. Both reads are index-only aggregates
                             // over the same `(deviceId, ts)` keys; a miss costs the 7 full stream reads
                             // this gate exists to skip.
-                            streams: streamFp + "|rrAlias5=\(activeWhoop5RR && owner == Repository.whoopSource)",
+                            streams: streamFp + "|rrAlias5=\(activeWhoop5RR && owner == Repository.whoopSource)|sib=\(siblingKey)",
                             // #1575: `hrvTraceActive &&` matters. With the HRV trace OFF no detail
                             // line is ever produced, so the flag describes nothing — but it would still
                             // flip at midnight and invalidate yesterday, charging EVERY user an extra
@@ -1352,7 +1369,17 @@ final class IntelligenceEngine: ObservableObject {
                 // what decides whether narrowing the read windows is worth building at all. Measured, not
                 // guessed, for the same reason the day-cache duration is.
                 let tPrep0 = Date()
-                let hr = await hrWindow.rows(owner: owner, from: from, to: to)
+                let hrOwn = await hrWindow.rows(owner: owner, from: from, to: to)
+                // NROOP: top the owner's streams up from sibling ids, only for minutes the owner has no HR in.
+                var siblingHr: [[HRSample]] = []
+                for sib in siblingsWithData {
+                    siblingHr.append((try? await store.hrSamples(deviceId: sib.id, from: from, to: to,
+                                                                 limit: StreamReadCap.hr)) ?? [])
+                }
+                let siblingCovered = siblingsWithData.isEmpty ? Set<Int>()
+                    : SiblingStreamMerge.coveredMinutes(ownerHrTs: hrOwn.map { $0.ts })
+                let hr = siblingsWithData.isEmpty ? hrOwn
+                    : SiblingStreamMerge.fill(owner: hrOwn, siblings: siblingHr, covered: siblingCovered, ts: { $0.ts })
                 guard hr.count >= IntelligenceEngine.minHrSamples else {
                     // This day still paid for its read; count it, or the tally under-reports exactly the
                     // sparse-history installs where reads dominate most.
@@ -1362,7 +1389,15 @@ final class IntelligenceEngine: ObservableObject {
                 }
                 let strictWhoop5RR = (try? await store.isWhoop5RRSource(deviceId: owner,
                     unlabelledAliasOfWhoop5: activeWhoop5RR && owner == Repository.whoopSource)) ?? true
-                let rr = await rrWindow.rows(owner: owner, from: from, to: to, allowReuse: !strictWhoop5RR)
+                let rrOwn = await rrWindow.rows(owner: owner, from: from, to: to, allowReuse: !strictWhoop5RR)
+                var siblingRr: [[RRInterval]] = []
+                for sib in siblingsWithData {
+                    siblingRr.append((try? await store.rrIntervals(deviceId: sib.id, from: from, to: to,
+                        limit: StreamReadCap.rr,
+                        unlabelledAliasOfWhoop5: activeWhoop5RR && sib.id == Repository.whoopSource)) ?? [])
+                }
+                let rr = siblingsWithData.isEmpty ? rrOwn
+                    : SiblingStreamMerge.fill(owner: rrOwn, siblings: siblingRr, covered: siblingCovered, ts: { $0.ts })
                 // `forScoring` drops an Oura ring's respiration rows: those are the ring's OWN per-window
                 // RATE (0x6A, milli-bpm, ~1 row per 5 min), stored as instrumentation, while the stager
                 // reads this stream as a ~1 Hz raw ADC waveform. Refusing by provenance keeps the
@@ -1376,14 +1411,40 @@ final class IntelligenceEngine: ObservableObject {
                 // `analyzeDay` as what they are: the device's OWN measured respiratory rate, which
                 // becomes the night's `respRateBpm` instead of the RSA estimate. A WHOOP owner gets the
                 // rows in the first list and nothing in the second, so its night is unchanged.
-                let respRows = (try? await store.respSamples(deviceId: owner, from: from, to: to,
-                                                             limit: 200_000)) ?? []
+                let respRowsOwn = (try? await store.respSamples(deviceId: owner, from: from, to: to,
+                                                                limit: 200_000)) ?? []
+                var siblingResp: [[RespSample]] = []
+                for sib in siblingsWithData {
+                    siblingResp.append((try? await store.respSamples(deviceId: sib.id, from: from, to: to,
+                                                                     limit: 200_000)) ?? [])
+                }
+                let respRows = siblingsWithData.isEmpty ? respRowsOwn
+                    : SiblingStreamMerge.fill(owner: respRowsOwn, siblings: siblingResp, covered: siblingCovered, ts: { $0.ts })
                 let resp = OuraRespScale.forScoring(respRows, deviceId: owner)
                 let vendorResp = OuraRespScale.forVendorRate(respRows, deviceId: owner)
-                let grav = (try? await store.gravitySamples(deviceId: owner, from: from, to: to,
-                                                            limit: StreamReadCap.gravity)) ?? []
+                let gravOwn = (try? await store.gravitySamples(deviceId: owner, from: from, to: to,
+                                                               limit: StreamReadCap.gravity)) ?? []
+                var siblingGrav: [[GravitySample]] = []
+                for sib in siblingsWithData {
+                    siblingGrav.append((try? await store.gravitySamples(deviceId: sib.id, from: from, to: to,
+                                                                        limit: StreamReadCap.gravity)) ?? [])
+                }
+                let grav = siblingsWithData.isEmpty ? gravOwn
+                    : SiblingStreamMerge.fill(owner: gravOwn, siblings: siblingGrav, covered: siblingCovered, ts: { $0.ts })
                 let steps = (try? await store.stepSamples(deviceId: owner, from: from, to: to, limit: 200_000)) ?? []
-                let skin = (try? await store.skinTempSamples(deviceId: owner, from: from, to: to, limit: StreamReadCap.skin)) ?? []
+                let skinOwn = (try? await store.skinTempSamples(deviceId: owner, from: from, to: to, limit: StreamReadCap.skin)) ?? []
+                var siblingSkin: [[SkinTempSample]] = []
+                for sib in siblingsWithData {
+                    siblingSkin.append((try? await store.skinTempSamples(deviceId: sib.id, from: from, to: to,
+                                                                         limit: StreamReadCap.skin)) ?? [])
+                }
+                let skin = siblingsWithData.isEmpty ? skinOwn
+                    : SiblingStreamMerge.fill(owner: skinOwn, siblings: siblingSkin, covered: siblingCovered, ts: { $0.ts })
+                if !siblingsWithData.isEmpty, offset == 0 || offset == 1 {
+                    skippedDayLines.append("sleep-detect merge day=\(day) owner=\(owner) hrOwn=\(hrOwn.count) "
+                        + siblingsWithData.map { "+\($0.id)=\($0.count)" }.joined(separator: " ")
+                        + " hrMerged=\(hr.count)")
+                }
                 // #93: WHOOP 4.0 raw SpO2 PPG samples for the night; analyzeDay banks the nightly red/IR ADC
                 // means on the DailyMetric. Empty on a 5/MG (no v24 spo2 channels) → the raw means stay nil.
                 let spo2 = (try? await store.spo2Samples(deviceId: owner, from: from, to: to, limit: 200_000)) ?? []
@@ -1636,7 +1697,7 @@ final class IntelligenceEngine: ObservableObject {
                 dayScoreSeconds += Date().timeIntervalSince(tScore0)
                 if isTodayScan {
                     var ids: [String] = []
-                    for id in [owner] + regDevices.filter(SourceIdentity.isWhoop).map(\.id) + [ownerFallbackId]
+                    for id in [owner] + regDevices.filter(SourceIdentity.isWhoop).map(\.id) + siblingStoreIds + [ownerFallbackId]
                     where !ids.contains(id) { ids.append(id) }
                     var perId: [(id: String, count: Int, first: Int?, last: Int?)] = []
                     for id in ids {
@@ -1648,7 +1709,8 @@ final class IntelligenceEngine: ObservableObject {
                     strainDiagLines.append(Self.sleepDetectTodayLine(
                         day: day, owner: owner, windowFrom: from, windowTo: to, tzOffset: tzOffset,
                         perId: perId, ownerHr: hr.count, grav: grav.count,
-                        gateLines: todayGateLines, nightMinutes: res.daily.totalSleepMin))
+                        gateLines: todayGateLines, nightMinutes: res.daily.totalSleepMin,
+                        mergedIds: siblingsWithData.map { $0.id }))
                 }
                 if dayStart == nowLocalMidnight && (effortCadenceActive || recoveryLabActive || sleepTraceActive) {
                     let capture = await AlgorithmLabCapture.run(store: store, owner: owner, computedId: computedId,
