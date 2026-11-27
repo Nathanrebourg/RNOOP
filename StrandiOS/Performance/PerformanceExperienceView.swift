@@ -24,6 +24,8 @@ struct PerformanceExperienceView: View {
     @AppStorage(UnitPrefs.effortScaleKey) private var effortPreference = EffortScale.whoop.rawValue
     @State private var day: String
     @State private var showCalendar = false
+    @State private var recalcPhase: String?
+    @State private var recalcResult: String?
     @State private var showSettings = false
     @State private var dataRevision = 0
     @State private var showDashboardEditor = false
@@ -361,19 +363,86 @@ struct PerformanceExperienceView: View {
                     Text(note).font(StrandFont.caption).foregroundStyle(StrandPalette.textTertiary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
+                if let result = recalcResult {
+                    Text(result).font(StrandFont.caption).foregroundStyle(StrandPalette.textSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
                 Button {
-                    Task {
-                        if live.historyReady { ble.syncNow() }
-                        await intelligence.analyzeRecent(triggerLabel: "today-recalculate")
-                        await repo.refresh()
-                    }
+                    Task { await recalculateToday() }
                 } label: {
-                    Label(intelligence.computing ? String(localized: "Calculating today's scores…") : String(localized: "Recalculate today"),
+                    Label(recalcPhase ?? (intelligence.computing ? String(localized: "Calculating today's scores…") : String(localized: "Recalculate today")),
                           systemImage: "arrow.clockwise").font(StrandFont.subhead)
                 }
-                .disabled(intelligence.computing)
+                .disabled(recalcPhase != nil || intelligence.computing)
             }
         }
+    }
+
+    /// Waits (polling once a second) while the scoring engine is busy; returns whether it is still busy at the limit.
+    private func waitWhileComputing(seconds: Int) async -> Bool {
+        var waited = 0
+        try? await Task.sleep(nanoseconds: 1_000_000_000)
+        while intelligence.computing && waited < seconds {
+            try? await Task.sleep(nanoseconds: 1_000_000_000)
+            waited += 1
+        }
+        return intelligence.computing
+    }
+
+    /// "Recalculer aujourd'hui": waits for the strap sync to finish (90 s at most), then forces the scoring
+    /// pass (waiting out one already running), then reports what was actually found. Real values only.
+    private func recalculateToday() async {
+        recalcResult = nil
+        defer { recalcPhase = nil }
+        // 1. Strap sync.
+        let syncNote: String
+        if live.connected && live.historyReady {
+            recalcPhase = String(localized: "Syncing last night from the strap…")
+            ble.syncNow()
+            var elapsed = 0
+            while !live.backfilling && elapsed < 6 {
+                try? await Task.sleep(nanoseconds: 1_000_000_000); elapsed += 1
+            }
+            let started = live.backfilling
+            while live.backfilling && elapsed < 90 {
+                try? await Task.sleep(nanoseconds: 1_000_000_000); elapsed += 1
+            }
+            if live.backfilling {
+                syncNote = String(localized: "Strap sync still running after 90 s.")
+            } else if started {
+                syncNote = String(localized: "Strap sync finished.")
+            } else {
+                syncNote = String(localized: "The strap did not start a new sync.")
+            }
+        } else {
+            syncNote = String(localized: "Strap not connected, no sync was possible.")
+        }
+        // 2. Scoring pass: let a running one finish, force ours, then let any queued follow-up finish.
+        recalcPhase = String(localized: "Calculating today's scores…")
+        _ = await waitWhileComputing(seconds: 60)
+        await intelligence.analyzeRecent(triggerLabel: "today-recalculate")
+        _ = await waitWhileComputing(seconds: 60)
+        await repo.refresh()
+        await model.load(repo: repo, context: context)
+        // 3. One real result line.
+        let snap = model.snapshot
+        let nightMinutes = snap?.value("sleep_total_min")
+        let night: String
+        if let minutes = nightMinutes, minutes > 0, snap?.value("recovery") != nil {
+            let m = Int(minutes.rounded())
+            night = String(localized: "Night found: \(m / 60) h \(m % 60) min of sleep, scores updated.")
+        } else if let minutes = nightMinutes, minutes > 0 {
+            let m = Int(minutes.rounded())
+            night = String(localized: "Night found: \(m / 60) h \(m % 60) min of sleep, but recovery is not calculated.")
+        } else {
+            let cal = Calendar.current
+            let startOfDay = Int(cal.startOfDay(for: Date()).timeIntervalSince1970)
+            let from = startOfDay - 4 * 3600
+            let to = min(startOfDay + 12 * 3600, Int(Date().timeIntervalSince1970))
+            let count = await repo.hrSamples(from: from, to: to, limit: 400_000).count
+            night = String(localized: "Night not found: \(count) heart-rate readings between 8 pm and 12 pm.")
+        }
+        recalcResult = night + " " + syncNote
     }
 
     /// "Yesterday" for the previous day, otherwise a short weekday/date of the carried score.

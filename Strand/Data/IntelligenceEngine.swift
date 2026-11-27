@@ -434,6 +434,53 @@ final class IntelligenceEngine: ObservableObject {
         return parts.isEmpty ? nil : parts.joined(separator: "\n")
     }
 
+    /// NROOP: local "MM-dd HH:mm" for a unix time under a fixed offset (diagnostics only).
+    nonisolated static func diagClock(_ ts: Int, offsetSec: Int) -> String {
+        let local = ts + offsetSec
+        let sod = ((local % 86_400) + 86_400) % 86_400
+        let day = AnalyticsEngine.dayString(ts, offsetSec: offsetSec)
+        return String(format: "%@ %02d:%02d", String(day.dropFirst(5)), sod / 3600, (sod % 3600) / 60)
+    }
+
+    /// NROOP: `gate run=N spanS=S KEPT|DROPPED gate=NAME ...` lines (candidate sleep runs only) reduced to
+    /// `cand=<n> gates=[run0:DROPPED:minSleepMin/22m, run1:KEPT:accepted/412m]`. Sparse-bridge bookkeeping
+    /// lines are not candidates and are skipped.
+    nonisolated static func sleepGateSummary(_ lines: [String]) -> (cand: Int, text: String) {
+        let known: Set<String> = ["minSleepMin", "maxMainSleepSpanS", "hrConfirm", "offWrist",
+                                  "daytimeGuard", "morningStillness", "accepted"]
+        var parts: [String] = []
+        for line in lines {
+            let tokens = line.split(separator: " ").map(String.init)
+            guard let runTok = tokens.first(where: { $0.hasPrefix("run=") }), let run = Int(runTok.dropFirst(4)), run >= 0,
+                  let gateTok = tokens.first(where: { $0.hasPrefix("gate=") }) else { continue }
+            let gate = String(gateTok.dropFirst(5))
+            guard known.contains(gate) else { continue }
+            let verdict = tokens.contains("DROPPED") ? "DROPPED" : "KEPT"
+            let span = tokens.first(where: { $0.hasPrefix("spanS=") }).flatMap { Int($0.dropFirst(6)) }.map { "\($0 / 60)m" } ?? "?"
+            parts.append("run\(run):\(verdict):\(gate)/\(span)")
+        }
+        return (parts.count, "[" + parts.joined(separator: ", ") + "]")
+    }
+
+    /// NROOP: the always-on, today-only account of what the sleep detector was given and decided.
+    /// Grep `sleep-detect today`. Counts, ids and times only.
+    nonisolated static func sleepDetectTodayLine(day: String, owner: String, windowFrom: Int, windowTo: Int,
+                                                 tzOffset: Int,
+                                                 perId: [(id: String, count: Int, first: Int?, last: Int?)],
+                                                 ownerHr: Int, grav: Int, gateLines: [String],
+                                                 nightMinutes: Double?) -> String {
+        let ids = perId.map { e -> String in
+            let span = (e.first != nil && e.last != nil)
+                ? " first=\(diagClock(e.first!, offsetSec: tzOffset)) last=\(diagClock(e.last!, offsetSec: tzOffset))" : ""
+            return "\(e.id) hr=\(e.count)\(span)"
+        }.joined(separator: "; ")
+        let gates = sleepGateSummary(gateLines)
+        let night = nightMinutes.map { "\(Int($0.rounded()))min" } ?? "none"
+        return "sleep-detect today day=\(day) owner=\(owner) "
+            + "window=\(diagClock(windowFrom, offsetSec: tzOffset))..\(diagClock(windowTo, offsetSec: tzOffset)) "
+            + "ids[\(ids)] ownerHr=\(ownerHr) grav=\(grav) cand=\(gates.cand) gates=\(gates.text) night=\(night)"
+    }
+
     nonisolated static func sleepDetectNoNightLogLine(day: String, hrCount: Int, rrCount: Int,
                                                       respCount: Int, gravCount: Int, stepCount: Int,
                                                       providedCount: Int, providedEndingOnDay: Int,
@@ -1243,7 +1290,7 @@ final class IntelligenceEngine: ObservableObject {
                 var dayCacheKey: String? = nil
                 // The newest opt-in sleep/stress comparisons read history or completed windows and are never cached.
                 // Bypass only this day's reuse so activation/history updates cannot serve a stale report.
-                if dayCacheEligible, !((sleepTraceActive || hrvTraceActive || effortCadenceActive || recoveryLabActive) && dayStart == nowLocalMidnight),
+                if dayCacheEligible, dayStart != nowLocalMidnight,   // NROOP: today is always re-scored so its sleep-detect diagnostic is emitted
                    let ownerFamily = DeviceFamily.forRegistryDevice(
                         model: regDevices.first(where: { $0.id == owner })?.model,
                         brand: regDevices.first(where: { $0.id == owner })?.brand) {
@@ -1474,7 +1521,15 @@ final class IntelligenceEngine: ObservableObject {
                         gravity: grav, wristOff: wristOff, bandSleepState: bandSleepState,
                         useSleepStagerV2: useSleepStagerV2))
                 }
-                let traceSink: ((String) -> Void)? = sleepTraceActive ? { sleepTrace.append($0) } : nil
+                // NROOP: for TODAY only, always collect the detector's per-candidate gate verdicts (no test mode)
+                // so the `sleep-detect today` line can say which gate rejected each candidate night.
+                var todayGateLines: [String] = []
+                let isTodayScan = dayStart == nowLocalMidnight
+                let traceSink: ((String) -> Void)? = (sleepTraceActive || isTodayScan)
+                    ? { line in
+                        if sleepTraceActive { sleepTrace.append(line) }
+                        if isTodayScan, line.hasPrefix("gate run=") { todayGateLines.append(line) }
+                    } : nil
                 // HRV mode (#141): a per-day collector for the nightly per-window RMSSD + summary; nil = default.
                 var hrvTrace: [String] = []
                 if hrvTraceActive && dayStart == nowLocalMidnight {
@@ -1579,6 +1634,22 @@ final class IntelligenceEngine: ObservableObject {
                                                         ? { strainDiagLines.append($0) } : nil,
                                                      recipeSource: owner,recipeWindowStart:dayMid,recipeWindowEnd:dayEnd+1)
                 dayScoreSeconds += Date().timeIntervalSince(tScore0)
+                if isTodayScan {
+                    var ids: [String] = []
+                    for id in [owner] + regDevices.filter(SourceIdentity.isWhoop).map(\.id) + [ownerFallbackId]
+                    where !ids.contains(id) { ids.append(id) }
+                    var perId: [(id: String, count: Int, first: Int?, last: Int?)] = []
+                    for id in ids {
+                        let fp = (try? await store.hrFingerprint(deviceId: id, from: from, to: to)) ?? (count: 0, maxTs: 0)
+                        let first = fp.count > 0
+                            ? ((try? await store.hrSamples(deviceId: id, from: from, to: to, limit: 1))?.first?.ts) : nil
+                        perId.append((id, fp.count, first, fp.count > 0 ? fp.maxTs : nil))
+                    }
+                    strainDiagLines.append(Self.sleepDetectTodayLine(
+                        day: day, owner: owner, windowFrom: from, windowTo: to, tzOffset: tzOffset,
+                        perId: perId, ownerHr: hr.count, grav: grav.count,
+                        gateLines: todayGateLines, nightMinutes: res.daily.totalSleepMin))
+                }
                 if dayStart == nowLocalMidnight && (effortCadenceActive || recoveryLabActive || sleepTraceActive) {
                     let capture = await AlgorithmLabCapture.run(store: store, owner: owner, computedId: computedId,
                         journalId: labJournalId, day: day, dayStart: dayMid, now: now, offset: tzOffset,
